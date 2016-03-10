@@ -1,0 +1,60 @@
+incluir <test>
+incluir <hola>
+
+objeto Rectangulo {
+	privado {
+		var entero tfdsfdfs ; 
+		var  entero testing2 ;
+
+		funcion entero getTest ( entero uno, entero dos ) {
+			var entero test3 = 4 ; 
+
+
+			regresa test3 ; 
+		};
+	}
+
+	publico {
+		var entero testing4 = 4 + 2 ;
+		var entero a ;
+
+
+		funcion entero getTest2 () {
+			var entero test3 = 0 ;
+
+			regresa test3 ; 
+		};
+	}
+
+};
+
+
+
+funcion bandera getTest3 ( bandera x ) {
+	var entero test3 = 0 ;
+
+	regresa x ; 
+};
+
+
+programa {
+	
+	var entero test = 0;
+
+
+	rect.asignaTest4(test3);
+	rect.asignaY(test3);
+
+	muestraLinea( test2 );
+
+
+
+	lee x;
+
+	
+	muestra (x);
+
+
+	
+
+}
