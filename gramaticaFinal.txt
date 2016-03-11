@@ -1,0 +1,81 @@
+
+
+programa  			::= Librerias Funciones main
+
+Librerias 			::= Libreria*
+
+Libreria  			::= "incluir" "<" NombreLibreria ">"
+
+
+
+Funciones 			::= Funcion*
+
+Funcion  			::= "funcion" Tipo Identificador Params Bloque ";"
+
+
+Tipo				::= "entero" 
+						| "gran entero"
+						| "decimal"
+						| "caracter"
+						| "texto"
+						| "bandera"
+
+
+Variable			::= "var" Tipo(Identificador | Asignacion ) ( "," (Identificador | Asignacion )  )* ";"
+
+
+Params				::=	"(" Tipo Identificador ("," Tipo Identificador )* ")"
+
+
+
+Bloque				::= "{" Estatuto* "}"
+
+
+
+Estatuto			::= Asignacion 
+						| Condicion
+						| Ciclo
+						| Escritura
+						| Lectura
+						| Variable
+
+Asignacion 			::=	Identificador "=" Expresion ";"
+
+Expresion			::=	Exp  ((">" | "<" | "!=") Exp)? 
+
+
+Exp 				::= Termino (("+" | "-") Termino )*
+
+
+Termino				::= Factor (("*" | "/") Factor )*
+
+
+Factor 				::=	"(" Expresion ")"
+						| (("+" | "-"))? VarCte
+
+
+
+VarCte				::=	Identificador
+					|	INT
+					|	FLOAT 
+
+
+Condicion			::= "condicion" "(" Expresion ")" Bloque ("fallo " Bloque)? ";"
+
+
+
+Ciclo				::=	"ciclo" "(" ( Asignacion | ) "," Expresion "," ( Asignacion | ) ")" Bloque ";" 
+					|	"haz" Bloque "mientras" "(" Expresion ")" ";"
+
+
+Escritura			::=	"muestraLinea " "(" ExpresionSalida ")" ";"
+					| 	"muestra" "(" ExpresionSalida ")" ";"
+
+Lectura				::= "lee" VarCte ";"
+
+
+FLOAT 				::= (Digito)+ "." (Digito)+
+INT 				::= (Digito)+
+Letra				::= [a-zA-Z]
+Digito				::=	[0-9]
+Identificador		::= Letra ( Letra | Digito )*
