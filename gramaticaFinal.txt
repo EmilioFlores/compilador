@@ -1,16 +1,29 @@
 
 
-programa  			::= Librerias Funciones main
+programa  			::= Librerias Objetos Funciones Main
 
-Librerias 			::= Libreria*
+Objetos				::= Librerias Objeto
 
-Libreria  			::= "incluir" "<" NombreLibreria ">"
+Objeto 				::= "objeto" Identificador "{" AtributosPrivados AtributosPublicos "}" ";"
+
+AtributosPrivados	::= "privado" "{" Variables Funciones "}"
+					|	
+
+AtributosPublicos	::= "publico" "{" Variables Funciones "}" 
+					|
+
+
+Librerias 			::= Libreria
+
+Libreria  			::= "incluir" "<" Identificador ">" Libreria
+					|
 
 
 
-Funciones 			::= Funcion*
+Funciones 			::= Funcion
 
-Funcion  			::= "funcion" Tipo Identificador Params Bloque ";"
+Funcion  			::= "funcion" Tipo Identificador Params BloqueFuncion ";" Funcion
+					|
 
 
 Tipo				::= "entero" 
@@ -21,58 +34,91 @@ Tipo				::= "entero"
 						| "bandera"
 
 
-Variable			::= "var" Tipo(Identificador | Asignacion ) ( "," (Identificador | Asignacion )  )* ";"
+Params				::=	"(" Param* ")"
+
+Param 				::= Tipo Identificador Param1
+Param1				::= "," Param | 
+
+Args				::= Identificador Args1
+					|
+Args1				::= "," Identificador Args1
+					|  
 
 
-Params				::=	"(" Tipo Identificador ("," Tipo Identificador )* ")"
+
+Bloque				::= "{" Variables Bloque1 "}"
+Bloque1				::=	Estatuto Bloque1 | 
+
+BloqueFuncion				::= "{" Variables BloqueFuncion1 "regresa" Identificador ";" "}"
+BloqueFuncion1				::=	Estatuto BloqueFuncion1 | 
 
 
-
-Bloque				::= "{" Estatuto* "}"
-
-
-
-Estatuto			::= Asignacion 
+Estatuto			::= Asignacion ';'
 						| Condicion
 						| Ciclo
 						| Escritura
 						| Lectura
-						| Variable
+						| Llamada
+
+Llamada				 ::= Identificador Llamada1 '(' Args ')' ';'
+Llamada1			 ::=  ( '.' Identificador ) Llamada1
+						| 
 
 Asignacion 			::=	Identificador "=" Expresion ";"
 
-Expresion			::=	Exp  ((">" | "<" | "!=") Exp)? 
+Expresion			::=	Exp Expresion1
+Expresion1 			::= expresion2 Exp 
+						| 
+Expresion2 			::= ">" | "<" | "!="
 
 
-Exp 				::= Termino (("+" | "-") Termino )*
+Exp 				::= Termino Exp1
+Exp1 				::= ("+" | "-") | 
 
-
-Termino				::= Factor (("*" | "/") Factor )*
-
+Termino				::= Factor Termino1
+Termino1			::= ("*" | "/") Termino | 
 
 Factor 				::=	"(" Expresion ")"
-						| (("+" | "-"))? VarCte
-
+						| Factor1 VarCte
+Factor1 			::= "+" | "-" | 
 
 
 VarCte				::=	Identificador
 					|	INT
 					|	FLOAT 
 
+Variables			::= Variable ";" Variables
+					| 
 
-Condicion			::= "condicion" "(" Expresion ")" Bloque ("fallo " Bloque)? ";"
 
+
+Variable			::= "var" Tipo Identificador  Variable2  
+					|	
+Variable2			::=	"," Identificador  
+					|
+
+
+Condicion			::= "condicion" "(" Expresion ")" Bloque Condicion1 ";"
+Condicion1			::= "fallo " Bloque |
 
 
 Ciclo				::=	"ciclo" "(" ( Asignacion | ) "," Expresion "," ( Asignacion | ) ")" Bloque ";" 
 					|	"haz" Bloque "mientras" "(" Expresion ")" ";"
+// muestra         (“Somos ” +  x +  “personas en la tierra”);
+// muestraLinea (“Somos ” + x + “personas en la tierra”);
 
+Escritura			::=	"muestraLinea " "(" EstatutosSalida ")" ";"
+					| 	"muestra" "(" EstatutosSalida ")" ";"
 
-Escritura			::=	"muestraLinea " "(" ExpresionSalida ")" ";"
-					| 	"muestra" "(" ExpresionSalida ")" ";"
+EstatutosSalida		::= Llamada
+					| Expresion
+					| VarCte
+					|
+
 
 Lectura				::= "lee" VarCte ";"
 
+Main 				::= "programa"  Bloque 
 
 FLOAT 				::= (Digito)+ "." (Digito)+
 INT 				::= (Digito)+

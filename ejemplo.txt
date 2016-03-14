@@ -3,11 +3,11 @@ incluir <hola>
 
 objeto Rectangulo {
 	privado {
-		var entero tfdsfdfs ; 
-		var  entero testing2 ;
+		var entero largo ;  
+		var  entero ancho ;
 
 		funcion entero getTest ( entero uno, entero dos ) {
-			var entero test3 = 4 ; 
+			var entero test3 ; 
 
 
 			regresa test3 ; 
@@ -15,12 +15,12 @@ objeto Rectangulo {
 	}
 
 	publico {
-		var entero testing4 = 4 + 2 ;
+		var entero testing4 ;
 		var entero a ;
 
 
 		funcion entero getTest2 () {
-			var entero test3 = 0 ;
+			var entero test3  ;
 
 			regresa test3 ; 
 		};
@@ -31,7 +31,7 @@ objeto Rectangulo {
 
 
 funcion bandera getTest3 ( bandera x ) {
-	var entero test3 = 0 ;
+	var entero test3  ;
 
 	regresa x ; 
 };
@@ -39,7 +39,7 @@ funcion bandera getTest3 ( bandera x ) {
 
 programa {
 	
-	var entero test = 0;
+	var entero test ;
 
 
 	rect.asignaTest4(test3);

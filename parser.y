@@ -13,6 +13,9 @@ extern int line_num;
 
  
 void yyerror(const char *s);
+
+
+string yyTipo = "";
 %}
 
 // Bison fundamentally works by asking flex to get the next token, which it
@@ -89,6 +92,10 @@ void yyerror(const char *s);
 
 
 
+
+
+
+
 %left INCLUIRSYM 
 
 
@@ -125,7 +132,7 @@ Funcion  			: FUNCIONSYM { cout << "Crear tabla de variables" << endl; } Tipo ID
 
 
 
-Tipo				: ENTEROSYM 
+Tipo				: ENTEROSYM  
 					| DECIMALSYM  
 					| CARACTERSYM  
 					| TEXTOSYM 
@@ -134,24 +141,24 @@ Tipo				: ENTEROSYM
 
 Params				: LPAREN Param RPAREN ;
 
-Param 				: Tipo IDENTIFICADOR { cout << "Identificador param: " << $2 << endl; } Param1 
+Param 				: Tipo IDENTIFICADOR  Param1 
 					| epsilon ;
 Param1				: COMMA Param 
 					| epsilon ;
 
 
-Args				: IDENTIFICADOR { cout << "Identificador args: " << $1 << endl; }  Args1
+Args				: IDENTIFICADOR   Args1
 					| epsilon ;
 Args1				: COMMA IDENTIFICADOR Args1
 					|  epsilon ;
 
 
 
-Bloque				: LCURLY Bloque1 RCURLY ;
+Bloque				: LCURLY Variables Bloque1 RCURLY ;
 Bloque1				:	Estatuto Bloque1 
 					| epsilon ;
 
-BloqueFuncion		: LCURLY BloqueFuncion1 REGRESASYM IDENTIFICADOR SEMICOLON RCURLY
+BloqueFuncion		: LCURLY Variables BloqueFuncion1 REGRESASYM IDENTIFICADOR SEMICOLON RCURLY
 BloqueFuncion1		:	Estatuto BloqueFuncion1 
 					| epsilon ;
 
@@ -161,11 +168,10 @@ Estatuto			: Asignacion SEMICOLON
 					| Ciclo
 					| Escritura
 					| Lectura
-					| Variable SEMICOLON
 					| Llamada ;
 
 
-Llamada				: IDENTIFICADOR { cout << "Identificador llamada: " << $1 << endl; }  Llamada1 LPAREN Args RPAREN SEMICOLON ;
+Llamada				: IDENTIFICADOR  Llamada1 LPAREN Args RPAREN SEMICOLON ;
 Llamada1			: DOT IDENTIFICADOR Llamada1
 					| epsilon ;
 
@@ -208,11 +214,9 @@ Variables			: Variable SEMICOLON Variables
 
 
 
-Variable			: VARSYM  Tipo { cout << " Tipo: " << yytext << endl; }  Variable1   Variable2 ;
-Variable1			: IDENTIFICADOR  { cout << " ID: " << $1 << endl; }
-					| Asignacion ;
-Variable2			: COMMA Variable1 
-					| epsilon ;
+Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {cout << "Variable: " << yyTipo  << ":" <<  $4 << endl; }   ;
+//Variable2			: COMMA IDENTIFICADOR Variable2
+//					| epsilon ;
 
 
 Condicion			: CONDICIONSYM LPAREN Expresion RPAREN Bloque Condicion1 SEMICOLON
