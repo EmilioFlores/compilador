@@ -16,6 +16,7 @@ void yyerror(const char *s);
 
 
 string yyTipo = "";
+string objetoNombre = "default";
 %}
 
 // Bison fundamentally works by asking flex to get the next token, which it
@@ -107,18 +108,17 @@ programa  			: Librerias Objetos Funciones Main ;
 
 Objetos				:  Objeto ;
 
-Objeto 				: OBJETOSYM IDENTIFICADOR LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON ;
+Objeto 				: OBJETOSYM  IDENTIFICADOR { objetoNombre = yytext;} LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON ;
 
-AtributosPrivados	: PRIVADOSYM LCURLY Variables Funciones RCURLY
+AtributosPrivados	: PRIVADOSYM LCURLY VariablesObjetos Funciones RCURLY
 					|  epsilon ;
 
-AtributosPublicos	: PUBLICOSYM LCURLY Variables Funciones RCURLY 
+AtributosPublicos	: PUBLICOSYM LCURLY Variables FuncionesObjetos RCURLY 
 					|  epsilon ;
 
 
 
 Librerias 			: Libreria Libreria1 ;
-
 Libreria  			: INCLUIRSYM LSS IDENTIFICADOR GTR  ;
 Libreria1			: Libreria | ;
 
@@ -126,17 +126,21 @@ Libreria1			: Libreria | ;
 
 
 Funciones 			: Funcion ;
+FuncionesObjetos	: FuncionObjeto ;
 
-Funcion  			: FUNCIONSYM { cout << "Crear tabla de variables" << endl; } Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON Funcion
+Funcion  			: FUNCIONSYM  Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON Funcion
 					| epsilon ;
 
+FuncionObjeto		: FUNCIONSYM { cout << "Insertar metodo publico de " << objetoNombre << endl; } Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON FuncionObjeto
+					| epsilon ;
 
 
 Tipo				: ENTEROSYM  
 					| DECIMALSYM  
 					| CARACTERSYM  
 					| TEXTOSYM 
-					| BANDERASYM ;
+					| BANDERASYM 
+					| IDENTIFICADOR ;
 
 
 Params				: LPAREN Param RPAREN ;
@@ -147,7 +151,8 @@ Param1				: COMMA Param
 					| epsilon ;
 
 
-Args				: IDENTIFICADOR   Args1
+Args				: IDENTIFICADOR 
+  Args1
 					| epsilon ;
 Args1				: COMMA IDENTIFICADOR Args1
 					|  epsilon ;
@@ -177,12 +182,15 @@ Llamada1			: DOT IDENTIFICADOR Llamada1
 
 Asignacion 			: IDENTIFICADOR EQL Expresion  ;
 
+
+
 Expresion			: Exp Expresion1 ;
-Expresion1 			: Expresion2 Exp  ;
+Expresion1 			: Expresion2 Exp 
 					| epsilon ;
 
-Expresion2 			: GRANENTEROSYM 
-					| LEESYM 
+Expresion2 			: LSS 
+					| GTR 
+					| EQL 
 					| NEQ ;
 
 Exp 				: Termino	Exp1 ;
@@ -211,10 +219,13 @@ VarCte				:	IDENTIFICADOR
 
 Variables			: Variable SEMICOLON Variables
 					| epsilon ;
+VariablesObjetos	: VariableObjeto SEMICOLON VariablesObjetos
+					| epsilon ;
 
 
 
-Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {cout << "Variable: " << yyTipo  << ":" <<  $4 << endl; }   ;
+Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   ;
+VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {cout << "Insertar variable privada: " << yyTipo  << ":" <<  $4 << " de objeto " << objetoNombre <<  endl; }   ;
 //Variable2			: COMMA IDENTIFICADOR Variable2
 //					| epsilon ;
 

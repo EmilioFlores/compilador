@@ -3,19 +3,20 @@ incluir <hola>
 
 objeto Rectangulo {
 	privado {
-		var entero largo ;  
-		var  entero ancho ;
+		var entero x;  
+		var entero ancho;
+		var entero largo;
 
-		funcion entero getTest ( entero uno, entero dos ) {
+		funcion entero getTest ( entero largo ) {
 			var entero test3 ; 
-
 
 			regresa test3 ; 
 		};
+
 	}
 
 	publico {
-		var entero testing4 ;
+		var entero y ;
 		var entero a ;
 
 
@@ -30,7 +31,7 @@ objeto Rectangulo {
 
 
 
-funcion bandera getTest3 ( bandera x ) {
+funcion bandera getTest3 ( bandera x, entero y  ) {
 	var entero test3  ;
 
 	regresa x ; 
@@ -40,7 +41,7 @@ funcion bandera getTest3 ( bandera x ) {
 programa {
 	
 	var entero test ;
-
+	var Rectangulo x;
 
 	rect.asignaTest4(test3);
 	rect.asignaY(test3);
@@ -48,6 +49,10 @@ programa {
 	muestraLinea( test2 );
 
 
+
+	condicion ( 1 + 2 > 3) { 
+		test =  2;
+	}
 
 	lee x;
 
