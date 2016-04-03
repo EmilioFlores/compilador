@@ -8,9 +8,9 @@ objeto Rectangulo {
 		var entero largo;
 
 		funcion entero getTest ( entero largo ) {
-			var entero test3 ; 
+			var entero test1 ; 
 
-			regresa test3 ; 
+			regresa test1 ; 
 		};
 
 	}
@@ -21,9 +21,9 @@ objeto Rectangulo {
 
 
 		funcion entero getTest2 () {
-			var entero test3  ;
 
-			regresa test3 ; 
+			var entero test2  ;
+			regresa test2 ; 
 		};
 	}
 
@@ -43,21 +43,26 @@ programa {
 	var entero test ;
 	var Rectangulo x;
 
-	rect.asignaTest4(test3);
-	rect.asignaY(test3);
+	rect.asigna6;
 
-	muestraLinea( test2 );
+	rect.getX();
+
+	random();
+
+	muestraLinea( test5 );
 
 
-
-	condicion ( 1 + 2 > 3) { 
-		test =  2;
-	}
-
-	lee x;
 
 	
-	muestra (x);
+
+	
+	test5 = 5;
+	
+	
+
+
+	
+	
 
 
 	

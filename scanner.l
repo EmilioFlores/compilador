@@ -26,7 +26,8 @@ ID [a-z][a-z0-9]*
 ";"                  			{ return SEMICOLON;  }
 ","                  			{ return COMMA;      }
 "."                  			{ return DOT;      }
-"=="                  			{ return EQL;        }
+"="                  			{ return EQL;        }
+"=="                  			{ return EQLEQL;        }
 "!="                 			{ return NEQ;        }
 ":"                 			{ return COLON;        }
 "<"                  			{ return LSS;        }
