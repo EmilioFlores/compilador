@@ -16,6 +16,8 @@ extern "C" FILE *yyin;
 extern int line_num;
 
  
+const bool debug = false;
+
 struct constante
 {
 	int direccion;
@@ -24,16 +26,44 @@ struct constante
 };
 void yyerror(const char *s);
 void printCuboSemantico();
-void accion_1(string yytext, int tipo);
-void accion_2(string operador);
-void accion_3(string operador);
-void accion_4();
-void accion_5();
-void accion_6(string fondoFalso);
-void accion_7();
-void accion_8(string operador);
-void accion_9();
+void printCuadruplos();
+void rellenar(int fin, int cont);
+
+//Expresiones
+void accion_1_expresiones(string yytext, int tipo);
+void accion_2_expresiones(string operador);
+void accion_3_expresiones(string operador);
+void accion_4_expresiones();
+void accion_5_expresiones();
+void accion_6_expresiones(string fondoFalso);
+void accion_7_expresiones();
+void accion_8_expresiones(string operador);
+void accion_9_expresiones();
+
+//Assignaciones
+void accion_1_assignacion(int dirOperando);
+void accion_2_assignacion(string operador);
+void accion_3_assignacion();
+
+
+//Estatuto CONDICION-FALLO
+void accion_1_condicion_fallo();
+void accion_2_condicion_fallo();
+void accion_3_condicion_fallo();
+
+
+//Estatuto Ciclo
+void accion_1_ciclo();
+void accion_2_ciclo();
+void accion_3_ciclo();
+
+
+//Estatuto Haz-Mientras
+void accion_1_haz_mientras();
+void accion_2_haz_mientras();
+
 int getIndexOperador(string operador);
+int getSiguienteDireccion(string tipo, bool constante);
 
 
 dirProcedimientos dirProcedimientos ;
@@ -71,6 +101,7 @@ int indexTemporalesConstantes = 0;
 stack<int> pilaOperandos;
 stack<string> pilaOperadores;
 stack<int> pilaTipos;
+stack<int> pilaSaltos;
 
 vector<Cuadruplo> cuadruplos; 
 vector<constante> constantes;
@@ -209,7 +240,13 @@ programa  			: Librerias Objetos Funciones Main ;
 
 Objetos				:  Objeto ;
 
-Objeto 				: OBJETOSYM  IDENTIFICADOR { objetoNombre = yytext;} LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON ;
+Objeto 				: OBJETOSYM  IDENTIFICADOR { 
+						objetoNombre = yytext; 
+						dirProcedimientos.crearObjeto(objetoNombre); 
+
+					}  LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON {
+						dirProcedimientos.terminaBloque();
+					} ;
 
 AtributosPrivados	: PRIVADOSYM LCURLY VariablesObjetos Funciones RCURLY
 					|  epsilon ;
@@ -232,7 +269,14 @@ FuncionesObjetos	: FuncionObjeto ;
 Funcion  			: FUNCIONSYM  Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON Funcion
 					| epsilon ;
 
-FuncionObjeto		: FUNCIONSYM  Tipo IDENTIFICADOR ParamsObjeto BloqueFuncion SEMICOLON FuncionObjeto
+FuncionObjeto		: FUNCIONSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {
+						
+						dirProcedimientos.crearMetodo(yyTipo, $4);
+
+					} ParamsObjeto BloqueFuncion SEMICOLON {
+
+					  dirProcedimientos.terminaBloque();
+					} FuncionObjeto
 					| epsilon ;
 
 
@@ -251,7 +295,11 @@ Param 				: Tipo IDENTIFICADOR  Param1
 Param1				: COMMA Param 
 					| epsilon ;
 
-ParamObjeto 		: Tipo IDENTIFICADOR  ParamObjeto1 
+ParamObjeto 		: Tipo { yyTipo = yytext } IDENTIFICADOR {
+
+						dirProcedimientos.agregaParametro(yyTipo, $3, getSiguienteDireccion(yyTipo, 0));
+
+					} ParamObjeto1 
 					| epsilon ;
 ParamObjeto1		: COMMA ParamObjeto 
 					| epsilon ;
@@ -288,39 +336,55 @@ Llamada1			: DOT IDENTIFICADOR Llamada1
 Llamada2			: LPAREN Args RPAREN  
 					| epsilon ;
 
-Asignacion 			: IDENTIFICADOR EQL Expresion  ;
+Asignacion 			: IDENTIFICADOR {
+										int direccionVariable = dirProcedimientos.buscaDireccion($1);
+										accion_1_assignacion(direccionVariable );
+										int variableIndex = dirProcedimientos.buscaVariable($1);
+										if (variableIndex == -1 ) { 
+											cerr << "ERROR: at symbol \"" << yytext;
+											cerr << "\" on line " << line_num << endl;
+											exit(-1);
+										}
+									} 
+						EQL  {
+								accion_2_assignacion("=");
+						}
+						Expresion {
+								accion_3_assignacion();
+								
+						} ;
 
 
 
 Expresion			: Exp Expresion1 ;
-Expresion1 			: Expresion2 Exp { accion_9(); }
+Expresion1 			: Expresion2 Exp { accion_9_expresiones(); }
 					| epsilon ;
 
-Expresion2 			: LSS { accion_8(yytext); }
-					| GTR { accion_8(yytext); }
-					| EQLEQL { accion_8(yytext); }
-					| NEQ { accion_8(yytext); } ;
+Expresion2 			: LSS { accion_8_expresiones(yytext); }
+					| GTR { accion_8_expresiones(yytext); }
+					| EQLEQL { accion_8_expresiones(yytext); }
+					| NEQ { accion_8_expresiones(yytext); } ;
 
-Exp 				: Termino { accion_4(); }	Exp1 ;
+Exp 				: Termino { accion_4_expresiones(); }	Exp1 ;
 Exp1				: PLUS {
-								accion_2(yytext);
+								accion_2_expresiones(yytext);
 								
 						   } Exp 
 					| MINUS {
-								accion_2(yytext);
+								accion_2_expresiones(yytext);
 						   } Exp
 					| epsilon	;
 
-Termino				: Factor { accion_5(); } Termino1	;
+Termino				: Factor { accion_5_expresiones(); } Termino1	;
 Termino1			: TIMES {
-								accion_3(yytext);
+								accion_3_expresiones(yytext);
 						   } Termino
 					| SLASH {
-								accion_3(yytext);
+								accion_3_expresiones(yytext);
 						   } Termino
 					| epsilon	;
 
-Factor				: LPAREN { accion_6("("); } Expresion { accion_7(); }  RPAREN
+Factor				: LPAREN { accion_6_expresiones("("); } Expresion { accion_7_expresiones(); }  RPAREN
 					| Factor1 VarCteExp 
 Factor1 			: PLUS
 					| MINUS
@@ -332,23 +396,23 @@ VarCteExp			:	IDENTIFICADOR {
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
 										// si es 4, entonces es un identificador
 
-										accion_1(yytext, 4);
+										accion_1_expresiones(yytext, 4);
 									 };
 					|	ENTERO { 
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
-										accion_1(yytext, 1);
+										accion_1_expresiones(yytext, 1);
 								};
 					|	BANDERA { 
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
-										accion_1(yytext, 0);
+										accion_1_expresiones(yytext, 0);
 									};
 					|	TEXTO   { 
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
-										accion_1(yytext, 3);
+										accion_1_expresiones(yytext, 3);
 									};
 					|	DECIMAL { 
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
-										accion_1(yytext, 2);
+										accion_1_expresiones(yytext, 2);
 
 								};  
 
@@ -368,23 +432,47 @@ VariablesObjetos	: VariableObjeto SEMICOLON VariablesObjetos
 
 Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR  {  
 									//TODO Hace funcion que me regrese la direccion. 
-									dirProcedimientos.crearVariable(yyTipo, $4, 1, 1000 );  
+									if (debug ) {
+										cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << $4 << endl;
+									}
+									dirProcedimientos.crearVariable(yyTipo, $4, 1, getSiguienteDireccion(yyTipo, 0) );
+
 								   }  ;
 VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   {  
 									//TODO Hace funcion que me regrese la direccion. 
-									dirProcedimientos.crearVariable(yyTipo, $4, 0, 1000 );  
+									if (debug ) {
+										cout << "Crear Objeto Tipo: " << yyTipo << " Nombre: " << $4 << endl;
+									}
+
+									dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(yyTipo, 0) );  
 								   }  ; ;
 //Variable2			: COMMA IDENTIFICADOR Variable2
 //					| epsilon ;
 
 
-Condicion			: CONDICIONSYM LPAREN Expresion RPAREN Bloque Condicion1 
-Condicion1			: FALLOSYM Bloque | epsilon ;
+Condicion			: CONDICIONSYM LPAREN Expresion RPAREN {
+						accion_1_condicion_fallo();
+					} Bloque Condicion1 
+Condicion1			: FALLOSYM {
+						accion_2_condicion_fallo();
+					} Bloque {
+						accion_3_condicion_fallo();
+					} | epsilon ;
 
 
 
-Ciclo				: CICLOSYM LPAREN Ciclo1 COMMA Expresion COMMA Ciclo1 RPAREN Bloque  ; 
-					| HAZSYM Bloque MIENTRASSYM LPAREN Expresion RPAREN SEMICOLON ;
+Ciclo				: CICLOSYM {
+							accion_1_ciclo();
+					} LPAREN Ciclo1 COMMA Expresion {
+							accion_2_ciclo();
+					} COMMA Ciclo1 RPAREN Bloque {
+							accion_3_ciclo();
+					}  ; 
+					| HAZSYM {
+						accion_1_haz_mientras();
+					} Bloque MIENTRASSYM LPAREN Expresion RPAREN {
+						accion_2_haz_mientras();
+					} SEMICOLON ;
 Ciclo1 				: Asignacion 
 					| epsilon ;
 
@@ -398,7 +486,7 @@ EstatutosSalida		: Llamada
 
 Lectura				: LEESYM VarCte SEMICOLON ;
 
-Main 				: PROGRAMASYM Bloque 
+Main 				: PROGRAMASYM Bloque { printCuadruplos(); }
 
 epsilon				:	;
 
@@ -439,68 +527,71 @@ void yyerror(const char *s) {
 	exit(-1);
 }
 
-void accion_1(string yytext, int tipo){
-	cout << "accion_1 Empieza >>> " << yytext <<  " <<< " <<  endl;
+void accion_1_expresiones(string yytext, int tipo){
+	if (debug ) {
+		cout << "accion_1_expresiones Empieza " << line_num <<   endl;
+	}
 	// Si no era una variable registrada y es constante
 	if ( tipo != 4 ) {
 		// crea variable constante en el scope
-		cout << "accion_1 If antes >>> " << yytext <<  " <<< " <<  endl;
+
 		constante constante; 
-		
-		cout << "accion_1 If despues >>> " << yytext <<  " <<< " <<  endl;
+
 		switch (tipo) {
 			case 0: // bandera
 
-				constante.direccion = offsetBanderaConstante + idnexBanderaConstantes++;
-				constante.tipo = tipo;
+				constante.direccion = getSiguienteDireccion("bandera", 1);
+				constante.tipo = 0;
 				constante.valor = yytext;
 
 			break;
 			case 1: // entero
-				constante.direccion = offsetEnteroConstante + indexEnteroConstantes++;
-				constante.tipo = tipo;
+				constante.direccion = getSiguienteDireccion("entero", 1);
+				constante.tipo = 1;
 				constante.valor = yytext;
 			break;
 			case 2: // decimal
-				constante.direccion = offsetDecimalConstante + indexDecimalConstantes++;
-				constante.tipo = tipo;
+				constante.direccion = getSiguienteDireccion("decimal", 1);
+				constante.tipo = 2;
 				constante.valor = yytext;
 
 			break;
 			case 3: // texto
-				constante.direccion = offsetTextoConstante + indexTextoConstantes++;
-				constante.tipo = tipo;
+				constante.direccion = getSiguienteDireccion("texto", 1);
+				constante.tipo = 3;
 				constante.valor = yytext;
 
 			break;
 		}
 		
 
-		cout << "accion_1 If  switch 1 >>> " << yytext <<  " <<< " <<  endl;
 		constantes.push_back(constante);			
-		cout << "accion_1 If  switch 2 >>> " << yytext <<  " <<< " <<  endl;
 		pilaOperandos.push(constante.direccion);
-		cout << "accion_1 If  switch 3 >>> " << yytext <<  " <<< " <<  endl;
 		pilaTipos.push(constante.tipo);
-		cout << "accion_1 If  switch 4 >>> " << yytext <<  " <<< " <<  endl;
+		
 		
 		
 	}
 	else {
 
-		cout << "accion_1 Else >>> " << yytext <<  " <<< " <<  endl;
 		// la variable ya estaba registrada
 		int direccionVariable = dirProcedimientos.buscaDireccion(yytext);
+		if (debug ) {
+
+		cout << "accion_1_expresiones Else >>> " << yytext <<  " <<< " <<  endl;
+		cout << "direccionVariable " << direccionVariable << endl;
+		}
 		if (direccionVariable != -1 ) {
 
 			
-			int tipoVariable = dirProcedimientos.buscaTipo(yytext);
+			int tipoVariable = dirProcedimientos.checaTipo(yytext);
+
 
 			//0 bandera, 1 entero, 2 decimal, 3 texto
 			if (tipoVariable < 4) {
 
 				pilaOperandos.push(direccionVariable);
-				pilaTipos.push(tipo);
+				pilaTipos.push(tipoVariable);
 
 			}
 			else  {
@@ -513,26 +604,37 @@ void accion_1(string yytext, int tipo){
 			exit(0);
 		}
 	}
-	cout << "accion_1 Termina >>> " << yytext <<  " <<< " <<  endl;
+	if (debug ) {
+		cout << "accion_1_expresiones Termina  " << line_num <<  endl;
+	}
+
 }
 
-void accion_2(string operador){
-	cout << "accion_2 Empieza operador >>> " << operador <<  " <<< " <<  endl;
+void accion_2_expresiones(string operador){
+	if (debug ) { 
+		cout << "accion_2_expresiones Empieza  " <<  line_num <<  endl;
+	}
 	pilaOperadores.push(operador);
-	cout << "accion_2 Termina operador >>> " << operador <<  " <<< " <<  endl;
+	if (debug ) {
+		cout << "accion_2_expresiones Termina  " <<  line_num <<  endl;
+	}
 }
 
-void accion_3(string operador){
-	
-	cout << "accion_3 Empieza operador >>> " << operador <<  " <<< " <<  endl;
+void accion_3_expresiones(string operador){
+	if (debug ) {
+		cout << "accion_3_expresiones Empieza  " <<  line_num <<  endl;
+	}
 	pilaOperadores.push(operador);
-	cout << "accion_3 Termina operador >>> " << operador <<  " <<< " <<  endl;
+	if (debug ) {
+		cout << "accion_3_expresiones Termina  " << line_num  << endl;
+	}
 }
 
-void accion_4() {
+void accion_4_expresiones() {
 	// Si top de pOperadores = + or -
-
-	cout << "accion_4 Empieza  >>>  <<< " <<  endl;
+	if (debug ) {
+		cout << "accion_4_expresiones Empieza   " << line_num <<  endl;
+	}
 	if ( pilaOperadores.size() != 0 ) {
 
 		if ( pilaOperadores.top() == "+" || pilaOperadores.top() == "-") {
@@ -550,6 +652,9 @@ void accion_4() {
 			pilaOperadores.pop();
 
 			tipoOperador  = getIndexOperador(operador);
+
+
+
 			tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
 
 			if (tipoResultado != -1 ) {
@@ -564,8 +669,7 @@ void accion_4() {
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = indexTemporales++;
-				
+				int resultado = getSiguienteDireccion("temporal",0);
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, izq, der, resultado);
 				cuadruplos.push_back( cuadruploTemp );
 
@@ -580,16 +684,22 @@ void accion_4() {
 
 		}
 	}
+	if (debug ) {
+		cout << "accion_4_expresiones Termina   " << line_num <<  endl;
+	}
 }
 
 
-void accion_5() {
+void accion_5_expresiones() {
 	// Si top de pOperadores = * or /
-	cout << "accion_5 Empieza  >>> "<< pilaOperadores.size() <<  " <<< " <<  endl;
+	if (debug ) {
+		cout << "accion_5_expresiones Empieza  " << line_num <<  endl;
+	}
 	if ( pilaOperadores.size() != 0 ) {
 		if ( pilaOperadores.top() == "/" || pilaOperadores.top() == "*") {
-
-			cout << "accion_5 If 1  >>>  <<< " <<  endl;
+			if (debug ) { 
+				cout << "accion_5_expresiones If 1  >>>  <<< " <<  endl;
+			}
 			int tipoDer = -1, tipoIzq = -1;
 			int tipoResultado = -1, tipoOperador;
 			tipoDer = pilaTipos.top();
@@ -597,17 +707,24 @@ void accion_5() {
 
 			tipoIzq = pilaTipos.top();
 			pilaTipos.pop();
+			if (debug ) {
 
-			cout << "accion_5 If 2  >>>  <<< " <<  endl;
+				cout << "accion_5_expresiones If 2   " << line_num <<   endl;
+			}
 			//Checa si son permitidas las operaciones
 			string operador = pilaOperadores.top();
 			pilaOperadores.pop();
-
-			cout << "accion_5 If 3  >>>  <<< " <<  endl;
+			if (debug ) {
+				cout << "accion_5_expresiones If 3  >>>   " << line_num << endl;
+			}
 			tipoOperador  = getIndexOperador(operador);
-			cout << "accion_5 If 4  >>>  <<< " <<  endl;
+			if (debug ) {
+				cout << "accion_5_expresiones If 4  >>>   " << line_num <<  endl;
+			}
 			tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
-			cout << "accion_5 If 5  >>>  <<< " <<  endl;
+			if (debug ) {
+				cout << "accion_5_expresiones If 5  >>>   " << line_num <<  endl;
+			}
 
 			if (tipoResultado != -1 ) {
 
@@ -621,7 +738,7 @@ void accion_5() {
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = indexTemporales++;
+				int resultado = getSiguienteDireccion("temporal", 0);
 				
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, izq, der, resultado);
 				cuadruplos.push_back( cuadruploTemp );
@@ -637,26 +754,44 @@ void accion_5() {
 
 		}
 	}
+	if (debug ) {
+		cout << "accion_5_expresiones Termina  " << line_num <<  endl;
+	}
 }
 
-void accion_6(string fondoFalso){
-	cout << "accion_6 Empieza  >>>  <<< " <<  endl;
+void accion_6_expresiones(string fondoFalso){
+	if (debug ) {
+		cout << "accion_6_expresiones Empieza  " <<  line_num <<  endl;
+	}
 	pilaOperadores.push(fondoFalso);
+	if (debug ) {
+		cout << "accion_6_expresiones Termina  " <<  line_num <<  endl;
+	}
 }
-void accion_7(){
-	
-	cout << "accion_7 Empieza  >>>  <<< " <<  endl;
+void accion_7_expresiones(){
+	if (debug ) {
+		cout << "accion_7_expresiones Empieza   " << line_num << endl;
+	}
 	pilaOperadores.pop();
-
+	if (debug ) {
+		cout << "accion_7_expresiones Termina   " << line_num << endl;
+	}
 }
-void accion_8(string operador){
-	cout << "accion_8 Empieza  >>>  <<< " <<  endl;
+void accion_8_expresiones(string operador){
+	if (debug ) {
+		cout << "accion_8_expresiones Empieza  " <<  line_num << endl;
+	}
 	
 	pilaOperadores.push(operador);
+	if (debug ) {
+		cout << "accion_8_expresiones Termina  " <<  line_num << endl;
+	}
 }
 
-void accion_9(){
-	cout << "accion_9 Empieza  >>>  <<< " <<  endl;
+void accion_9_expresiones(){
+	if (debug ) {
+		cout << "accion_9_expresiones Empieza   " << line_num  << endl;
+	}
 	
 	// Si top de pOperadores = > or < 
 	if ( pilaOperadores.size() != 0 ) {
@@ -689,7 +824,7 @@ void accion_9(){
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = indexTemporales++;
+				int resultado = getSiguienteDireccion("temporal", 0);
 				
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, izq, der, resultado);
 				cuadruplos.push_back( cuadruploTemp );
@@ -705,7 +840,256 @@ void accion_9(){
 
 		}
 	}
+	if (debug ) {
+		cout << "accion_9_expresiones Termina   " << line_num <<  endl;
+	}
 }
+
+
+void accion_1_assignacion(int dirOperando){
+	//Meter id en PilaO
+	if (debug ) {
+		cout << "accion_1_assignacion Empieza" <<  endl;
+	}
+	pilaOperandos.push(dirOperando);
+	if (debug ) {
+		cout << "accion_1_assignacion Termina" <<  endl;
+	}
+}
+
+void accion_2_assignacion(string operador){
+	//Meter = en pilaOperadores
+	if (debug ) {
+		cout << "accion_2_assignacion Empieza" <<  endl;
+	}
+	pilaOperadores.push(operador);
+	if (debug ) {
+		cout << "accion_2_assignacion Termina" <<  endl;
+	}
+}
+void accion_3_assignacion( ){
+	// sacar der de pilaO
+	// sacar izq de pilaO
+	// asigna = pOperadores.pop()
+	// genera
+	//		asigna, der, , izq
+	if (debug ) {
+		cout << "accion_3_assignacion Empieza" <<  endl;
+	}
+
+
+	
+	int der = pilaOperandos.top();
+	pilaOperandos.pop();
+
+	int izq = pilaOperandos.top();
+	pilaOperandos.pop();
+
+	string asigna = pilaOperadores.top();
+	pilaOperadores.pop();
+
+	Cuadruplo cuadruploTemp = Cuadruplo(asigna, der, 0 , izq);
+	cuadruplos.push_back( cuadruploTemp );
+
+	if (debug ) {
+		cout << "accion_3_assignacion Termina" <<  endl;
+	}
+
+
+}
+
+void accion_1_condicion_fallo() {
+	// aux = pop PTipos
+	// si aux diferente de boleano, entonces error semantico
+	// sino 
+	//		sacar resultado de pilaO
+	//		Generar gotoF, resultado, , ___
+	//		PUSH PSaltos(cont-1)
+
+	if ( debug ) {
+		cout << "accion_1_condicion_fallo Empieza" << endl;
+	}
+	int aux = pilaTipos.top();
+	pilaTipos.pop();
+
+	if ( aux != 0 ) {
+		cerr << "SEMANTIC ERROR: on line " << line_num << endl;
+		exit(-1);
+	}
+
+	else {
+		int resultado = pilaOperandos.top();
+		pilaOperandos.pop();
+	
+		Cuadruplo cuadruploTemp = Cuadruplo("gotoF", resultado, 0 , -1);
+		cuadruplos.push_back( cuadruploTemp );
+		
+		pilaSaltos.push( cuadruplos.size() -1 );
+
+	}
+	if ( debug ) {
+		cout << "accion_1_condicion_fallo Termina" << endl;
+	}
+}
+
+void accion_2_condicion_fallo(){
+	// Genrar goto ____
+	// Sacar falso de PSaltos
+	//rellenar(falso,cont)
+	//PUSH PSaltos (cont-1)
+	if ( debug ) {
+		cout << "accion_2_condicion_fallo Empieza" << endl;
+	}
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", 0, 0 , -1);
+	cuadruplos.push_back( cuadruploTemp );	
+
+	int falso = pilaSaltos.top();
+	pilaSaltos.pop();
+	
+	rellenar(falso, cuadruplos.size()  );
+	
+	pilaSaltos.push( cuadruplos.size() -1 );
+
+	if ( debug ) {
+		cout << "accion_2_condicion_fallo Termina" << endl;
+	}
+}
+
+void accion_3_condicion_fallo() {
+	//Sacar fin de PSaltos
+	//rellenar (fin, cont);
+	if (debug ) {
+		cout << "acciopn_3_condicion_fallo Empieza   " << line_num <<  endl;
+	}
+	int fin = pilaSaltos.top();
+	pilaSaltos.pop();
+
+	rellenar(fin, cuadruplos.size()  );
+
+	if (debug ) {
+		cout << "acciopn_3_condicion_fallo Termina   " << line_num <<  endl;
+	}
+
+}
+
+void accion_1_ciclo() {
+	// meter cont en PSaltos
+	
+
+	if ( debug ) {
+		cout << "accion_1_ciclo Empieza" << endl;
+	}
+
+	pilaSaltos.push( cuadruplos.size() );
+
+	if ( debug ) {
+		cout << "accion_1_ciclo Termina" << endl;
+	}
+}
+
+void accion_2_ciclo() {
+	// sacar aux de ptipos
+	/// si aux diferente booleano, generar error semantico
+	// sino
+	//		sacar resultado de pilaO
+	//		generar gotofalso, , ,resultado
+	//		PUSH PSaltos (cont-1)
+	
+
+	if ( debug ) {
+		cout << "accion_2_ciclo Empieza" << endl;
+	}
+	
+	int aux = pilaTipos.top();
+	pilaTipos.pop();
+
+	if ( aux != 0 ) {
+		cerr << "SEMANTIC ERROR: on line " << line_num << endl;
+		exit(-1);
+	} else {
+		int resultado = pilaOperandos.top();
+		pilaOperandos.pop();
+	
+		Cuadruplo cuadruploTemp = Cuadruplo("gotoF", resultado, 0 , -1);
+		cuadruplos.push_back( cuadruploTemp );
+		
+		pilaSaltos.push( cuadruplos.size() -1 );
+
+	}
+
+	if ( debug ) {
+		cout << "accion_2_ciclo Termina" << endl;
+	}
+}
+
+void accion_3_ciclo() {
+	// sacar falso de pSaltos, sacar retorno de pSaltos
+	// generar goto retorno
+	// rellenar(salso, cont)
+	
+
+	if ( debug ) {
+		cout << "accion_3_ciclo Empieza" << endl;
+	}
+	
+	
+	int falso = pilaSaltos.top();
+	pilaSaltos.pop();
+
+	int retorno = pilaSaltos.top();
+	pilaSaltos.pop();
+	
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", 0, 0 , retorno);
+	cuadruplos.push_back( cuadruploTemp );
+
+	rellenar(falso, cuadruplos.size()  );
+
+
+	if ( debug ) {
+		cout << "accion_3_ciclo Termina" << endl;
+	}
+}
+
+void accion_1_haz_mientras() {
+	// meter cont en PSaltos
+	
+
+	if ( debug ) {
+		cout << "accion_1_haz_mientras Empieza" << endl;
+	}
+
+	pilaSaltos.push( cuadruplos.size() );
+
+	if ( debug ) {
+		cout << "accion_1_haz_mientras Termina" << endl;
+	}
+}
+
+void accion_2_haz_mientras() {
+	// sacar resultado de pSaltos, sacar retorno de pSaltos
+	// generar gotofalso resultado retorno
+	
+
+	if ( debug ) {
+		cout << "accion_2_haz_mientras Empieza" << endl;
+	}
+
+	int resultado = pilaOperandos.top();
+	pilaOperandos.pop();
+
+	int retorno = pilaSaltos.top();
+	pilaSaltos.pop();
+	
+
+	Cuadruplo cuadruploTemp = Cuadruplo("gotoF", resultado, 0 , retorno);
+	cuadruplos.push_back( cuadruploTemp );
+
+
+	if ( debug ) {
+		cout << "accion_2_haz_mientras Termina" << endl;
+	}
+}
+
 
 void printCuboSemantico() {
 	
@@ -752,5 +1136,63 @@ int getIndexOperador(string operador) {
 	else if ( operador == "&&")
 			return 12;	
 	else return -1;
+
+}
+
+int getSiguienteDireccion(string tipo, bool constante) {
+
+
+	if ( !constante ) {
+
+		if (tipo == "entero") {
+			return offsetEntero + indexEnteros++;
+
+		} else if ( tipo == "decimal") {
+			return offsetDecimal + indexDecimal++;
+
+		} else if ( tipo == "texto") {
+			return offsetTexto + indexTexto++;
+
+		} else if ( tipo == "bandera") {
+			return offsetBandera + idnexBandera++;
+			
+		} else if ( tipo == "temporal") {
+			return offsetTemporales + indexTemporales++;
+
+		}
+	}
+	else {
+		if (tipo == "entero") {
+			return offsetEnteroConstante + indexEnteroConstantes++;
+
+		} else if ( tipo == "decimal") {
+			return offsetDecimalConstante + indexDecimalConstantes++;
+
+		} else if ( tipo == "texto") {
+			return offsetTextoConstante + indexTextoConstantes++;
+
+		} else if ( tipo == "bandera") {
+			return offsetBanderaConstante + idnexBanderaConstantes++;
+			
+		} else if ( tipo == "temporal") {
+			return offsetTemporalesConstante + indexTemporalesConstantes++;
+
+		}	
+	}
+	return 0;
+
+}
+
+void printCuadruplos() { 
+	for (int i = 0; i < cuadruplos.size(); i++ ) {
+
+		cout << i << " \t \t" << cuadruplos[i].getOp() << ", \t\t" << cuadruplos[i].getIzq() << ", \t\t" << cuadruplos[i].getDer() << ", \t\t" << cuadruplos[i].getRes() << endl ;
+	}
+}
+
+void rellenar(int fin, int cont) {
+
+	
+	cuadruplos[fin].setRes(cont);
 
 }

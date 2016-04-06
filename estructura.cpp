@@ -152,6 +152,13 @@ public:
         return -1;
     }
     
+    int checaTipo(string id){
+        int iV = buscaVariable(id);
+        if (iV==-1)
+            return -1;
+        return vVariables[iV].tipo;
+    }
+    
     //crearVariable es para checar si puede crear una variable. ej: entero x; o 'Objeto' y; donde Objeto es un tipo previamente definido
     //esta funcion tambien sirve para decir si una variable es publica a un objeto, con el bool privacidad
     bool crearVariable(string tipo, string id, bool privacidad,int direccion){
@@ -172,6 +179,7 @@ public:
             v.estructura=2;
             v.bloque=bloqueTipo[v.tipo-5];
         }
+        v.direccion = direccion;
         v.privacidad=privacidad;
         vVariables.push_back(v);
         if (privacidad){//esto para agregar las variables publicas de un objeto
@@ -196,6 +204,7 @@ public:
         cout << "No se encontro la variable "<< id << endl;
         return -1;
     }
+    
     
     bool checaCompletezPred(bool metodo){
         if (vVariables[ultVariabe].estructura==1)//checa si la variable es un metodo, si no no
@@ -287,6 +296,7 @@ public:
         if (iVar==-1){
             return -1;
         }
+
         return vVariables[iVar].direccion;
     }
     bool agregaParametro (string tipo, string id, int direccion){
