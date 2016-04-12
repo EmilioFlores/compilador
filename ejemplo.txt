@@ -50,27 +50,7 @@ programa {
 
 	random();
 
-	muestraLinea( test5 );
-
-
-	 condicion ( band ) {
-	 	test5 = 4;
-	 }
-	 fallo {
-	 	test5 = 7;
-	 }
 	
-	test5 = 5 + test5 * 6;
-	
-	
-	ciclo (test5 = 4, band == band, test5 = 3 + 2) {
-		test5 = 10;
-	}
-
-
-	haz {
-		test5=test5*4;
-	} mientras (test5 > 0 );
 	
 
 

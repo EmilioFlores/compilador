@@ -5,7 +5,9 @@
 #include "cuadruplo.cpp"
 #include "estructura.cpp"
 #include <stack>
+#include <string>     // std::string, std::to_string
 #include <vector>
+#include <sstream>
 using namespace std;
 
 // stuff from flex that bison needs to know about:
@@ -62,8 +64,27 @@ void accion_3_ciclo();
 void accion_1_haz_mientras();
 void accion_2_haz_mientras();
 
+//Definicion de un procedimiento
+void accion_1_definicion_proc(string tipo, string nombre);
+void accion_2_definicion_proc(string tipo, string nombre, int direccion);
+void accion_3_definicion_proc();
+void accion_4_definicion_proc();
+void accion_5_definicion_proc();
+void accion_6_definicion_proc();
+void accion_7_definicion_proc();
+
+// Llamada un procedimiento
+void accion_1_llamada_proc(string objetoNombre, string metodoNombre);
+void accion_2_llamada_proc();
+void accion_3_llamada_proc();
+void accion_4_llamada_proc();
+void accion_5_llamada_proc();
+void accion_6_llamada_proc(string nombreProc);
+
+
 int getIndexOperador(string operador);
 int getSiguienteDireccion(string tipo, bool constante);
+template <typename T> string to_string(T value);
 
 
 dirProcedimientos dirProcedimientos ;
@@ -97,6 +118,7 @@ int idnexBanderaConstantes    = 0;
 int indexTextoConstantes      = 0;
 int indexTemporalesConstantes = 0;
 
+int indexParametro = 0;
 
 stack<int> pilaOperandos;
 stack<string> pilaOperadores;
@@ -105,8 +127,6 @@ stack<int> pilaSaltos;
 
 vector<Cuadruplo> cuadruplos; 
 vector<constante> constantes;
-
-
 
 int cuboSemantico[4][4][13] = 	{
 								  	{  // bandera 0
@@ -271,7 +291,9 @@ Funcion  			: FUNCIONSYM  Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON Func
 
 FuncionObjeto		: FUNCIONSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {
 						
-						dirProcedimientos.crearMetodo(yyTipo, $4);
+						//dirProcedimientos.crearMetodo(yyTipo, $4);
+						accion_1_definicion_proc(yyTipo, $4);
+
 
 					} ParamsObjeto BloqueFuncion SEMICOLON {
 
@@ -296,8 +318,9 @@ Param1				: COMMA Param
 					| epsilon ;
 
 ParamObjeto 		: Tipo { yyTipo = yytext } IDENTIFICADOR {
-
-						dirProcedimientos.agregaParametro(yyTipo, $3, getSiguienteDireccion(yyTipo, 0));
+						int direccion_virtual = getSiguienteDireccion(yyTipo, 0);
+						accion_2_definicion_proc(yyTipo, $3, direccion_virtual);
+						// dirProcedimientos.agregaParametro(yyTipo, $3, direccion_virtual);
 
 					} ParamObjeto1 
 					| epsilon ;
@@ -330,10 +353,21 @@ Estatuto			: Asignacion SEMICOLON
 					| Llamada ;
 
 
-Llamada				: IDENTIFICADOR   Llamada1 Llamada2  SEMICOLON ;
-Llamada1			: DOT IDENTIFICADOR Llamada1
+Llamada				: IDENTIFICADOR {
+					   cout << "llamada a procedimiento: " << $1 <<  endl;
+					   objetoNombre = $1;
+
+
+					}  Llamada1 Llamada2  SEMICOLON ;
+Llamada1			: DOT IDENTIFICADOR {
+						string metodoNombre = $2;
+
+						accion_1_llamada_proc(objetoNombre, metodoNombre);
+					} Llamada1
 					| epsilon ;
-Llamada2			: LPAREN Args RPAREN  
+Llamada2			: LPAREN {
+						accion_2_llamada_proc();
+					} Args RPAREN  
 					| epsilon ;
 
 Asignacion 			: IDENTIFICADOR {
@@ -670,7 +704,7 @@ void accion_4_expresiones() {
 
 				// Aumenta los temporales en 1
 				int resultado = getSiguienteDireccion("temporal",0);
-				Cuadruplo cuadruploTemp = Cuadruplo(operador, izq, der, resultado);
+				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
 
 				pilaOperandos.push(resultado);
@@ -740,7 +774,7 @@ void accion_5_expresiones() {
 				// Aumenta los temporales en 1
 				int resultado = getSiguienteDireccion("temporal", 0);
 				
-				Cuadruplo cuadruploTemp = Cuadruplo(operador, izq, der, resultado);
+				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
 
 				pilaOperandos.push(resultado);
@@ -826,7 +860,7 @@ void accion_9_expresiones(){
 				// Aumenta los temporales en 1
 				int resultado = getSiguienteDireccion("temporal", 0);
 				
-				Cuadruplo cuadruploTemp = Cuadruplo(operador, izq, der, resultado);
+				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
 
 				pilaOperandos.push(resultado);
@@ -888,7 +922,7 @@ void accion_3_assignacion( ){
 	string asigna = pilaOperadores.top();
 	pilaOperadores.pop();
 
-	Cuadruplo cuadruploTemp = Cuadruplo(asigna, der, 0 , izq);
+	Cuadruplo cuadruploTemp = Cuadruplo(asigna, to_string(der), "", to_string(izq));
 	cuadruplos.push_back( cuadruploTemp );
 
 	if (debug ) {
@@ -921,7 +955,7 @@ void accion_1_condicion_fallo() {
 		int resultado = pilaOperandos.top();
 		pilaOperandos.pop();
 	
-		Cuadruplo cuadruploTemp = Cuadruplo("gotoF", resultado, 0 , -1);
+		Cuadruplo cuadruploTemp = Cuadruplo("gotoF", to_string(resultado), "" , to_string(-1));
 		cuadruplos.push_back( cuadruploTemp );
 		
 		pilaSaltos.push( cuadruplos.size() -1 );
@@ -940,7 +974,7 @@ void accion_2_condicion_fallo(){
 	if ( debug ) {
 		cout << "accion_2_condicion_fallo Empieza" << endl;
 	}
-	Cuadruplo cuadruploTemp = Cuadruplo("goto", 0, 0 , -1);
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(-1));
 	cuadruplos.push_back( cuadruploTemp );	
 
 	int falso = pilaSaltos.top();
@@ -1010,7 +1044,7 @@ void accion_2_ciclo() {
 		int resultado = pilaOperandos.top();
 		pilaOperandos.pop();
 	
-		Cuadruplo cuadruploTemp = Cuadruplo("gotoF", resultado, 0 , -1);
+		Cuadruplo cuadruploTemp = Cuadruplo("gotoF", to_string(resultado), "" , to_string(-1));
 		cuadruplos.push_back( cuadruploTemp );
 		
 		pilaSaltos.push( cuadruplos.size() -1 );
@@ -1039,7 +1073,7 @@ void accion_3_ciclo() {
 	int retorno = pilaSaltos.top();
 	pilaSaltos.pop();
 	
-	Cuadruplo cuadruploTemp = Cuadruplo("goto", 0, 0 , retorno);
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(retorno));
 	cuadruplos.push_back( cuadruploTemp );
 
 	rellenar(falso, cuadruplos.size()  );
@@ -1081,7 +1115,7 @@ void accion_2_haz_mientras() {
 	pilaSaltos.pop();
 	
 
-	Cuadruplo cuadruploTemp = Cuadruplo("gotoF", resultado, 0 , retorno);
+	Cuadruplo cuadruploTemp = Cuadruplo("gotoF", to_string(resultado), "", to_string(retorno));
 	cuadruplos.push_back( cuadruploTemp );
 
 
@@ -1089,6 +1123,225 @@ void accion_2_haz_mientras() {
 		cout << "accion_2_haz_mientras Termina" << endl;
 	}
 }
+
+
+void accion_1_definicion_proc(string tipo, string nombre) {
+	// Dar de alta el nombre del procedimiento en el Dir de Procs
+	// Verificar la semantica
+	
+
+	if ( debug ) {
+		cout << "accion_1_definicion_proc Empieza" << endl;
+	}
+	dirProcedimientos.crearMetodo(tipo, nombre);
+
+	if ( debug ) {
+		cout << "accion_1_definicion_proc Termina" << endl;
+	}
+}
+
+void accion_2_definicion_proc(string tipo, string nombre, int direccion) {
+	// Ligar cada parametro a la tabla de parametros del dir de procs
+	
+	
+
+	if ( debug ) {
+		cout << "accion_2_definicion_proc Empieza" << endl;
+	}
+
+	dirProcedimientos.agregaParametro(tipo, nombre, direccion);
+
+	if ( debug ) {
+		cout << "accion_2_definicion_proc Termina" << endl;
+	}
+}
+
+
+void accion_3_definicion_proc() {
+	// Dar de alta el tipo de los parametros
+	// Esto se hace en la accion_2_definicion_proc
+	
+	if ( debug ) {
+		cout << "accion_3_definicion_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_3_definicion_proc Termina" << endl;
+	}
+}
+
+
+void accion_4_definicion_proc() {
+	// Dar de alta en el Dir de  Procs el numero de parametros detectados
+	// Esto lo conseguimos con el vector de parametros, haciendo un .size(); 
+
+	if ( debug ) {
+		cout << "accion_4_definicion_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_4_definicion_proc Termina" << endl;
+	}
+}
+
+
+void accion_5_definicion_proc() {
+	// Dar de alta en el Dir de Procs el numero de variables locales definidas	
+	// Esto lo conseguimos con el vector de variables haciendo un .size();
+	
+
+	if ( debug ) {
+		cout << "accion_5_definicion_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_5_definicion_proc Termina" << endl;
+	}
+}
+
+
+void accion_6_definicion_proc() {
+	// Dar de alta en el dir de procs el numero de cuadruplo en el que inicia el proc.
+	
+	
+
+	if ( debug ) {
+		cout << "accion_6_definicion_proc Empieza" << endl;
+	}
+
+
+
+	if ( debug ) {
+		cout << "accion_6_definicion_proc Termina" << endl;
+	}
+}
+
+
+void accion_7_definicion_proc() {
+	// Liberar la tabla de variables locales del procedimiento
+	// Generar una accion de RETORNO
+	
+	
+
+	if ( debug ) {
+		cout << "accion_7_definicion_proc Empieza" << endl;
+	}
+
+	Cuadruplo cuadruploTemp = Cuadruplo("retorno", "", "" , "");
+	cuadruplos.push_back( cuadruploTemp );	
+
+	if ( debug ) {
+		cout << "accion_7_definicion_proc Termina" << endl;
+	}
+}
+
+
+void accion_1_llamada_proc(string objetoNombre, string metodoNombre) {
+	// Verificar que el procedimiento exista como tal en el Dir. de procs
+	
+	
+
+	if ( debug ) {
+		cout << "accion_1_llamada_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_1_llamada_proc Termina" << endl;
+	}
+}
+
+void accion_2_llamada_proc() {
+	// Generar accipon: Era tamaño (expansion del reagistro de activacion, de acuerdo a tamaño definido )
+	// inicializar contador de parametros k = 1;
+
+	
+	
+
+	if ( debug ) {
+		cout << "accion_2_llamada_proc Empieza" << endl;
+	}
+	indexParametro = 0;
+
+
+
+	if ( debug ) {
+		cout << "accion_2_llamada_proc Termina" << endl;
+	}
+}
+
+void accion_3_llamada_proc() {
+	// Argumento ? pop de pilaOperandos, tipoArg = pop.Pilatipos
+	// Verificar tipo de argumento contra el parametro k 
+	// Generar PARAMETRO, Argumento, parametro k 
+
+
+	
+	
+
+	if ( debug ) {
+		cout << "accion_3_llamada_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_3_llamada_proc Termina" << endl;
+	}
+}
+
+void accion_4_llamada_proc() {
+	// K = K + 1, apuntar al siguiente parametro
+	
+	
+
+	if ( debug ) {
+		cout << "accion_4_llamada_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_4_llamada_proc Termina" << endl;
+	}
+}
+
+void accion_5_llamada_proc() {
+	// Verificar que el ultimo parametro apunte a nulo ( en nuestro caso checar el size del vector de params contra k );
+
+	
+	
+
+	if ( debug ) {
+		cout << "accion_5_llamada_proc Empieza" << endl;
+	}
+
+
+	if ( debug ) {
+		cout << "accion_5_llamada_proc Termina" << endl;
+	}
+}
+
+void accion_6_llamada_proc(string nombreProc) {
+	// Generar GOSUB , nombre proc, dir de inicio
+	
+	
+
+	if ( debug ) {
+		cout << "accion_6_llamada_proc Empieza" << endl;
+	}
+
+	Cuadruplo cuadruploTemp = Cuadruplo("gosub", nombreProc, to_string(cuadruplos.size()) , "");
+	cuadruplos.push_back( cuadruploTemp );	
+
+	if ( debug ) {
+		cout << "accion_6_llamada_proc Termina" << endl;
+	}
+}
+
+
+
 
 
 void printCuboSemantico() {
@@ -1193,6 +1446,20 @@ void printCuadruplos() {
 void rellenar(int fin, int cont) {
 
 	
-	cuadruplos[fin].setRes(cont);
+	cuadruplos[fin].setRes(to_string(cont));
 
 }
+
+
+template <typename T> string to_string(T value)
+    {
+      //create an output string stream
+      std::ostringstream os ;
+
+      //throw the value into the string stream
+      os << value ;
+
+      //convert the string stream into a string and return
+      return os.str() ;
+    }
+

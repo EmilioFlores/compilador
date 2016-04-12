@@ -7,24 +7,24 @@ class Cuadruplo{
 	private:
 		
 		string op;
-		int der;
-		int izq;
-		int res;
+		string der;
+		string izq;
+		string res;
 
 
 	public:
 		
 
 		string getOp();
-		int getDer();
-		int getIzq();
-		int getRes();
+		string getDer();
+		string getIzq();
+		string getRes();
 		void setOp(string op);
-		void setDer(int der);
-		void setIzq(int izq);
-		void setRes(int res);
+		void setDer(string der);
+		void setIzq(string izq);
+		void setRes(string res);
 
-		Cuadruplo(string opp, int izqq, int derr, int ress);
+		Cuadruplo(string opp, string izqq, string derr, string ress);
 
 
 		
@@ -35,15 +35,15 @@ string Cuadruplo ::  getOp() {
 	return op;
 };
 
-int Cuadruplo :: getDer() {
+string Cuadruplo :: getDer() {
 	return der;
 }
 
-int Cuadruplo :: getIzq() {
+string Cuadruplo :: getIzq() {
 	return izq;
 }
 
-int Cuadruplo :: getRes() {
+string Cuadruplo :: getRes() {
 	return res;
 }
 
@@ -51,16 +51,16 @@ void Cuadruplo :: setOp(string opp) {
 	op = opp;
 }
 
-void Cuadruplo :: setDer(int derr) {
+void Cuadruplo :: setDer(string derr) {
 	der = derr;
 }
-void Cuadruplo :: setIzq(int izqq) {
+void Cuadruplo :: setIzq(string izqq) {
 	izq = izqq;
 }
-void Cuadruplo :: setRes(int ress) {
+void Cuadruplo :: setRes(string ress) {
 	res = ress;
 }
-Cuadruplo :: Cuadruplo(string opp, int izqq, int derr, int ress) {
+Cuadruplo :: Cuadruplo(string opp, string izqq, string derr, string ress) {
 		op = opp;
 		der = derr;
 		izq = izqq;

@@ -1,0 +1,41 @@
+Necesito que hagas:
+
+	Para métodos y metodos de objetos: 
+		Para metodos normales
+			Funcion que verifique que un método exista.. Te enviare el nombre del método y lo buscaras en el directorio de procedimientos
+
+		Para objetos
+			Funcion que verifique que una funcion exista para x objeto... Te enviare el nombre de la variable y el metodo.. tu tienes que buscar el tipo de la variable, conseguir el tipo que es y buscar en ese tipo que exista el metodo que se envio. 
+
+
+		Necesito una funcion que me regrese el vector de params de una funcion.. yo tengo un contador que empieza en 0, y cada que encuentra un param aumenta el contador... yo tengo que comparar que el parametro k, corresponda al vectorParams[k] con respecto al tipo de variable que espera. 
+
+		Necesito que al directorio de procedimientos, agregues un campo que se llame CuadruploInicial... este es un entero que representa donde empieza la primera instruccion del mètodo... entonces si tengo yo por ejemplo:
+				1. funcion entero getTest2 (entero x, entero y) {
+				2. 
+				3.	var entero test2  ;
+				4. 	regresa test2 ; 
+				};
+				Aunque es un caso tonto, porque asi no es, lo que tendria el campo CuadruploInicial seria un 3, que representa la primera instruccion. 
+				Para esto yo te enviare un entero representando el cuadruplo donde inicia
+				dirProcedimientos.cuadruploInicial(3);
+
+	Para Memoria: 
+		2 estructuras de 4 casillas cada una.. donde guares la cantidad de enteros, bandera, temporales entero, etc que hay en una funcion
+		vector<int> normales = {0, 0 ,0 ,0 }
+		vector<int> temporales = {0, 0 , 0 ,0 }
+
+		Para lo anterior, adaptar el metodo de crearVariable para que reciba un atributo que identifique si es o no es temporarl.. para que al momento de crear la variable aumentes el vector corresponiente para guardar la variable nueva... ejemplo:
+			dirProcedimientos.crearVariable("entero", "x", 1, 1001, false); // esta es un entero normal
+			dirProcedimientos.crearVariable("entero", "y", 1, 20001, true); // esta es una temporal entera
+
+		Crear una estructura tipo 
+		struct dimension {
+			int limSuperior;
+			int m;
+			int r;
+			struct dimension;
+		}
+		o un vector de estructuras, para matrices. Debemos de guardar el valor del limiteSuperior para N dimensiones y para cada dimension calcular el valor de R y de  M. No es dificil 
+
+		
