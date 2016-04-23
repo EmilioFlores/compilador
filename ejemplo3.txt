@@ -44,9 +44,8 @@ programa {
 
 	var entero test5;
 
-	ciclo (test5 = 4, band == band, test5 =  2) {
-
-	}
+	
+	muestra (test5 , test5, 6);
 }
 
 

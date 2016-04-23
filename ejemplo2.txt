@@ -4,61 +4,54 @@ incluir <hola>
 objeto Rectangulo {
 	privado {
 		var entero x;  
-		var entero ancho;
-		var entero largo;
-
-		funcion entero getTest ( entero largo ) {
-			var entero test1 ; 
-
-			regresa test1 ; 
-		};
 
 	}
 
 	publico {
 		var entero y ;
-		var entero a ;
+		var entero z ;
+
 
 
 		funcion entero getTest2 () {
 
-			var entero test2  ;
-			regresa test2 ; 
-		};
+			var entero x ;
+			
+			regresa getTest2() ;
+		}; 
 	}
 
 };
 
 
 
-funcion bandera getTest3 ( bandera x, entero y  ) {
-	var entero test3  ;
+funcion entero getTest3(entero x, entero xx ) {
+	var entero y;
+	var entero yy;
 
-	regresa x ; 
+	regresa getTest3(3,4);
+	
+};
+
+
+funcion entero getTest4(entero x, entero xx ) {
+	var entero xxx;
+	var entero xxxx;
+
+	regresa getTest3(4,5);
+	
 };
 
 
 programa {
 	
-	var bandera band ;
 
-	var entero test5;
+	var entero x ;
+	var entero xx ;
+	var entero xxx ;
+	x = 4 + 2.6 + getTest3(5,8)  ;
+	
+		
 
 	
-
-
-	 condicion ( band ) {
-	 	test5 = 4;
-	 }
-	 fallo {
-	 	test5 = 7;
-	 }
-	
-	
-	
-
-
-
-	
-
 }

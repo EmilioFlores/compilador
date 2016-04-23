@@ -1,0 +1,2818 @@
+Terminals unused in grammar
+
+   NUMBER
+   COLON
+   CARACTERSYM
+   GRANENTEROSYM
+   ARREGLOSYM
+   MATRIZSYM
+   FALSOSYM
+   VERDADEROSYM
+
+
+Gramática
+
+    0 $accept: programa $end
+
+    1 programa: Librerias Objetos Funciones Main
+
+    2 Objetos: Objeto
+
+    3 $@1: /* vacío */
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON
+
+    5 AtributosPrivados: PRIVADOSYM LCURLY VariablesObjetos Funciones RCURLY
+    6                  | epsilon
+
+    7 AtributosPublicos: PUBLICOSYM LCURLY Variables FuncionesObjetos RCURLY
+    8                  | epsilon
+
+    9 Librerias: Libreria Libreria1
+
+   10 Libreria: INCLUIRSYM LSS IDENTIFICADOR GTR
+
+   11 Libreria1: Libreria
+   12          | /* vacío */
+
+   13 Funciones: Funcion
+
+   14 FuncionesObjetos: FuncionObjeto
+
+   15 $@2: /* vacío */
+
+   16 $@3: /* vacío */
+
+   17 $@4: /* vacío */
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON $@4 Funcion
+   19        | epsilon
+
+   20 $@5: /* vacío */
+
+   21 $@6: /* vacío */
+
+   22 $@7: /* vacío */
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto
+   24              | epsilon
+
+   25 Tipo: ENTEROSYM
+   26     | DECIMALSYM
+   27     | TEXTOSYM
+   28     | BANDERASYM
+   29     | IDENTIFICADOR
+
+   30 Params: LPAREN Param RPAREN
+
+   31 ParamsObjeto: LPAREN ParamObjeto RPAREN
+
+   32 $@8: /* vacío */
+
+   33 $@9: /* vacío */
+
+   34 Param: Tipo $@8 IDENTIFICADOR $@9 Param1
+   35      | epsilon
+
+   36 Param1: COMMA Param
+   37       | epsilon
+
+   38 $@10: /* vacío */
+
+   39 $@11: /* vacío */
+
+   40 ParamObjeto: Tipo $@10 IDENTIFICADOR $@11 ParamObjeto1
+   41            | epsilon
+
+   42 ParamObjeto1: COMMA ParamObjeto
+   43             | epsilon
+
+   44 $@12: /* vacío */
+
+   45 Args: Expresion $@12 Args1
+   46     | epsilon
+
+   47 $@13: /* vacío */
+
+   48 Args1: COMMA Expresion $@13 Args1
+   49      | epsilon
+
+   50 Bloque: LCURLY Variables Bloque1 RCURLY
+
+   51 Bloque1: Estatuto SEMICOLON Bloque1
+   52        | epsilon
+
+   53 BloqueFuncion: LCURLY Variables BloqueFuncion1 BloqueFuncion2 RCURLY
+
+   54 BloqueFuncion1: Estatuto SEMICOLON BloqueFuncion1
+   55               | epsilon
+
+   56 BloqueFuncion2: REGRESASYM Expresion
+   57               | epsilon
+
+   58 Estatuto: Asignacion
+   59         | Condicion
+   60         | Ciclo
+   61         | Escritura
+   62         | Lectura
+   63         | Llamada
+
+   64 $@14: /* vacío */
+
+   65 Llamada: IDENTIFICADOR $@14 Llamada1 Llamada2
+
+   66 $@15: /* vacío */
+
+   67 Llamada1: DOT IDENTIFICADOR $@15 Llamada1
+   68         | epsilon
+
+   69 $@16: /* vacío */
+
+   70 Llamada2: LPAREN $@16 Args RPAREN
+   71         | epsilon
+
+   72 $@17: /* vacío */
+
+   73 $@18: /* vacío */
+
+   74 Asignacion: IDENTIFICADOR $@17 EQL $@18 Expresion
+
+   75 Expresion: Exp Expresion1
+
+   76 Expresion1: Expresion2 Exp
+   77           | epsilon
+
+   78 Expresion2: LSS
+   79           | GTR
+   80           | EQLEQL
+   81           | NEQ
+
+   82 $@19: /* vacío */
+
+   83 Exp: Termino $@19 Exp1
+
+   84 $@20: /* vacío */
+
+   85 Exp1: PLUS $@20 Exp
+
+   86 $@21: /* vacío */
+
+   87 Exp1: MINUS $@21 Exp
+   88     | epsilon
+
+   89 $@22: /* vacío */
+
+   90 Termino: Factor $@22 Termino1
+
+   91 $@23: /* vacío */
+
+   92 Termino1: TIMES $@23 Termino
+
+   93 $@24: /* vacío */
+
+   94 Termino1: SLASH $@24 Termino
+   95         | epsilon
+
+   96 $@25: /* vacío */
+
+   97 $@26: /* vacío */
+
+   98 Factor: LPAREN $@25 Expresion $@26 RPAREN
+   99       | Factor1 VarCteExp
+
+  100 Factor1: PLUS
+  101        | MINUS
+  102        | epsilon
+
+  103 VarCteExp: Llamada
+  104          | ENTERO
+  105          | BANDERA
+  106          | TEXTO
+  107          | DECIMAL
+
+  108 VarCte: IDENTIFICADOR
+  109       | ENTERO
+  110       | BANDERA
+  111       | TEXTO
+  112       | DECIMAL
+
+  113 Variables: Variable SEMICOLON Variables
+  114          | epsilon
+
+  115 VariablesObjetos: VariableObjeto SEMICOLON VariablesObjetos
+  116                 | epsilon
+
+  117 $@27: /* vacío */
+
+  118 Variable: VARSYM Tipo $@27 IDENTIFICADOR
+
+  119 $@28: /* vacío */
+
+  120 VariableObjeto: VARSYM Tipo $@28 IDENTIFICADOR
+
+  121 $@29: /* vacío */
+
+  122 Condicion: CONDICIONSYM LPAREN Expresion RPAREN $@29 Bloque Condicion1
+
+  123 $@30: /* vacío */
+
+  124 Condicion1: FALLOSYM $@30 Bloque
+  125           | epsilon
+
+  126 $@31: /* vacío */
+
+  127 $@32: /* vacío */
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 RPAREN Bloque
+
+  129 $@33: /* vacío */
+
+  130 Ciclo: HAZSYM $@33 Bloque MIENTRASSYM LPAREN Expresion RPAREN
+
+  131 Ciclo1: Asignacion
+  132       | epsilon
+
+  133 Escritura: MUESTRALINEASYM LPAREN EstatutosSalida RPAREN
+  134          | MUESTRASYM LPAREN EstatutosSalida RPAREN
+
+  135 EstatutosSalida: VarCte
+  136                | epsilon
+
+  137 Lectura: LEESYM VarCte
+
+  138 Main: PROGRAMASYM Bloque
+
+  139 epsilon: /* vacío */
+
+
+Terminales con las reglas donde aparecen
+
+$end (0) 0
+error (256)
+ENTERO (258) 104 109
+DECIMAL (259) 107 112
+TEXTO (260) 106 111
+NUMBER (261)
+IDENTIFICADOR (262) 4 10 18 23 29 34 40 65 67 74 108 118 120
+BANDERA (263) 105 110
+PLUS (264) 85 100
+MINUS (265) 87 101
+TIMES (266) 92
+SLASH (267) 94
+LPAREN (268) 30 31 70 98 122 128 130 133 134
+RPAREN (269) 30 31 70 98 122 128 130 133 134
+LCURLY (270) 4 5 7 50 53
+RCURLY (271) 4 5 7 50 53
+SEMICOLON (272) 4 18 23 51 54 113 115
+COMMA (273) 36 42 48 128
+DOT (274) 67
+EQL (275) 74
+EQLEQL (276) 80
+NEQ (277) 81
+COLON (278)
+LSS (279) 10 78
+GTR (280) 10 79
+CONDICIONSYM (281) 122
+PROGRAMASYM (282) 138
+FALLOSYM (283) 124
+VARSYM (284) 118 120
+MUESTRASYM (285) 134
+MUESTRALINEASYM (286) 133
+LEESYM (287) 137
+BANDERASYM (288) 28
+CARACTERSYM (289)
+ENTEROSYM (290) 25
+GRANENTEROSYM (291)
+DECIMALSYM (292) 26
+TEXTOSYM (293) 27
+ARREGLOSYM (294)
+MATRIZSYM (295)
+CICLOSYM (296) 128
+HAZSYM (297) 130
+MIENTRASSYM (298) 130
+FUNCIONSYM (299) 18 23
+REGRESASYM (300) 56
+INCLUIRSYM (301) 10
+FALSOSYM (302)
+VERDADEROSYM (303)
+OBJETOSYM (304) 4
+PRIVADOSYM (305) 5
+PUBLICOSYM (306) 7
+
+
+No terminales con las reglas donde aparecen
+
+$accept (52)
+    en la izquierda: 0
+programa (53)
+    en la izquierda: 1, en la derecha: 0
+Objetos (54)
+    en la izquierda: 2, en la derecha: 1
+Objeto (55)
+    en la izquierda: 4, en la derecha: 2
+$@1 (56)
+    en la izquierda: 3, en la derecha: 4
+AtributosPrivados (57)
+    en la izquierda: 5 6, en la derecha: 4
+AtributosPublicos (58)
+    en la izquierda: 7 8, en la derecha: 4
+Librerias (59)
+    en la izquierda: 9, en la derecha: 1
+Libreria (60)
+    en la izquierda: 10, en la derecha: 9 11
+Libreria1 (61)
+    en la izquierda: 11 12, en la derecha: 9
+Funciones (62)
+    en la izquierda: 13, en la derecha: 1 5
+FuncionesObjetos (63)
+    en la izquierda: 14, en la derecha: 7
+Funcion (64)
+    en la izquierda: 18 19, en la derecha: 13 18
+$@2 (65)
+    en la izquierda: 15, en la derecha: 18
+$@3 (66)
+    en la izquierda: 16, en la derecha: 18
+$@4 (67)
+    en la izquierda: 17, en la derecha: 18
+FuncionObjeto (68)
+    en la izquierda: 23 24, en la derecha: 14 23
+$@5 (69)
+    en la izquierda: 20, en la derecha: 23
+$@6 (70)
+    en la izquierda: 21, en la derecha: 23
+$@7 (71)
+    en la izquierda: 22, en la derecha: 23
+Tipo (72)
+    en la izquierda: 25 26 27 28 29, en la derecha: 18 23 34 40 118
+    120
+Params (73)
+    en la izquierda: 30, en la derecha: 18
+ParamsObjeto (74)
+    en la izquierda: 31, en la derecha: 23
+Param (75)
+    en la izquierda: 34 35, en la derecha: 30 36
+$@8 (76)
+    en la izquierda: 32, en la derecha: 34
+$@9 (77)
+    en la izquierda: 33, en la derecha: 34
+Param1 (78)
+    en la izquierda: 36 37, en la derecha: 34
+ParamObjeto (79)
+    en la izquierda: 40 41, en la derecha: 31 42
+$@10 (80)
+    en la izquierda: 38, en la derecha: 40
+$@11 (81)
+    en la izquierda: 39, en la derecha: 40
+ParamObjeto1 (82)
+    en la izquierda: 42 43, en la derecha: 40
+Args (83)
+    en la izquierda: 45 46, en la derecha: 70
+$@12 (84)
+    en la izquierda: 44, en la derecha: 45
+Args1 (85)
+    en la izquierda: 48 49, en la derecha: 45 48
+$@13 (86)
+    en la izquierda: 47, en la derecha: 48
+Bloque (87)
+    en la izquierda: 50, en la derecha: 122 124 128 130 138
+Bloque1 (88)
+    en la izquierda: 51 52, en la derecha: 50 51
+BloqueFuncion (89)
+    en la izquierda: 53, en la derecha: 18 23
+BloqueFuncion1 (90)
+    en la izquierda: 54 55, en la derecha: 53 54
+BloqueFuncion2 (91)
+    en la izquierda: 56 57, en la derecha: 53
+Estatuto (92)
+    en la izquierda: 58 59 60 61 62 63, en la derecha: 51 54
+Llamada (93)
+    en la izquierda: 65, en la derecha: 63 103
+$@14 (94)
+    en la izquierda: 64, en la derecha: 65
+Llamada1 (95)
+    en la izquierda: 67 68, en la derecha: 65 67
+$@15 (96)
+    en la izquierda: 66, en la derecha: 67
+Llamada2 (97)
+    en la izquierda: 70 71, en la derecha: 65
+$@16 (98)
+    en la izquierda: 69, en la derecha: 70
+Asignacion (99)
+    en la izquierda: 74, en la derecha: 58 131
+$@17 (100)
+    en la izquierda: 72, en la derecha: 74
+$@18 (101)
+    en la izquierda: 73, en la derecha: 74
+Expresion (102)
+    en la izquierda: 75, en la derecha: 45 48 56 74 98 122 128 130
+Expresion1 (103)
+    en la izquierda: 76 77, en la derecha: 75
+Expresion2 (104)
+    en la izquierda: 78 79 80 81, en la derecha: 76
+Exp (105)
+    en la izquierda: 83, en la derecha: 75 76 85 87
+$@19 (106)
+    en la izquierda: 82, en la derecha: 83
+Exp1 (107)
+    en la izquierda: 85 87 88, en la derecha: 83
+$@20 (108)
+    en la izquierda: 84, en la derecha: 85
+$@21 (109)
+    en la izquierda: 86, en la derecha: 87
+Termino (110)
+    en la izquierda: 90, en la derecha: 83 92 94
+$@22 (111)
+    en la izquierda: 89, en la derecha: 90
+Termino1 (112)
+    en la izquierda: 92 94 95, en la derecha: 90
+$@23 (113)
+    en la izquierda: 91, en la derecha: 92
+$@24 (114)
+    en la izquierda: 93, en la derecha: 94
+Factor (115)
+    en la izquierda: 98 99, en la derecha: 90
+$@25 (116)
+    en la izquierda: 96, en la derecha: 98
+$@26 (117)
+    en la izquierda: 97, en la derecha: 98
+Factor1 (118)
+    en la izquierda: 100 101 102, en la derecha: 99
+VarCteExp (119)
+    en la izquierda: 103 104 105 106 107, en la derecha: 99
+VarCte (120)
+    en la izquierda: 108 109 110 111 112, en la derecha: 135 137
+Variables (121)
+    en la izquierda: 113 114, en la derecha: 7 50 53 113
+VariablesObjetos (122)
+    en la izquierda: 115 116, en la derecha: 5 115
+Variable (123)
+    en la izquierda: 118, en la derecha: 113
+$@27 (124)
+    en la izquierda: 117, en la derecha: 118
+VariableObjeto (125)
+    en la izquierda: 120, en la derecha: 115
+$@28 (126)
+    en la izquierda: 119, en la derecha: 120
+Condicion (127)
+    en la izquierda: 122, en la derecha: 59
+$@29 (128)
+    en la izquierda: 121, en la derecha: 122
+Condicion1 (129)
+    en la izquierda: 124 125, en la derecha: 122
+$@30 (130)
+    en la izquierda: 123, en la derecha: 124
+Ciclo (131)
+    en la izquierda: 128 130, en la derecha: 60
+$@31 (132)
+    en la izquierda: 126, en la derecha: 128
+$@32 (133)
+    en la izquierda: 127, en la derecha: 128
+$@33 (134)
+    en la izquierda: 129, en la derecha: 130
+Ciclo1 (135)
+    en la izquierda: 131 132, en la derecha: 128
+Escritura (136)
+    en la izquierda: 133 134, en la derecha: 61
+EstatutosSalida (137)
+    en la izquierda: 135 136, en la derecha: 133 134
+Lectura (138)
+    en la izquierda: 137, en la derecha: 62
+Main (139)
+    en la izquierda: 138, en la derecha: 1
+epsilon (140)
+    en la izquierda: 139, en la derecha: 6 8 19 24 35 37 41 43 46 49
+    52 55 57 68 71 77 88 95 102 114 116 125 132 136
+
+
+estado 0
+
+    0 $accept: . programa $end
+
+    INCLUIRSYM  desplazar e ir al estado 1
+
+    programa   ir al estado 2
+    Librerias  ir al estado 3
+    Libreria   ir al estado 4
+
+
+estado 1
+
+   10 Libreria: INCLUIRSYM . LSS IDENTIFICADOR GTR
+
+    LSS  desplazar e ir al estado 5
+
+
+estado 2
+
+    0 $accept: programa . $end
+
+    $end  desplazar e ir al estado 6
+
+
+estado 3
+
+    1 programa: Librerias . Objetos Funciones Main
+
+    OBJETOSYM  desplazar e ir al estado 7
+
+    Objetos  ir al estado 8
+    Objeto   ir al estado 9
+
+
+estado 4
+
+    9 Librerias: Libreria . Libreria1
+
+    INCLUIRSYM  desplazar e ir al estado 1
+
+    $default  reduce usando la regla 12 (Libreria1)
+
+    Libreria   ir al estado 10
+    Libreria1  ir al estado 11
+
+
+estado 5
+
+   10 Libreria: INCLUIRSYM LSS . IDENTIFICADOR GTR
+
+    IDENTIFICADOR  desplazar e ir al estado 12
+
+
+estado 6
+
+    0 $accept: programa $end .
+
+    $default  aceptar
+
+
+estado 7
+
+    4 Objeto: OBJETOSYM . IDENTIFICADOR $@1 LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON
+
+    IDENTIFICADOR  desplazar e ir al estado 13
+
+
+estado 8
+
+    1 programa: Librerias Objetos . Funciones Main
+
+    FUNCIONSYM  desplazar e ir al estado 14
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Funciones  ir al estado 15
+    Funcion    ir al estado 16
+    epsilon    ir al estado 17
+
+
+estado 9
+
+    2 Objetos: Objeto .
+
+    $default  reduce usando la regla 2 (Objetos)
+
+
+estado 10
+
+   11 Libreria1: Libreria .
+
+    $default  reduce usando la regla 11 (Libreria1)
+
+
+estado 11
+
+    9 Librerias: Libreria Libreria1 .
+
+    $default  reduce usando la regla 9 (Librerias)
+
+
+estado 12
+
+   10 Libreria: INCLUIRSYM LSS IDENTIFICADOR . GTR
+
+    GTR  desplazar e ir al estado 18
+
+
+estado 13
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR . $@1 LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON
+
+    $default  reduce usando la regla 3 ($@1)
+
+    $@1  ir al estado 19
+
+
+estado 14
+
+   18 Funcion: FUNCIONSYM . Tipo $@2 IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON $@4 Funcion
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    Tipo  ir al estado 25
+
+
+estado 15
+
+    1 programa: Librerias Objetos Funciones . Main
+
+    PROGRAMASYM  desplazar e ir al estado 26
+
+    Main  ir al estado 27
+
+
+estado 16
+
+   13 Funciones: Funcion .
+
+    $default  reduce usando la regla 13 (Funciones)
+
+
+estado 17
+
+   19 Funcion: epsilon .
+
+    $default  reduce usando la regla 19 (Funcion)
+
+
+estado 18
+
+   10 Libreria: INCLUIRSYM LSS IDENTIFICADOR GTR .
+
+    $default  reduce usando la regla 10 (Libreria)
+
+
+estado 19
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 . LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON
+
+    LCURLY  desplazar e ir al estado 28
+
+
+estado 20
+
+   29 Tipo: IDENTIFICADOR .
+
+    $default  reduce usando la regla 29 (Tipo)
+
+
+estado 21
+
+   28 Tipo: BANDERASYM .
+
+    $default  reduce usando la regla 28 (Tipo)
+
+
+estado 22
+
+   25 Tipo: ENTEROSYM .
+
+    $default  reduce usando la regla 25 (Tipo)
+
+
+estado 23
+
+   26 Tipo: DECIMALSYM .
+
+    $default  reduce usando la regla 26 (Tipo)
+
+
+estado 24
+
+   27 Tipo: TEXTOSYM .
+
+    $default  reduce usando la regla 27 (Tipo)
+
+
+estado 25
+
+   18 Funcion: FUNCIONSYM Tipo . $@2 IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON $@4 Funcion
+
+    $default  reduce usando la regla 15 ($@2)
+
+    $@2  ir al estado 29
+
+
+estado 26
+
+  138 Main: PROGRAMASYM . Bloque
+
+    LCURLY  desplazar e ir al estado 30
+
+    Bloque  ir al estado 31
+
+
+estado 27
+
+    1 programa: Librerias Objetos Funciones Main .
+
+    $default  reduce usando la regla 1 (programa)
+
+
+estado 28
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 LCURLY . AtributosPrivados AtributosPublicos RCURLY SEMICOLON
+
+    PRIVADOSYM  desplazar e ir al estado 32
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    AtributosPrivados  ir al estado 33
+    epsilon            ir al estado 34
+
+
+estado 29
+
+   18 Funcion: FUNCIONSYM Tipo $@2 . IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON $@4 Funcion
+
+    IDENTIFICADOR  desplazar e ir al estado 35
+
+
+estado 30
+
+   50 Bloque: LCURLY . Variables Bloque1 RCURLY
+
+    VARSYM  desplazar e ir al estado 36
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Variables  ir al estado 37
+    Variable   ir al estado 38
+    epsilon    ir al estado 39
+
+
+estado 31
+
+  138 Main: PROGRAMASYM Bloque .
+
+    $default  reduce usando la regla 138 (Main)
+
+
+estado 32
+
+    5 AtributosPrivados: PRIVADOSYM . LCURLY VariablesObjetos Funciones RCURLY
+
+    LCURLY  desplazar e ir al estado 40
+
+
+estado 33
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 LCURLY AtributosPrivados . AtributosPublicos RCURLY SEMICOLON
+
+    PUBLICOSYM  desplazar e ir al estado 41
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    AtributosPublicos  ir al estado 42
+    epsilon            ir al estado 43
+
+
+estado 34
+
+    6 AtributosPrivados: epsilon .
+
+    $default  reduce usando la regla 6 (AtributosPrivados)
+
+
+estado 35
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR . $@3 Params BloqueFuncion SEMICOLON $@4 Funcion
+
+    $default  reduce usando la regla 16 ($@3)
+
+    $@3  ir al estado 44
+
+
+estado 36
+
+  118 Variable: VARSYM . Tipo $@27 IDENTIFICADOR
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    Tipo  ir al estado 45
+
+
+estado 37
+
+   50 Bloque: LCURLY Variables . Bloque1 RCURLY
+
+    IDENTIFICADOR    desplazar e ir al estado 46
+    CONDICIONSYM     desplazar e ir al estado 47
+    MUESTRASYM       desplazar e ir al estado 48
+    MUESTRALINEASYM  desplazar e ir al estado 49
+    LEESYM           desplazar e ir al estado 50
+    CICLOSYM         desplazar e ir al estado 51
+    HAZSYM           desplazar e ir al estado 52
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Bloque1     ir al estado 53
+    Estatuto    ir al estado 54
+    Llamada     ir al estado 55
+    Asignacion  ir al estado 56
+    Condicion   ir al estado 57
+    Ciclo       ir al estado 58
+    Escritura   ir al estado 59
+    Lectura     ir al estado 60
+    epsilon     ir al estado 61
+
+
+estado 38
+
+  113 Variables: Variable . SEMICOLON Variables
+
+    SEMICOLON  desplazar e ir al estado 62
+
+
+estado 39
+
+  114 Variables: epsilon .
+
+    $default  reduce usando la regla 114 (Variables)
+
+
+estado 40
+
+    5 AtributosPrivados: PRIVADOSYM LCURLY . VariablesObjetos Funciones RCURLY
+
+    VARSYM  desplazar e ir al estado 63
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    VariablesObjetos  ir al estado 64
+    VariableObjeto    ir al estado 65
+    epsilon           ir al estado 66
+
+
+estado 41
+
+    7 AtributosPublicos: PUBLICOSYM . LCURLY Variables FuncionesObjetos RCURLY
+
+    LCURLY  desplazar e ir al estado 67
+
+
+estado 42
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 LCURLY AtributosPrivados AtributosPublicos . RCURLY SEMICOLON
+
+    RCURLY  desplazar e ir al estado 68
+
+
+estado 43
+
+    8 AtributosPublicos: epsilon .
+
+    $default  reduce usando la regla 8 (AtributosPublicos)
+
+
+estado 44
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 . Params BloqueFuncion SEMICOLON $@4 Funcion
+
+    LPAREN  desplazar e ir al estado 69
+
+    Params  ir al estado 70
+
+
+estado 45
+
+  118 Variable: VARSYM Tipo . $@27 IDENTIFICADOR
+
+    $default  reduce usando la regla 117 ($@27)
+
+    $@27  ir al estado 71
+
+
+estado 46
+
+   65 Llamada: IDENTIFICADOR . $@14 Llamada1 Llamada2
+   74 Asignacion: IDENTIFICADOR . $@17 EQL $@18 Expresion
+
+    EQL       reduce usando la regla 72 ($@17)
+    $default  reduce usando la regla 64 ($@14)
+
+    $@14  ir al estado 72
+    $@17  ir al estado 73
+
+
+estado 47
+
+  122 Condicion: CONDICIONSYM . LPAREN Expresion RPAREN $@29 Bloque Condicion1
+
+    LPAREN  desplazar e ir al estado 74
+
+
+estado 48
+
+  134 Escritura: MUESTRASYM . LPAREN EstatutosSalida RPAREN
+
+    LPAREN  desplazar e ir al estado 75
+
+
+estado 49
+
+  133 Escritura: MUESTRALINEASYM . LPAREN EstatutosSalida RPAREN
+
+    LPAREN  desplazar e ir al estado 76
+
+
+estado 50
+
+  137 Lectura: LEESYM . VarCte
+
+    ENTERO         desplazar e ir al estado 77
+    DECIMAL        desplazar e ir al estado 78
+    TEXTO          desplazar e ir al estado 79
+    IDENTIFICADOR  desplazar e ir al estado 80
+    BANDERA        desplazar e ir al estado 81
+
+    VarCte  ir al estado 82
+
+
+estado 51
+
+  128 Ciclo: CICLOSYM . $@31 LPAREN Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 RPAREN Bloque
+
+    $default  reduce usando la regla 126 ($@31)
+
+    $@31  ir al estado 83
+
+
+estado 52
+
+  130 Ciclo: HAZSYM . $@33 Bloque MIENTRASSYM LPAREN Expresion RPAREN
+
+    $default  reduce usando la regla 129 ($@33)
+
+    $@33  ir al estado 84
+
+
+estado 53
+
+   50 Bloque: LCURLY Variables Bloque1 . RCURLY
+
+    RCURLY  desplazar e ir al estado 85
+
+
+estado 54
+
+   51 Bloque1: Estatuto . SEMICOLON Bloque1
+
+    SEMICOLON  desplazar e ir al estado 86
+
+
+estado 55
+
+   63 Estatuto: Llamada .
+
+    $default  reduce usando la regla 63 (Estatuto)
+
+
+estado 56
+
+   58 Estatuto: Asignacion .
+
+    $default  reduce usando la regla 58 (Estatuto)
+
+
+estado 57
+
+   59 Estatuto: Condicion .
+
+    $default  reduce usando la regla 59 (Estatuto)
+
+
+estado 58
+
+   60 Estatuto: Ciclo .
+
+    $default  reduce usando la regla 60 (Estatuto)
+
+
+estado 59
+
+   61 Estatuto: Escritura .
+
+    $default  reduce usando la regla 61 (Estatuto)
+
+
+estado 60
+
+   62 Estatuto: Lectura .
+
+    $default  reduce usando la regla 62 (Estatuto)
+
+
+estado 61
+
+   52 Bloque1: epsilon .
+
+    $default  reduce usando la regla 52 (Bloque1)
+
+
+estado 62
+
+  113 Variables: Variable SEMICOLON . Variables
+
+    VARSYM  desplazar e ir al estado 36
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Variables  ir al estado 87
+    Variable   ir al estado 38
+    epsilon    ir al estado 39
+
+
+estado 63
+
+  120 VariableObjeto: VARSYM . Tipo $@28 IDENTIFICADOR
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    Tipo  ir al estado 88
+
+
+estado 64
+
+    5 AtributosPrivados: PRIVADOSYM LCURLY VariablesObjetos . Funciones RCURLY
+
+    FUNCIONSYM  desplazar e ir al estado 14
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Funciones  ir al estado 89
+    Funcion    ir al estado 16
+    epsilon    ir al estado 17
+
+
+estado 65
+
+  115 VariablesObjetos: VariableObjeto . SEMICOLON VariablesObjetos
+
+    SEMICOLON  desplazar e ir al estado 90
+
+
+estado 66
+
+  116 VariablesObjetos: epsilon .
+
+    $default  reduce usando la regla 116 (VariablesObjetos)
+
+
+estado 67
+
+    7 AtributosPublicos: PUBLICOSYM LCURLY . Variables FuncionesObjetos RCURLY
+
+    VARSYM  desplazar e ir al estado 36
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Variables  ir al estado 91
+    Variable   ir al estado 38
+    epsilon    ir al estado 39
+
+
+estado 68
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 LCURLY AtributosPrivados AtributosPublicos RCURLY . SEMICOLON
+
+    SEMICOLON  desplazar e ir al estado 92
+
+
+estado 69
+
+   30 Params: LPAREN . Param RPAREN
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Tipo     ir al estado 93
+    Param    ir al estado 94
+    epsilon  ir al estado 95
+
+
+estado 70
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 Params . BloqueFuncion SEMICOLON $@4 Funcion
+
+    LCURLY  desplazar e ir al estado 96
+
+    BloqueFuncion  ir al estado 97
+
+
+estado 71
+
+  118 Variable: VARSYM Tipo $@27 . IDENTIFICADOR
+
+    IDENTIFICADOR  desplazar e ir al estado 98
+
+
+estado 72
+
+   65 Llamada: IDENTIFICADOR $@14 . Llamada1 Llamada2
+
+    DOT  desplazar e ir al estado 99
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Llamada1  ir al estado 100
+    epsilon   ir al estado 101
+
+
+estado 73
+
+   74 Asignacion: IDENTIFICADOR $@17 . EQL $@18 Expresion
+
+    EQL  desplazar e ir al estado 102
+
+
+estado 74
+
+  122 Condicion: CONDICIONSYM LPAREN . Expresion RPAREN $@29 Bloque Condicion1
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 106
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 75
+
+  134 Escritura: MUESTRASYM LPAREN . EstatutosSalida RPAREN
+
+    ENTERO         desplazar e ir al estado 77
+    DECIMAL        desplazar e ir al estado 78
+    TEXTO          desplazar e ir al estado 79
+    IDENTIFICADOR  desplazar e ir al estado 80
+    BANDERA        desplazar e ir al estado 81
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    VarCte           ir al estado 112
+    EstatutosSalida  ir al estado 113
+    epsilon          ir al estado 114
+
+
+estado 76
+
+  133 Escritura: MUESTRALINEASYM LPAREN . EstatutosSalida RPAREN
+
+    ENTERO         desplazar e ir al estado 77
+    DECIMAL        desplazar e ir al estado 78
+    TEXTO          desplazar e ir al estado 79
+    IDENTIFICADOR  desplazar e ir al estado 80
+    BANDERA        desplazar e ir al estado 81
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    VarCte           ir al estado 112
+    EstatutosSalida  ir al estado 115
+    epsilon          ir al estado 114
+
+
+estado 77
+
+  109 VarCte: ENTERO .
+
+    $default  reduce usando la regla 109 (VarCte)
+
+
+estado 78
+
+  112 VarCte: DECIMAL .
+
+    $default  reduce usando la regla 112 (VarCte)
+
+
+estado 79
+
+  111 VarCte: TEXTO .
+
+    $default  reduce usando la regla 111 (VarCte)
+
+
+estado 80
+
+  108 VarCte: IDENTIFICADOR .
+
+    $default  reduce usando la regla 108 (VarCte)
+
+
+estado 81
+
+  110 VarCte: BANDERA .
+
+    $default  reduce usando la regla 110 (VarCte)
+
+
+estado 82
+
+  137 Lectura: LEESYM VarCte .
+
+    $default  reduce usando la regla 137 (Lectura)
+
+
+estado 83
+
+  128 Ciclo: CICLOSYM $@31 . LPAREN Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 RPAREN Bloque
+
+    LPAREN  desplazar e ir al estado 116
+
+
+estado 84
+
+  130 Ciclo: HAZSYM $@33 . Bloque MIENTRASSYM LPAREN Expresion RPAREN
+
+    LCURLY  desplazar e ir al estado 30
+
+    Bloque  ir al estado 117
+
+
+estado 85
+
+   50 Bloque: LCURLY Variables Bloque1 RCURLY .
+
+    $default  reduce usando la regla 50 (Bloque)
+
+
+estado 86
+
+   51 Bloque1: Estatuto SEMICOLON . Bloque1
+
+    IDENTIFICADOR    desplazar e ir al estado 46
+    CONDICIONSYM     desplazar e ir al estado 47
+    MUESTRASYM       desplazar e ir al estado 48
+    MUESTRALINEASYM  desplazar e ir al estado 49
+    LEESYM           desplazar e ir al estado 50
+    CICLOSYM         desplazar e ir al estado 51
+    HAZSYM           desplazar e ir al estado 52
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Bloque1     ir al estado 118
+    Estatuto    ir al estado 54
+    Llamada     ir al estado 55
+    Asignacion  ir al estado 56
+    Condicion   ir al estado 57
+    Ciclo       ir al estado 58
+    Escritura   ir al estado 59
+    Lectura     ir al estado 60
+    epsilon     ir al estado 61
+
+
+estado 87
+
+  113 Variables: Variable SEMICOLON Variables .
+
+    $default  reduce usando la regla 113 (Variables)
+
+
+estado 88
+
+  120 VariableObjeto: VARSYM Tipo . $@28 IDENTIFICADOR
+
+    $default  reduce usando la regla 119 ($@28)
+
+    $@28  ir al estado 119
+
+
+estado 89
+
+    5 AtributosPrivados: PRIVADOSYM LCURLY VariablesObjetos Funciones . RCURLY
+
+    RCURLY  desplazar e ir al estado 120
+
+
+estado 90
+
+  115 VariablesObjetos: VariableObjeto SEMICOLON . VariablesObjetos
+
+    VARSYM  desplazar e ir al estado 63
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    VariablesObjetos  ir al estado 121
+    VariableObjeto    ir al estado 65
+    epsilon           ir al estado 66
+
+
+estado 91
+
+    7 AtributosPublicos: PUBLICOSYM LCURLY Variables . FuncionesObjetos RCURLY
+
+    FUNCIONSYM  desplazar e ir al estado 122
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    FuncionesObjetos  ir al estado 123
+    FuncionObjeto     ir al estado 124
+    epsilon           ir al estado 125
+
+
+estado 92
+
+    4 Objeto: OBJETOSYM IDENTIFICADOR $@1 LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON .
+
+    $default  reduce usando la regla 4 (Objeto)
+
+
+estado 93
+
+   34 Param: Tipo . $@8 IDENTIFICADOR $@9 Param1
+
+    $default  reduce usando la regla 32 ($@8)
+
+    $@8  ir al estado 126
+
+
+estado 94
+
+   30 Params: LPAREN Param . RPAREN
+
+    RPAREN  desplazar e ir al estado 127
+
+
+estado 95
+
+   35 Param: epsilon .
+
+    $default  reduce usando la regla 35 (Param)
+
+
+estado 96
+
+   53 BloqueFuncion: LCURLY . Variables BloqueFuncion1 BloqueFuncion2 RCURLY
+
+    VARSYM  desplazar e ir al estado 36
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Variables  ir al estado 128
+    Variable   ir al estado 38
+    epsilon    ir al estado 39
+
+
+estado 97
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 Params BloqueFuncion . SEMICOLON $@4 Funcion
+
+    SEMICOLON  desplazar e ir al estado 129
+
+
+estado 98
+
+  118 Variable: VARSYM Tipo $@27 IDENTIFICADOR .
+
+    $default  reduce usando la regla 118 (Variable)
+
+
+estado 99
+
+   67 Llamada1: DOT . IDENTIFICADOR $@15 Llamada1
+
+    IDENTIFICADOR  desplazar e ir al estado 130
+
+
+estado 100
+
+   65 Llamada: IDENTIFICADOR $@14 Llamada1 . Llamada2
+
+    LPAREN  desplazar e ir al estado 131
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Llamada2  ir al estado 132
+    epsilon   ir al estado 133
+
+
+estado 101
+
+   68 Llamada1: epsilon .
+
+    $default  reduce usando la regla 68 (Llamada1)
+
+
+estado 102
+
+   74 Asignacion: IDENTIFICADOR $@17 EQL . $@18 Expresion
+
+    $default  reduce usando la regla 73 ($@18)
+
+    $@18  ir al estado 134
+
+
+estado 103
+
+  100 Factor1: PLUS .
+
+    $default  reduce usando la regla 100 (Factor1)
+
+
+estado 104
+
+  101 Factor1: MINUS .
+
+    $default  reduce usando la regla 101 (Factor1)
+
+
+estado 105
+
+   98 Factor: LPAREN . $@25 Expresion $@26 RPAREN
+
+    $default  reduce usando la regla 96 ($@25)
+
+    $@25  ir al estado 135
+
+
+estado 106
+
+  122 Condicion: CONDICIONSYM LPAREN Expresion . RPAREN $@29 Bloque Condicion1
+
+    RPAREN  desplazar e ir al estado 136
+
+
+estado 107
+
+   75 Expresion: Exp . Expresion1
+
+    EQLEQL  desplazar e ir al estado 137
+    NEQ     desplazar e ir al estado 138
+    LSS     desplazar e ir al estado 139
+    GTR     desplazar e ir al estado 140
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion1  ir al estado 141
+    Expresion2  ir al estado 142
+    epsilon     ir al estado 143
+
+
+estado 108
+
+   83 Exp: Termino . $@19 Exp1
+
+    $default  reduce usando la regla 82 ($@19)
+
+    $@19  ir al estado 144
+
+
+estado 109
+
+   90 Termino: Factor . $@22 Termino1
+
+    $default  reduce usando la regla 89 ($@22)
+
+    $@22  ir al estado 145
+
+
+estado 110
+
+   99 Factor: Factor1 . VarCteExp
+
+    ENTERO         desplazar e ir al estado 146
+    DECIMAL        desplazar e ir al estado 147
+    TEXTO          desplazar e ir al estado 148
+    IDENTIFICADOR  desplazar e ir al estado 149
+    BANDERA        desplazar e ir al estado 150
+
+    Llamada    ir al estado 151
+    VarCteExp  ir al estado 152
+
+
+estado 111
+
+  102 Factor1: epsilon .
+
+    $default  reduce usando la regla 102 (Factor1)
+
+
+estado 112
+
+  135 EstatutosSalida: VarCte .
+
+    $default  reduce usando la regla 135 (EstatutosSalida)
+
+
+estado 113
+
+  134 Escritura: MUESTRASYM LPAREN EstatutosSalida . RPAREN
+
+    RPAREN  desplazar e ir al estado 153
+
+
+estado 114
+
+  136 EstatutosSalida: epsilon .
+
+    $default  reduce usando la regla 136 (EstatutosSalida)
+
+
+estado 115
+
+  133 Escritura: MUESTRALINEASYM LPAREN EstatutosSalida . RPAREN
+
+    RPAREN  desplazar e ir al estado 154
+
+
+estado 116
+
+  128 Ciclo: CICLOSYM $@31 LPAREN . Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 RPAREN Bloque
+
+    IDENTIFICADOR  desplazar e ir al estado 155
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Asignacion  ir al estado 156
+    Ciclo1      ir al estado 157
+    epsilon     ir al estado 158
+
+
+estado 117
+
+  130 Ciclo: HAZSYM $@33 Bloque . MIENTRASSYM LPAREN Expresion RPAREN
+
+    MIENTRASSYM  desplazar e ir al estado 159
+
+
+estado 118
+
+   51 Bloque1: Estatuto SEMICOLON Bloque1 .
+
+    $default  reduce usando la regla 51 (Bloque1)
+
+
+estado 119
+
+  120 VariableObjeto: VARSYM Tipo $@28 . IDENTIFICADOR
+
+    IDENTIFICADOR  desplazar e ir al estado 160
+
+
+estado 120
+
+    5 AtributosPrivados: PRIVADOSYM LCURLY VariablesObjetos Funciones RCURLY .
+
+    $default  reduce usando la regla 5 (AtributosPrivados)
+
+
+estado 121
+
+  115 VariablesObjetos: VariableObjeto SEMICOLON VariablesObjetos .
+
+    $default  reduce usando la regla 115 (VariablesObjetos)
+
+
+estado 122
+
+   23 FuncionObjeto: FUNCIONSYM . Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    Tipo  ir al estado 161
+
+
+estado 123
+
+    7 AtributosPublicos: PUBLICOSYM LCURLY Variables FuncionesObjetos . RCURLY
+
+    RCURLY  desplazar e ir al estado 162
+
+
+estado 124
+
+   14 FuncionesObjetos: FuncionObjeto .
+
+    $default  reduce usando la regla 14 (FuncionesObjetos)
+
+
+estado 125
+
+   24 FuncionObjeto: epsilon .
+
+    $default  reduce usando la regla 24 (FuncionObjeto)
+
+
+estado 126
+
+   34 Param: Tipo $@8 . IDENTIFICADOR $@9 Param1
+
+    IDENTIFICADOR  desplazar e ir al estado 163
+
+
+estado 127
+
+   30 Params: LPAREN Param RPAREN .
+
+    $default  reduce usando la regla 30 (Params)
+
+
+estado 128
+
+   53 BloqueFuncion: LCURLY Variables . BloqueFuncion1 BloqueFuncion2 RCURLY
+
+    IDENTIFICADOR    desplazar e ir al estado 46
+    CONDICIONSYM     desplazar e ir al estado 47
+    MUESTRASYM       desplazar e ir al estado 48
+    MUESTRALINEASYM  desplazar e ir al estado 49
+    LEESYM           desplazar e ir al estado 50
+    CICLOSYM         desplazar e ir al estado 51
+    HAZSYM           desplazar e ir al estado 52
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    BloqueFuncion1  ir al estado 164
+    Estatuto        ir al estado 165
+    Llamada         ir al estado 55
+    Asignacion      ir al estado 56
+    Condicion       ir al estado 57
+    Ciclo           ir al estado 58
+    Escritura       ir al estado 59
+    Lectura         ir al estado 60
+    epsilon         ir al estado 166
+
+
+estado 129
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON . $@4 Funcion
+
+    $default  reduce usando la regla 17 ($@4)
+
+    $@4  ir al estado 167
+
+
+estado 130
+
+   67 Llamada1: DOT IDENTIFICADOR . $@15 Llamada1
+
+    $default  reduce usando la regla 66 ($@15)
+
+    $@15  ir al estado 168
+
+
+estado 131
+
+   70 Llamada2: LPAREN . $@16 Args RPAREN
+
+    $default  reduce usando la regla 69 ($@16)
+
+    $@16  ir al estado 169
+
+
+estado 132
+
+   65 Llamada: IDENTIFICADOR $@14 Llamada1 Llamada2 .
+
+    $default  reduce usando la regla 65 (Llamada)
+
+
+estado 133
+
+   71 Llamada2: epsilon .
+
+    $default  reduce usando la regla 71 (Llamada2)
+
+
+estado 134
+
+   74 Asignacion: IDENTIFICADOR $@17 EQL $@18 . Expresion
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 170
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 135
+
+   98 Factor: LPAREN $@25 . Expresion $@26 RPAREN
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 171
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 136
+
+  122 Condicion: CONDICIONSYM LPAREN Expresion RPAREN . $@29 Bloque Condicion1
+
+    $default  reduce usando la regla 121 ($@29)
+
+    $@29  ir al estado 172
+
+
+estado 137
+
+   80 Expresion2: EQLEQL .
+
+    $default  reduce usando la regla 80 (Expresion2)
+
+
+estado 138
+
+   81 Expresion2: NEQ .
+
+    $default  reduce usando la regla 81 (Expresion2)
+
+
+estado 139
+
+   78 Expresion2: LSS .
+
+    $default  reduce usando la regla 78 (Expresion2)
+
+
+estado 140
+
+   79 Expresion2: GTR .
+
+    $default  reduce usando la regla 79 (Expresion2)
+
+
+estado 141
+
+   75 Expresion: Exp Expresion1 .
+
+    $default  reduce usando la regla 75 (Expresion)
+
+
+estado 142
+
+   76 Expresion1: Expresion2 . Exp
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Exp      ir al estado 173
+    Termino  ir al estado 108
+    Factor   ir al estado 109
+    Factor1  ir al estado 110
+    epsilon  ir al estado 111
+
+
+estado 143
+
+   77 Expresion1: epsilon .
+
+    $default  reduce usando la regla 77 (Expresion1)
+
+
+estado 144
+
+   83 Exp: Termino $@19 . Exp1
+
+    PLUS   desplazar e ir al estado 174
+    MINUS  desplazar e ir al estado 175
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Exp1     ir al estado 176
+    epsilon  ir al estado 177
+
+
+estado 145
+
+   90 Termino: Factor $@22 . Termino1
+
+    TIMES  desplazar e ir al estado 178
+    SLASH  desplazar e ir al estado 179
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Termino1  ir al estado 180
+    epsilon   ir al estado 181
+
+
+estado 146
+
+  104 VarCteExp: ENTERO .
+
+    $default  reduce usando la regla 104 (VarCteExp)
+
+
+estado 147
+
+  107 VarCteExp: DECIMAL .
+
+    $default  reduce usando la regla 107 (VarCteExp)
+
+
+estado 148
+
+  106 VarCteExp: TEXTO .
+
+    $default  reduce usando la regla 106 (VarCteExp)
+
+
+estado 149
+
+   65 Llamada: IDENTIFICADOR . $@14 Llamada1 Llamada2
+
+    $default  reduce usando la regla 64 ($@14)
+
+    $@14  ir al estado 72
+
+
+estado 150
+
+  105 VarCteExp: BANDERA .
+
+    $default  reduce usando la regla 105 (VarCteExp)
+
+
+estado 151
+
+  103 VarCteExp: Llamada .
+
+    $default  reduce usando la regla 103 (VarCteExp)
+
+
+estado 152
+
+   99 Factor: Factor1 VarCteExp .
+
+    $default  reduce usando la regla 99 (Factor)
+
+
+estado 153
+
+  134 Escritura: MUESTRASYM LPAREN EstatutosSalida RPAREN .
+
+    $default  reduce usando la regla 134 (Escritura)
+
+
+estado 154
+
+  133 Escritura: MUESTRALINEASYM LPAREN EstatutosSalida RPAREN .
+
+    $default  reduce usando la regla 133 (Escritura)
+
+
+estado 155
+
+   74 Asignacion: IDENTIFICADOR . $@17 EQL $@18 Expresion
+
+    $default  reduce usando la regla 72 ($@17)
+
+    $@17  ir al estado 73
+
+
+estado 156
+
+  131 Ciclo1: Asignacion .
+
+    $default  reduce usando la regla 131 (Ciclo1)
+
+
+estado 157
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 . COMMA Expresion $@32 COMMA Ciclo1 RPAREN Bloque
+
+    COMMA  desplazar e ir al estado 182
+
+
+estado 158
+
+  132 Ciclo1: epsilon .
+
+    $default  reduce usando la regla 132 (Ciclo1)
+
+
+estado 159
+
+  130 Ciclo: HAZSYM $@33 Bloque MIENTRASSYM . LPAREN Expresion RPAREN
+
+    LPAREN  desplazar e ir al estado 183
+
+
+estado 160
+
+  120 VariableObjeto: VARSYM Tipo $@28 IDENTIFICADOR .
+
+    $default  reduce usando la regla 120 (VariableObjeto)
+
+
+estado 161
+
+   23 FuncionObjeto: FUNCIONSYM Tipo . $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto
+
+    $default  reduce usando la regla 20 ($@5)
+
+    $@5  ir al estado 184
+
+
+estado 162
+
+    7 AtributosPublicos: PUBLICOSYM LCURLY Variables FuncionesObjetos RCURLY .
+
+    $default  reduce usando la regla 7 (AtributosPublicos)
+
+
+estado 163
+
+   34 Param: Tipo $@8 IDENTIFICADOR . $@9 Param1
+
+    $default  reduce usando la regla 33 ($@9)
+
+    $@9  ir al estado 185
+
+
+estado 164
+
+   53 BloqueFuncion: LCURLY Variables BloqueFuncion1 . BloqueFuncion2 RCURLY
+
+    REGRESASYM  desplazar e ir al estado 186
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    BloqueFuncion2  ir al estado 187
+    epsilon         ir al estado 188
+
+
+estado 165
+
+   54 BloqueFuncion1: Estatuto . SEMICOLON BloqueFuncion1
+
+    SEMICOLON  desplazar e ir al estado 189
+
+
+estado 166
+
+   55 BloqueFuncion1: epsilon .
+
+    $default  reduce usando la regla 55 (BloqueFuncion1)
+
+
+estado 167
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON $@4 . Funcion
+
+    FUNCIONSYM  desplazar e ir al estado 14
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Funcion  ir al estado 190
+    epsilon  ir al estado 17
+
+
+estado 168
+
+   67 Llamada1: DOT IDENTIFICADOR $@15 . Llamada1
+
+    DOT  desplazar e ir al estado 99
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Llamada1  ir al estado 191
+    epsilon   ir al estado 101
+
+
+estado 169
+
+   70 Llamada2: LPAREN $@16 . Args RPAREN
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Args       ir al estado 192
+    Expresion  ir al estado 193
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 194
+
+
+estado 170
+
+   74 Asignacion: IDENTIFICADOR $@17 EQL $@18 Expresion .
+
+    $default  reduce usando la regla 74 (Asignacion)
+
+
+estado 171
+
+   98 Factor: LPAREN $@25 Expresion . $@26 RPAREN
+
+    $default  reduce usando la regla 97 ($@26)
+
+    $@26  ir al estado 195
+
+
+estado 172
+
+  122 Condicion: CONDICIONSYM LPAREN Expresion RPAREN $@29 . Bloque Condicion1
+
+    LCURLY  desplazar e ir al estado 30
+
+    Bloque  ir al estado 196
+
+
+estado 173
+
+   76 Expresion1: Expresion2 Exp .
+
+    $default  reduce usando la regla 76 (Expresion1)
+
+
+estado 174
+
+   85 Exp1: PLUS . $@20 Exp
+
+    $default  reduce usando la regla 84 ($@20)
+
+    $@20  ir al estado 197
+
+
+estado 175
+
+   87 Exp1: MINUS . $@21 Exp
+
+    $default  reduce usando la regla 86 ($@21)
+
+    $@21  ir al estado 198
+
+
+estado 176
+
+   83 Exp: Termino $@19 Exp1 .
+
+    $default  reduce usando la regla 83 (Exp)
+
+
+estado 177
+
+   88 Exp1: epsilon .
+
+    $default  reduce usando la regla 88 (Exp1)
+
+
+estado 178
+
+   92 Termino1: TIMES . $@23 Termino
+
+    $default  reduce usando la regla 91 ($@23)
+
+    $@23  ir al estado 199
+
+
+estado 179
+
+   94 Termino1: SLASH . $@24 Termino
+
+    $default  reduce usando la regla 93 ($@24)
+
+    $@24  ir al estado 200
+
+
+estado 180
+
+   90 Termino: Factor $@22 Termino1 .
+
+    $default  reduce usando la regla 90 (Termino)
+
+
+estado 181
+
+   95 Termino1: epsilon .
+
+    $default  reduce usando la regla 95 (Termino1)
+
+
+estado 182
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA . Expresion $@32 COMMA Ciclo1 RPAREN Bloque
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 201
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 183
+
+  130 Ciclo: HAZSYM $@33 Bloque MIENTRASSYM LPAREN . Expresion RPAREN
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 202
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 184
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 . IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto
+
+    IDENTIFICADOR  desplazar e ir al estado 203
+
+
+estado 185
+
+   34 Param: Tipo $@8 IDENTIFICADOR $@9 . Param1
+
+    COMMA  desplazar e ir al estado 204
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Param1   ir al estado 205
+    epsilon  ir al estado 206
+
+
+estado 186
+
+   56 BloqueFuncion2: REGRESASYM . Expresion
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 207
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 187
+
+   53 BloqueFuncion: LCURLY Variables BloqueFuncion1 BloqueFuncion2 . RCURLY
+
+    RCURLY  desplazar e ir al estado 208
+
+
+estado 188
+
+   57 BloqueFuncion2: epsilon .
+
+    $default  reduce usando la regla 57 (BloqueFuncion2)
+
+
+estado 189
+
+   54 BloqueFuncion1: Estatuto SEMICOLON . BloqueFuncion1
+
+    IDENTIFICADOR    desplazar e ir al estado 46
+    CONDICIONSYM     desplazar e ir al estado 47
+    MUESTRASYM       desplazar e ir al estado 48
+    MUESTRALINEASYM  desplazar e ir al estado 49
+    LEESYM           desplazar e ir al estado 50
+    CICLOSYM         desplazar e ir al estado 51
+    HAZSYM           desplazar e ir al estado 52
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    BloqueFuncion1  ir al estado 209
+    Estatuto        ir al estado 165
+    Llamada         ir al estado 55
+    Asignacion      ir al estado 56
+    Condicion       ir al estado 57
+    Ciclo           ir al estado 58
+    Escritura       ir al estado 59
+    Lectura         ir al estado 60
+    epsilon         ir al estado 166
+
+
+estado 190
+
+   18 Funcion: FUNCIONSYM Tipo $@2 IDENTIFICADOR $@3 Params BloqueFuncion SEMICOLON $@4 Funcion .
+
+    $default  reduce usando la regla 18 (Funcion)
+
+
+estado 191
+
+   67 Llamada1: DOT IDENTIFICADOR $@15 Llamada1 .
+
+    $default  reduce usando la regla 67 (Llamada1)
+
+
+estado 192
+
+   70 Llamada2: LPAREN $@16 Args . RPAREN
+
+    RPAREN  desplazar e ir al estado 210
+
+
+estado 193
+
+   45 Args: Expresion . $@12 Args1
+
+    $default  reduce usando la regla 44 ($@12)
+
+    $@12  ir al estado 211
+
+
+estado 194
+
+   46 Args: epsilon .
+  102 Factor1: epsilon .
+
+    RPAREN    reduce usando la regla 46 (Args)
+    $default  reduce usando la regla 102 (Factor1)
+
+
+estado 195
+
+   98 Factor: LPAREN $@25 Expresion $@26 . RPAREN
+
+    RPAREN  desplazar e ir al estado 212
+
+
+estado 196
+
+  122 Condicion: CONDICIONSYM LPAREN Expresion RPAREN $@29 Bloque . Condicion1
+
+    FALLOSYM  desplazar e ir al estado 213
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Condicion1  ir al estado 214
+    epsilon     ir al estado 215
+
+
+estado 197
+
+   85 Exp1: PLUS $@20 . Exp
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Exp      ir al estado 216
+    Termino  ir al estado 108
+    Factor   ir al estado 109
+    Factor1  ir al estado 110
+    epsilon  ir al estado 111
+
+
+estado 198
+
+   87 Exp1: MINUS $@21 . Exp
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Exp      ir al estado 217
+    Termino  ir al estado 108
+    Factor   ir al estado 109
+    Factor1  ir al estado 110
+    epsilon  ir al estado 111
+
+
+estado 199
+
+   92 Termino1: TIMES $@23 . Termino
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Termino  ir al estado 218
+    Factor   ir al estado 109
+    Factor1  ir al estado 110
+    epsilon  ir al estado 111
+
+
+estado 200
+
+   94 Termino1: SLASH $@24 . Termino
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Termino  ir al estado 219
+    Factor   ir al estado 109
+    Factor1  ir al estado 110
+    epsilon  ir al estado 111
+
+
+estado 201
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion . $@32 COMMA Ciclo1 RPAREN Bloque
+
+    $default  reduce usando la regla 127 ($@32)
+
+    $@32  ir al estado 220
+
+
+estado 202
+
+  130 Ciclo: HAZSYM $@33 Bloque MIENTRASSYM LPAREN Expresion . RPAREN
+
+    RPAREN  desplazar e ir al estado 221
+
+
+estado 203
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR . $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto
+
+    $default  reduce usando la regla 21 ($@6)
+
+    $@6  ir al estado 222
+
+
+estado 204
+
+   36 Param1: COMMA . Param
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Tipo     ir al estado 93
+    Param    ir al estado 223
+    epsilon  ir al estado 95
+
+
+estado 205
+
+   34 Param: Tipo $@8 IDENTIFICADOR $@9 Param1 .
+
+    $default  reduce usando la regla 34 (Param)
+
+
+estado 206
+
+   37 Param1: epsilon .
+
+    $default  reduce usando la regla 37 (Param1)
+
+
+estado 207
+
+   56 BloqueFuncion2: REGRESASYM Expresion .
+
+    $default  reduce usando la regla 56 (BloqueFuncion2)
+
+
+estado 208
+
+   53 BloqueFuncion: LCURLY Variables BloqueFuncion1 BloqueFuncion2 RCURLY .
+
+    $default  reduce usando la regla 53 (BloqueFuncion)
+
+
+estado 209
+
+   54 BloqueFuncion1: Estatuto SEMICOLON BloqueFuncion1 .
+
+    $default  reduce usando la regla 54 (BloqueFuncion1)
+
+
+estado 210
+
+   70 Llamada2: LPAREN $@16 Args RPAREN .
+
+    $default  reduce usando la regla 70 (Llamada2)
+
+
+estado 211
+
+   45 Args: Expresion $@12 . Args1
+
+    COMMA  desplazar e ir al estado 224
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Args1    ir al estado 225
+    epsilon  ir al estado 226
+
+
+estado 212
+
+   98 Factor: LPAREN $@25 Expresion $@26 RPAREN .
+
+    $default  reduce usando la regla 98 (Factor)
+
+
+estado 213
+
+  124 Condicion1: FALLOSYM . $@30 Bloque
+
+    $default  reduce usando la regla 123 ($@30)
+
+    $@30  ir al estado 227
+
+
+estado 214
+
+  122 Condicion: CONDICIONSYM LPAREN Expresion RPAREN $@29 Bloque Condicion1 .
+
+    $default  reduce usando la regla 122 (Condicion)
+
+
+estado 215
+
+  125 Condicion1: epsilon .
+
+    $default  reduce usando la regla 125 (Condicion1)
+
+
+estado 216
+
+   85 Exp1: PLUS $@20 Exp .
+
+    $default  reduce usando la regla 85 (Exp1)
+
+
+estado 217
+
+   87 Exp1: MINUS $@21 Exp .
+
+    $default  reduce usando la regla 87 (Exp1)
+
+
+estado 218
+
+   92 Termino1: TIMES $@23 Termino .
+
+    $default  reduce usando la regla 92 (Termino1)
+
+
+estado 219
+
+   94 Termino1: SLASH $@24 Termino .
+
+    $default  reduce usando la regla 94 (Termino1)
+
+
+estado 220
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion $@32 . COMMA Ciclo1 RPAREN Bloque
+
+    COMMA  desplazar e ir al estado 228
+
+
+estado 221
+
+  130 Ciclo: HAZSYM $@33 Bloque MIENTRASSYM LPAREN Expresion RPAREN .
+
+    $default  reduce usando la regla 130 (Ciclo)
+
+
+estado 222
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 . ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto
+
+    LPAREN  desplazar e ir al estado 229
+
+    ParamsObjeto  ir al estado 230
+
+
+estado 223
+
+   36 Param1: COMMA Param .
+
+    $default  reduce usando la regla 36 (Param1)
+
+
+estado 224
+
+   48 Args1: COMMA . Expresion $@13 Args1
+
+    PLUS    desplazar e ir al estado 103
+    MINUS   desplazar e ir al estado 104
+    LPAREN  desplazar e ir al estado 105
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Expresion  ir al estado 231
+    Exp        ir al estado 107
+    Termino    ir al estado 108
+    Factor     ir al estado 109
+    Factor1    ir al estado 110
+    epsilon    ir al estado 111
+
+
+estado 225
+
+   45 Args: Expresion $@12 Args1 .
+
+    $default  reduce usando la regla 45 (Args)
+
+
+estado 226
+
+   49 Args1: epsilon .
+
+    $default  reduce usando la regla 49 (Args1)
+
+
+estado 227
+
+  124 Condicion1: FALLOSYM $@30 . Bloque
+
+    LCURLY  desplazar e ir al estado 30
+
+    Bloque  ir al estado 232
+
+
+estado 228
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion $@32 COMMA . Ciclo1 RPAREN Bloque
+
+    IDENTIFICADOR  desplazar e ir al estado 155
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Asignacion  ir al estado 156
+    Ciclo1      ir al estado 233
+    epsilon     ir al estado 158
+
+
+estado 229
+
+   31 ParamsObjeto: LPAREN . ParamObjeto RPAREN
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Tipo         ir al estado 234
+    ParamObjeto  ir al estado 235
+    epsilon      ir al estado 236
+
+
+estado 230
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto . BloqueFuncion SEMICOLON $@7 FuncionObjeto
+
+    LCURLY  desplazar e ir al estado 96
+
+    BloqueFuncion  ir al estado 237
+
+
+estado 231
+
+   48 Args1: COMMA Expresion . $@13 Args1
+
+    $default  reduce usando la regla 47 ($@13)
+
+    $@13  ir al estado 238
+
+
+estado 232
+
+  124 Condicion1: FALLOSYM $@30 Bloque .
+
+    $default  reduce usando la regla 124 (Condicion1)
+
+
+estado 233
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 . RPAREN Bloque
+
+    RPAREN  desplazar e ir al estado 239
+
+
+estado 234
+
+   40 ParamObjeto: Tipo . $@10 IDENTIFICADOR $@11 ParamObjeto1
+
+    $default  reduce usando la regla 38 ($@10)
+
+    $@10  ir al estado 240
+
+
+estado 235
+
+   31 ParamsObjeto: LPAREN ParamObjeto . RPAREN
+
+    RPAREN  desplazar e ir al estado 241
+
+
+estado 236
+
+   41 ParamObjeto: epsilon .
+
+    $default  reduce usando la regla 41 (ParamObjeto)
+
+
+estado 237
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion . SEMICOLON $@7 FuncionObjeto
+
+    SEMICOLON  desplazar e ir al estado 242
+
+
+estado 238
+
+   48 Args1: COMMA Expresion $@13 . Args1
+
+    COMMA  desplazar e ir al estado 224
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Args1    ir al estado 243
+    epsilon  ir al estado 226
+
+
+estado 239
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 RPAREN . Bloque
+
+    LCURLY  desplazar e ir al estado 30
+
+    Bloque  ir al estado 244
+
+
+estado 240
+
+   40 ParamObjeto: Tipo $@10 . IDENTIFICADOR $@11 ParamObjeto1
+
+    IDENTIFICADOR  desplazar e ir al estado 245
+
+
+estado 241
+
+   31 ParamsObjeto: LPAREN ParamObjeto RPAREN .
+
+    $default  reduce usando la regla 31 (ParamsObjeto)
+
+
+estado 242
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON . $@7 FuncionObjeto
+
+    $default  reduce usando la regla 22 ($@7)
+
+    $@7  ir al estado 246
+
+
+estado 243
+
+   48 Args1: COMMA Expresion $@13 Args1 .
+
+    $default  reduce usando la regla 48 (Args1)
+
+
+estado 244
+
+  128 Ciclo: CICLOSYM $@31 LPAREN Ciclo1 COMMA Expresion $@32 COMMA Ciclo1 RPAREN Bloque .
+
+    $default  reduce usando la regla 128 (Ciclo)
+
+
+estado 245
+
+   40 ParamObjeto: Tipo $@10 IDENTIFICADOR . $@11 ParamObjeto1
+
+    $default  reduce usando la regla 39 ($@11)
+
+    $@11  ir al estado 247
+
+
+estado 246
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 . FuncionObjeto
+
+    FUNCIONSYM  desplazar e ir al estado 122
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    FuncionObjeto  ir al estado 248
+    epsilon        ir al estado 125
+
+
+estado 247
+
+   40 ParamObjeto: Tipo $@10 IDENTIFICADOR $@11 . ParamObjeto1
+
+    COMMA  desplazar e ir al estado 249
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    ParamObjeto1  ir al estado 250
+    epsilon       ir al estado 251
+
+
+estado 248
+
+   23 FuncionObjeto: FUNCIONSYM Tipo $@5 IDENTIFICADOR $@6 ParamsObjeto BloqueFuncion SEMICOLON $@7 FuncionObjeto .
+
+    $default  reduce usando la regla 23 (FuncionObjeto)
+
+
+estado 249
+
+   42 ParamObjeto1: COMMA . ParamObjeto
+
+    IDENTIFICADOR  desplazar e ir al estado 20
+    BANDERASYM     desplazar e ir al estado 21
+    ENTEROSYM      desplazar e ir al estado 22
+    DECIMALSYM     desplazar e ir al estado 23
+    TEXTOSYM       desplazar e ir al estado 24
+
+    $default  reduce usando la regla 139 (epsilon)
+
+    Tipo         ir al estado 234
+    ParamObjeto  ir al estado 252
+    epsilon      ir al estado 236
+
+
+estado 250
+
+   40 ParamObjeto: Tipo $@10 IDENTIFICADOR $@11 ParamObjeto1 .
+
+    $default  reduce usando la regla 40 (ParamObjeto)
+
+
+estado 251
+
+   43 ParamObjeto1: epsilon .
+
+    $default  reduce usando la regla 43 (ParamObjeto1)
+
+
+estado 252
+
+   42 ParamObjeto1: COMMA ParamObjeto .
+
+    $default  reduce usando la regla 42 (ParamObjeto1)

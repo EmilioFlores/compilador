@@ -1,3 +1,4 @@
+
 //
 //  main.cpp
 //  proyectoCompiladores
@@ -99,21 +100,32 @@ public:
 
 struct variable{
     int tipo;//< 9 si es de los tipos estandares, >= 9 si es un tipo definido
+    string id;//nombre de la variable
     int estructura;//0 variables, 1 funciones, 2 objetos
     int bloque;//por si es funcion u objeto
     int direccion; //direccion a la base de datos
     bool privacidad;//true si es publico, false si es privado
 };
 
+struct Memoria{
+    int enteros_total;
+    int decimal_total;
+    int bandera_total;
+    int texto_total;
+    int temporal_total;
+};
+
 struct bloque{
     int tipo;
     string nombre;
+    struct Memoria memoria;
     vector <int> vVar;//Variables Publicas del bloque
     vector <int> vParam;//Parametros (en caso de que sea un metodo)
     //vector <int> vBloquesSup;//Bloques superiores del bloque en cuestion (ayuda a buscar variables globales que puedan ser usadas en el bloque)
 };
 
-class dirProcedimientos{
+
+class dirProcedimientos {
 private:
     
 public:
@@ -159,6 +171,13 @@ public:
         return vVariables[iV].tipo;
     }
     
+    int checaEstructura(string id){
+        int iV = buscaVariable(id);
+        if (iV==-1)
+            return -1;
+        return vVariables[iV].estructura;
+    }
+    
     //crearVariable es para checar si puede crear una variable. ej: entero x; o 'Objeto' y; donde Objeto es un tipo previamente definido
     //esta funcion tambien sirve para decir si una variable es publica a un objeto, con el bool privacidad
     bool crearVariable(string tipo, string id, bool privacidad,int direccion){
@@ -179,33 +198,40 @@ public:
             v.estructura=2;
             v.bloque=bloqueTipo[v.tipo-5];
         }
-        v.direccion = direccion;
         v.privacidad=privacidad;
+        v.id=id;
+        v.direccion=direccion;
         vVariables.push_back(v);
         if (privacidad){//esto para agregar las variables publicas de un objeto
+            if (tipo == "entero ") {}
+            else if ( tipo == "bandera") {}
+            else if ( tipo == "decimal") {}
+            else if ( tipo == "texto") {}
+            
+            vBloques[bloqueAct].memoria.enteros_total++;
             vBloques[bloqueAct].vVar.push_back(varNo);
         }
         varNo++;//
         return true;
     }
     
-    //buscaVariable checa si la variable ha sido instanciada antes en el proyecto y regresa su indice la tabla de variables de variables
+    ///buscaVariable checa si la variable ha sido instanciada antes en el proyecto y regresa su indice la tabla de variables de variables
     // regresa -1 si no la encontro
     int buscaVariable (string id){
         int val=-1;
         for (int i = pilaBloques.size()-1 ; i >= 0 ; i--){
             val = arbol->search(id,pilaBloques[i]);
-            if (val>-1)
+            if (val>-1){
+                nombreUltVar = id;
+                ultVariabe=val;// para saber cual fue la ultima variable inicializada
+                argActual=0;//se reinicializa argumentos actuales a 0 para saber que no se a checado ningun argumento de esta variable posible metodo
                 return val;
+            }
         }
-        nombreUltVar = id;
-        ultVariabe=val;// para saber cual fue la ultima variable inicializada
-        argActual=0;//se reinicializa argumentos actuales a 0 para saber que no se a checado ningun argumento de esta variable posible metodo
         cout << "No se encontro la variable "<< id << endl;
         return -1;
     }
-    
-    
+    // se llama al final de checar cada metodo
     bool checaCompletezPred(bool metodo){
         if (vVariables[ultVariabe].estructura==1)//checa si la variable es un metodo, si no no
         {
@@ -218,31 +244,59 @@ public:
                 cout << "Faltan argumentos" << endl;
                 return false;
             }
+            return true;
         }
-        return true;
+        else{
+            cout << "La variable no es un metodo"<<endl;
+            return false;
+        }
     }
-    /*
+    //esta es para constantes
     bool checaArgumentoTipo(int tipo){
-        
-    }
-    bool checaArgumentoID(string id){
         int iAux = ultVariabe;// se guardan para mantener los datos del metodo que llamo los argumentos
         string sAux = nombreUltVar;
+        
         if (vVariables[ultVariabe].estructura!=1){
-            cout << "La variable "+nombreUltVar+" no es un metodo no debe tener argumentos"<<endl;
+            cout << "La variable "<<nombreUltVar<<" no es un metodo no debe tener argumentos"<<endl;
             return false;
         }
         if (argActual+1>vBloques[vVariables[ultVariabe].bloque].vParam.size()){
             cout <<"Se excedio en argumentos"<<endl;
             return false;
         }
-        if (vVariables[buscaVariable(id)].tipo!=)
+        if (tipo!=vVariables[vBloques[vVariables[iAux].bloque].vParam[argActual]].tipo)
+        {
+            cout << "No coinciden los tipos del argumento #"<<argActual+1<<endl;
+            return false;
+        }
         argActual++;
         ultVariabe=iAux;
         nombreUltVar = sAux;
         return true;
     }
-    */
+    //esta es para argumentos normales
+    bool checaArgumentoID(string id){
+        int iAux = ultVariabe;// se guardan para mantener los datos del metodo que llamo los argumentos
+        string sAux = nombreUltVar;
+        if (vVariables[ultVariabe].estructura!=1){
+            cout << "La variable "<<nombreUltVar<<" no es un metodo no debe tener argumentos"<<endl;
+            return false;
+        }
+        if (argActual+1>vBloques[vVariables[ultVariabe].bloque].vParam.size()){
+            cout <<"Se excedio en argumentos"<<endl;
+            return false;
+        }
+        if (vVariables[buscaVariable(id)].tipo!=vVariables[vBloques[vVariables[iAux].bloque].vParam[argActual]].tipo)
+        {
+            cout << "No coinciden los tipos del argumento #"<<argActual<<endl;
+            return false;
+        }
+        argActual++;
+        ultVariabe=iAux;
+        nombreUltVar = sAux;
+        return true;
+    }
+    
     bool crearObjeto(string tipo){
         for (int i = 0 ; i < tipos.size() ; i++){
             if (tipos[i]==tipo){
@@ -262,7 +316,7 @@ public:
         return true;
     }
     
-    bool crearMetodo (string tipo, string id){
+    bool crearMetodo (string tipo, string id, int direccion){
         variable v;
         v.tipo = buscaTipo(tipo);
         if (v.tipo==-1){
@@ -279,6 +333,8 @@ public:
         bloque bAux;
         bAux.tipo = v.tipo;
         bAux.nombre = id;
+        v.id=id;
+        v.direccion=direccion;
         v.privacidad=true;// se les da privacidad publica por default
         vVariables.push_back(v);
         vBloques[bloqueAct].vVar.push_back(varNo);
@@ -290,13 +346,34 @@ public:
         varNo++;
         return true;
     }
+    
+    bool checaPredicado(string id){
+        int iAux = ultVariabe; //guardamos la ultima variable usada que corresponde al objeto invocador
+        string sAux = nombreUltVar;
+        if (vVariables[iAux].estructura!=2){
+            cout << "La variable "+sAux+" no es un objeto no puede invocar predicados"<<endl;
+            return false;
+        }
+        int bloqueM =vVariables[iAux].bloque;
+        int iVar=-1;
+        for (int  i = 0 ; i < vBloques[bloqueM].vVar.size();i++){
+            if (vVariables[vBloques[bloqueM].vVar[i]].id==id){
+                iVar=vBloques[bloqueM].vVar[i];
+            }
+        }
+        if(iVar==-1){
+            cout << "No se encontro la variable publica "+id+" dentro de "+nombreUltVar<<endl;
+            return false;
+        }
+        return true;
+    }
+    
     int buscaDireccion(string id){
         int iVar;
         iVar = buscaVariable(id);
         if (iVar==-1){
             return -1;
         }
-
         return vVariables[iVar].direccion;
     }
     bool agregaParametro (string tipo, string id, int direccion){
@@ -309,9 +386,5 @@ public:
     void terminaBloque(){
         pilaBloques.pop_back();
         bloqueAct=pilaBloques.back();
-    }
-    
-    bool checaPredicado(){
-        
     }
 };

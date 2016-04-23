@@ -17,10 +17,10 @@ objeto Rectangulo {
 
 	publico {
 		var entero y ;
-		var entero a ;
+		var entero asigna6 ;
 
 
-		funcion entero getTest2 () {
+		funcion entero getX () {
 
 			var entero test2  ;
 			regresa test2 ; 
@@ -41,10 +41,10 @@ funcion bandera getTest3 ( bandera x, entero y  ) {
 programa {
 	
 	var bandera band ;
-	var Rectangulo xxxx;
+	var Rectangulo rect;
 	var entero test5;
 
-	rect.asigna6;
+	
 
 	rect.getX();
 

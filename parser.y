@@ -43,7 +43,7 @@ void accion_8_expresiones(string operador);
 void accion_9_expresiones();
 
 //Assignaciones
-void accion_1_assignacion(int dirOperando);
+void accion_1_assignacion(int dirOperando, int tipoVariable);
 void accion_2_assignacion(string operador);
 void accion_3_assignacion();
 
@@ -59,6 +59,11 @@ void accion_1_ciclo();
 void accion_2_ciclo();
 void accion_3_ciclo();
 
+// estatuto print
+void accion_1_print();
+
+// estatuto read
+void accion_1_read(string yytext);
 
 //Estatuto Haz-Mientras
 void accion_1_haz_mientras();
@@ -81,45 +86,77 @@ void accion_4_llamada_proc();
 void accion_5_llamada_proc();
 void accion_6_llamada_proc(string nombreProc);
 
-
+void resetOffsetIndexes(bool local);
 int getIndexOperador(string operador);
-int getSiguienteDireccion(string tipo, bool constante);
+int getSiguienteDireccion(string tipo, bool constante, bool local);
 template <typename T> string to_string(T value);
 
 
 dirProcedimientos dirProcedimientos ;
 string yyTipo = "";
 string objetoNombre = "default";
+string metodoNombre = "";
+string funcionNombre = "";
 
 
-int offsetEntero     = 1000;
-int offsetEnteroConstante = 4500;
+int offsetEnteroGlobal     		 	= 1000;
+int offsetEnteroConstanteGlobal  	= 1900;
+int offsetDecimalGlobal    		 	= 2000;
+int offsetDecimalConstanteGlobal 	= 2900;
+int offsetBanderaGlobal    		 	= 3000;
+int offsetBanderaConstanteGlobal 	= 3900;
+int offsetTextoGlobal      		 	= 4000;
+int offsetTextoConstanteGlobal   	= 4900;
+int offsetTemporalesGlobal 		 	= 5000;
+int offsetTemporalesConstanteGlobal = 5900;
+int offsetVacioGlobal 				= 6000;
+int offsetVacioConstanteGlobal 		= 6900;
 
-int offsetDecimal    = 5000;
-int offsetDecimalConstante = 9500;
+int offsetEnteroLocal     			= 7000;
+int offsetEnteroConstanteLocal 		= 7900;
+int offsetDecimalLocal    			= 8000;
+int offsetDecimalConstanteLocal 	= 8900;
+int offsetBanderaLocal    			= 9000;
+int offsetBanderaConstanteLocal 	= 9900;
+int offsetTextoLocal      			= 10000;
+int offsetTextoConstanteLocal 		= 10900;
+int offsetTemporalesLocal 			= 11000;
+int offsetTemporalesConstanteLocal 	= 11900;
+int offsetVacioLocal 				= 12000;
+int offsetVacioConstanteLocal 		= 12900;
 
-int offsetBandera    = 10000;
-int offsetBanderaConstante = 12500;
 
-int offsetTexto      = 13000;
-int offsetTextoConstante = 19500;
 
-int offsetTemporales = 20000;
-int offsetTemporalesConstante = 29500;
+int indexEnterosGlobal      			= 0;
+int indexDecimalGlobal      			= 0;
+int idnexBanderaGlobal      			= 0;
+int indexTextoGlobal        			= 0;
+int indexTemporalesGlobal   			= 0;
+int indexVacioGlobal  					= 0;
+int indexEnteroConstantesGlobal      	= 0;
+int indexDecimalConstantesGlobal      	= 0;
+int idnexBanderaConstantesGlobal      	= 0;
+int indexTextoConstantesGlobal        	= 0;
+int indexTemporalesConstantesGlobal   	= 0;
+int indexVacioConstantesGlobal   	  	= 0;
 
-int indexEnteros    = 0;
-int indexDecimal    = 0;
-int idnexBandera    = 0;
-int indexTexto      = 0;
-int indexTemporales = 0;
-int indexEnteroConstantes    = 0;
-int indexDecimalConstantes    = 0;
-int idnexBanderaConstantes    = 0;
-int indexTextoConstantes      = 0;
-int indexTemporalesConstantes = 0;
+int indexEnterosLocal       			= 0;
+int indexDecimalLocal       			= 0;
+int idnexBanderaLocal       			= 0;
+int indexTextoLocal         			= 0;
+int indexTemporalesLocal    			= 0;
+int indexVacioLocal   					= 0;
+int indexEnteroConstantesLocal       	= 0;
+int indexDecimalConstantesLocal       	= 0;
+int idnexBanderaConstantesLocal       	= 0;
+int indexTextoConstantesLocal         	= 0;
+int indexTemporalesConstantesLocal    	= 0;
+int indexVacioConstantesLocal    	  	= 0;
 
 int indexParametro = 0;
 
+bool metodo = false;
+bool local = false;
 stack<int> pilaOperandos;
 stack<string> pilaOperadores;
 stack<int> pilaTipos;
@@ -265,13 +302,14 @@ Objeto 				: OBJETOSYM  IDENTIFICADOR {
 						dirProcedimientos.crearObjeto(objetoNombre); 
 
 					}  LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON {
+						resetOffsetIndexes(local);
 						dirProcedimientos.terminaBloque();
 					} ;
 
-AtributosPrivados	: PRIVADOSYM LCURLY VariablesObjetos Funciones RCURLY
+AtributosPrivados	: PRIVADOSYM LCURLY { local = true; } VariablesObjetos Funciones  { local = false; } RCURLY
 					|  epsilon ;
 
-AtributosPublicos	: PUBLICOSYM LCURLY Variables FuncionesObjetos RCURLY 
+AtributosPublicos	: PUBLICOSYM LCURLY { local = true; } Variables FuncionesObjetos { local = false; } RCURLY 
 					|  epsilon ;
 
 
@@ -286,17 +324,27 @@ Libreria1			: Libreria | ;
 Funciones 			: Funcion ;
 FuncionesObjetos	: FuncionObjeto ;
 
-Funcion  			: FUNCIONSYM  Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON Funcion
+Funcion  			: FUNCIONSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {
+						funcionNombre = $4;
+						accion_1_definicion_proc(yyTipo, $4);
+					 	local = true; 
+					} Params BloqueFuncion SEMICOLON {
+						
+						resetOffsetIndexes(local);
+						local = false; 
+					  	dirProcedimientos.terminaBloque();
+					} Funcion
 					| epsilon ;
 
 FuncionObjeto		: FUNCIONSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {
-						
+						funcionNombre = $4;
 						//dirProcedimientos.crearMetodo(yyTipo, $4);
 						accion_1_definicion_proc(yyTipo, $4);
-
+						local = true; 
 
 					} ParamsObjeto BloqueFuncion SEMICOLON {
-
+					  resetOffsetIndexes(local);
+					  local = false; 
 					  dirProcedimientos.terminaBloque();
 					} FuncionObjeto
 					| epsilon ;
@@ -309,16 +357,20 @@ Tipo				: ENTEROSYM
 					| IDENTIFICADOR ;
 
 
-Params				: LPAREN Param RPAREN ;
-ParamsObjeto		: LPAREN ParamObjeto RPAREN ;
+Params				: LPAREN  Param  RPAREN ;
+ParamsObjeto		: LPAREN  ParamObjeto  RPAREN ;
 
-Param 				: Tipo IDENTIFICADOR  Param1 
+Param 				: Tipo { yyTipo = yytext } IDENTIFICADOR {
+						int direccion_virtual = getSiguienteDireccion(yyTipo, 0, local);
+
+						accion_2_definicion_proc(yyTipo, $3, direccion_virtual);
+					} Param1 
 					| epsilon ;
 Param1				: COMMA Param 
 					| epsilon ;
 
 ParamObjeto 		: Tipo { yyTipo = yytext } IDENTIFICADOR {
-						int direccion_virtual = getSiguienteDireccion(yyTipo, 0);
+						int direccion_virtual = getSiguienteDireccion(yyTipo, 0, local);
 						accion_2_definicion_proc(yyTipo, $3, direccion_virtual);
 						// dirProcedimientos.agregaParametro(yyTipo, $3, direccion_virtual);
 
@@ -328,24 +380,38 @@ ParamObjeto1		: COMMA ParamObjeto
 					| epsilon ;
 
 
-Args				: VarCte Args1
+Args				: Expresion { 
+					  accion_3_llamada_proc();
+					} Args1
 					| epsilon ;
 
-Args1				: COMMA VarCte Args1
-					| epsilon ;
-
-
-
-Bloque				: LCURLY Variables Bloque1 RCURLY ;
-Bloque1				:	Estatuto Bloque1 
-					| epsilon ;
-
-BloqueFuncion		: LCURLY Variables BloqueFuncion1 REGRESASYM IDENTIFICADOR SEMICOLON RCURLY
-BloqueFuncion1		:	Estatuto BloqueFuncion1 
+Args1				: COMMA Expresion {
+					  accion_3_llamada_proc();
+					} Args1
 					| epsilon ;
 
 
-Estatuto			: Asignacion SEMICOLON
+
+Bloque				: LCURLY   Variables Bloque1   RCURLY ;
+Bloque1				:	Estatuto SEMICOLON Bloque1 
+					| epsilon ;
+
+
+BloqueFuncion		: LCURLY Variables BloqueFuncion1 BloqueFuncion2    RCURLY {		
+
+
+						Cuadruplo cuadruploTemp = Cuadruplo("retorno", "", "" , "");
+						cuadruplos.push_back( cuadruploTemp );	
+					}
+BloqueFuncion1		:	Estatuto SEMICOLON BloqueFuncion1 
+					| epsilon ;
+BloqueFuncion2		: REGRESASYM  Expresion {
+						accion_7_definicion_proc();
+					} SEMICOLON
+					| epsilon ;
+
+
+Estatuto			: Asignacion 
 					| Condicion
 					| Ciclo
 					| Escritura
@@ -354,25 +420,67 @@ Estatuto			: Asignacion SEMICOLON
 
 
 Llamada				: IDENTIFICADOR {
-					   cout << "llamada a procedimiento: " << $1 <<  endl;
+					 	
+					// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
+					// si es 4, entonces es un identificador
+
+					   metodo = false;
 					   objetoNombre = $1;
+					   metodoNombre = $1;
+					   int variableIndex = dirProcedimientos.buscaVariable(objetoNombre);
+
+					   if (variableIndex == -1 ) { 
+							cerr << "ERROR: Variable not found:  \"" << objetoNombre;
+							cerr << "\" on line " << line_num << endl;
+							exit(-1);
+						}
 
 
-					}  Llamada1 Llamada2  SEMICOLON ;
+
+					}  Llamada1 Llamada2  {
+						accion_6_llamada_proc(metodoNombre);
+					} ;
 Llamada1			: DOT IDENTIFICADOR {
-						string metodoNombre = $2;
-
+					  metodoNombre = $2;
+					  metodo = true;
+						
 						accion_1_llamada_proc(objetoNombre, metodoNombre);
 					} Llamada1
 					| epsilon ;
 Llamada2			: LPAREN {
+						// mete fondo falso
+						accion_6_expresiones("(");
+						//cout << "Metodo nombre" << metodoNombre << endl;
+						// Si es una funcion, no tenia .getX(), solo era getX()
+						if ( metodo == false) {
+
+							accion_1_llamada_proc(objetoNombre, metodoNombre);
+						}
+						
+						
 						accion_2_llamada_proc();
-					} Args RPAREN  
-					| epsilon ;
+					} Args RPAREN  {
+						accion_7_expresiones();
+						accion_5_llamada_proc();
+
+					}
+					| epsilon {
+						
+						if ( metodo ) {
+							//cout << "Metodo: " << metodoNombre << endl;
+							accion_1_expresiones(metodoNombre, 4);
+						}
+						else {
+							//cout << "Variable: " << objetoNombre << endl;
+							accion_1_expresiones(objetoNombre, 4);
+
+						}
+					};
 
 Asignacion 			: IDENTIFICADOR {
 										int direccionVariable = dirProcedimientos.buscaDireccion($1);
-										accion_1_assignacion(direccionVariable );
+										int tipoVariable = dirProcedimientos.checaTipo($1);
+										accion_1_assignacion(direccionVariable, tipoVariable);
 										int variableIndex = dirProcedimientos.buscaVariable($1);
 										if (variableIndex == -1 ) { 
 											cerr << "ERROR: at symbol \"" << yytext;
@@ -426,11 +534,9 @@ Factor1 			: PLUS
 
 
 
-VarCteExp			:	IDENTIFICADOR { 
-										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
-										// si es 4, entonces es un identificador
+VarCteExp			:	Llamada { 
 
-										accion_1_expresiones(yytext, 4);
+										
 									 };
 					|	ENTERO { 
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
@@ -448,13 +554,10 @@ VarCteExp			:	IDENTIFICADOR {
 										// 1. Meter a pilaO (direccion de variable) y meter a PTipos el tipo de variable
 										accion_1_expresiones(yytext, 2);
 
-								};  
+									};
+					 
 
-VarCte			:	IDENTIFICADOR 
-					|	ENTERO 
-					|	BANDERA 
-					|	TEXTO   
-					|	DECIMAL ;
+					
 
 
 Variables			: Variable SEMICOLON Variables
@@ -467,9 +570,16 @@ VariablesObjetos	: VariableObjeto SEMICOLON VariablesObjetos
 Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR  {  
 									//TODO Hace funcion que me regrese la direccion. 
 									if (debug ) {
-										cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << $4 << endl;
 									}
-									dirProcedimientos.crearVariable(yyTipo, $4, 1, getSiguienteDireccion(yyTipo, 0) );
+									// Si la variable era local o global 
+									int direccion;
+									
+									direccion = getSiguienteDireccion(yyTipo, 0,  local);
+
+									
+									cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << $4 << " Direccion: " <<   direccion << " Local: " << local   << endl;
+									
+									dirProcedimientos.crearVariable(yyTipo, $4, 1, direccion );
 
 								   }  ;
 VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   {  
@@ -478,7 +588,7 @@ VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   {
 										cout << "Crear Objeto Tipo: " << yyTipo << " Nombre: " << $4 << endl;
 									}
 
-									dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(yyTipo, 0) );  
+									dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(yyTipo, 0, local));  
 								   }  ; ;
 //Variable2			: COMMA IDENTIFICADOR Variable2
 //					| epsilon ;
@@ -506,19 +616,17 @@ Ciclo				: CICLOSYM {
 						accion_1_haz_mientras();
 					} Bloque MIENTRASSYM LPAREN Expresion RPAREN {
 						accion_2_haz_mientras();
-					} SEMICOLON ;
+					}  ;
 Ciclo1 				: Asignacion 
 					| epsilon ;
 
-Escritura			: MUESTRALINEASYM LPAREN EstatutosSalida RPAREN SEMICOLON ;
-					| MUESTRASYM LPAREN EstatutosSalida RPAREN SEMICOLON ;
+Escritura			: MUESTRASYM LPAREN Expresion { accion_1_print(); }  EstatutosSalida RPAREN  ;
 
-EstatutosSalida		: Llamada
-					| VarCte
+EstatutosSalida		: COMMA Expresion { accion_1_print(); } EstatutosSalida
 					| epsilon ;
 
 
-Lectura				: LEESYM VarCte SEMICOLON ;
+Lectura				: LEESYM IDENTIFICADOR { accion_1_read(yytext); } ;
 
 Main 				: PROGRAMASYM Bloque { printCuadruplos(); }
 
@@ -574,31 +682,31 @@ void accion_1_expresiones(string yytext, int tipo){
 		switch (tipo) {
 			case 0: // bandera
 
-				constante.direccion = getSiguienteDireccion("bandera", 1);
+				constante.direccion = getSiguienteDireccion("bandera", 1, local);
 				constante.tipo = 0;
 				constante.valor = yytext;
 
 			break;
 			case 1: // entero
-				constante.direccion = getSiguienteDireccion("entero", 1);
+				constante.direccion = getSiguienteDireccion("entero", 1, local);
 				constante.tipo = 1;
 				constante.valor = yytext;
 			break;
 			case 2: // decimal
-				constante.direccion = getSiguienteDireccion("decimal", 1);
+				constante.direccion = getSiguienteDireccion("decimal", 1, local);
 				constante.tipo = 2;
 				constante.valor = yytext;
 
 			break;
 			case 3: // texto
-				constante.direccion = getSiguienteDireccion("texto", 1);
+				constante.direccion = getSiguienteDireccion("texto", 1, local);
 				constante.tipo = 3;
 				constante.valor = yytext;
 
 			break;
 		}
 		
-
+		
 		constantes.push_back(constante);			
 		pilaOperandos.push(constante.direccion);
 		pilaTipos.push(constante.tipo);
@@ -609,20 +717,25 @@ void accion_1_expresiones(string yytext, int tipo){
 	else {
 
 		// la variable ya estaba registrada
+
 		int direccionVariable = dirProcedimientos.buscaDireccion(yytext);
 		if (debug ) {
 
 		cout << "accion_1_expresiones Else >>> " << yytext <<  " <<< " <<  endl;
-		cout << "direccionVariable " << direccionVariable << endl;
 		}
 		if (direccionVariable != -1 ) {
 
 			
 			int tipoVariable = dirProcedimientos.checaTipo(yytext);
 
+			int estructuraVariable = dirProcedimientos.checaEstructura(yytext);
+
 
 			//0 bandera, 1 entero, 2 decimal, 3 texto
-			if (tipoVariable < 4) {
+			// estructura 0 variable, 1 funcion
+			if (tipoVariable < 4 && ( estructuraVariable == 0 || estructuraVariable == 1)  ) {
+			
+
 
 				pilaOperandos.push(direccionVariable);
 				pilaTipos.push(tipoVariable);
@@ -672,7 +785,7 @@ void accion_4_expresiones() {
 	if ( pilaOperadores.size() != 0 ) {
 
 		if ( pilaOperadores.top() == "+" || pilaOperadores.top() == "-") {
-
+			
 			int tipoDer = -1, tipoIzq = -1;
 			int tipoResultado = -1, tipoOperador;
 			tipoDer = pilaTipos.top();
@@ -703,17 +816,19 @@ void accion_4_expresiones() {
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = getSiguienteDireccion("temporal",0);
+				int resultado = getSiguienteDireccion("temporal",0,local);
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
 
 				pilaOperandos.push(resultado);
 
 				pilaTipos.push(tipoResultado);
+				
 
 			}	
 			else {
-				cout << "Tipos incompatibles" << endl;
+				cerr << "Tipos incompatibles en la linea: " << line_num <<  endl;
+				exit(-1);
 			}	
 
 		}
@@ -772,7 +887,7 @@ void accion_5_expresiones() {
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = getSiguienteDireccion("temporal", 0);
+				int resultado = getSiguienteDireccion("temporal", 0, local);
 				
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
@@ -780,10 +895,12 @@ void accion_5_expresiones() {
 				pilaOperandos.push(resultado);
 
 				pilaTipos.push(tipoResultado);
+				
 
 			}	
 			else {
-				cout << "Tipos incompatibles" << endl;
+				cerr << "Tipos incompatibles en la linea " << line_num << endl
+;				exit(-1);
 			}	
 
 		}
@@ -858,7 +975,7 @@ void accion_9_expresiones(){
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = getSiguienteDireccion("temporal", 0);
+				int resultado = getSiguienteDireccion("temporal", 0, local);
 				
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
@@ -869,7 +986,8 @@ void accion_9_expresiones(){
 
 			}	
 			else {
-				cout << "Tipos incompatibles" << endl;
+				cerr << "Tipos incompatibles en la linea: " << line_num << endl;
+				exit(-1);
 			}	
 
 		}
@@ -880,12 +998,15 @@ void accion_9_expresiones(){
 }
 
 
-void accion_1_assignacion(int dirOperando){
+void accion_1_assignacion(int dirOperando, int tipoVariable){
 	//Meter id en PilaO
 	if (debug ) {
 		cout << "accion_1_assignacion Empieza" <<  endl;
 	}
+
+	pilaTipos.push(tipoVariable);
 	pilaOperandos.push(dirOperando);
+
 	if (debug ) {
 		cout << "accion_1_assignacion Termina" <<  endl;
 	}
@@ -915,15 +1036,38 @@ void accion_3_assignacion( ){
 	
 	int der = pilaOperandos.top();
 	pilaOperandos.pop();
+	int tipoDer = pilaTipos.top();
+	pilaTipos.pop();
+	
+	//cout << "Der: " << der <<  " Tipo: " << tipoDer << endl;
 
 	int izq = pilaOperandos.top();
 	pilaOperandos.pop();
+	int tipoIzq = pilaTipos.top();
+	pilaTipos.pop();
+	
+	//cout << "Izq: " << izq <<  " Tipo: " << tipoIzq << endl;
 
 	string asigna = pilaOperadores.top();
 	pilaOperadores.pop();
 
-	Cuadruplo cuadruploTemp = Cuadruplo(asigna, to_string(der), "", to_string(izq));
-	cuadruplos.push_back( cuadruploTemp );
+	// Si son vacios, entocnes error..
+	if ( tipoDer == 4 || tipoIzq == 4 ){ 
+		cerr << "SEMANTIC ERROR, WRONG TYPE OF VARIABLE on line " << line_num << endl;
+		exit(-1);
+	}
+
+	int tipoOperador  = getIndexOperador(asigna);
+	int tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
+
+	if ( tipoResultado != -1 ) {
+
+		Cuadruplo cuadruploTemp = Cuadruplo(asigna, to_string(der), "", to_string(izq));
+		cuadruplos.push_back( cuadruploTemp );
+	} else {
+				cerr << "Tipos incompatibles en linea: " << line_num <<   endl;
+				exit(-1);
+	}
 
 	if (debug ) {
 		cout << "accion_3_assignacion Termina" <<  endl;
@@ -1006,6 +1150,49 @@ void accion_3_condicion_fallo() {
 
 }
 
+void accion_1_print() {
+	
+
+
+	if ( debug ) {
+		cout << "accion_1_print Empieza" << endl;
+	}
+
+	int res = pilaOperandos.top();
+	pilaOperandos.pop();
+
+	Cuadruplo cuadruploTemp = Cuadruplo("print", "", "" , to_string(res));
+	cuadruplos.push_back( cuadruploTemp );	
+
+	if ( debug ) {
+		cout << "accion_1_print Termina" << endl;
+	}
+}
+
+
+void accion_1_read(string nombre) { 
+
+	if ( debug ) {
+		cout << "accion_1_read Empieza" << endl;
+	}
+
+	int variableIndex = dirProcedimientos.buscaVariable(nombre);
+
+   if (variableIndex == -1 ) { 
+		cerr << "ERROR: Variable not found:  \"" << nombre;
+		cerr << "\" on line " << line_num << endl;
+		exit(-1);
+	}
+
+
+	Cuadruplo cuadruploTemp = Cuadruplo("read", "", "" , nombre );
+	cuadruplos.push_back( cuadruploTemp );	
+
+	if ( debug ) {
+		cout << "accion_1_read Termina" << endl;
+	}
+
+}
 void accion_1_ciclo() {
 	// meter cont en PSaltos
 	
@@ -1111,6 +1298,8 @@ void accion_2_haz_mientras() {
 	int resultado = pilaOperandos.top();
 	pilaOperandos.pop();
 
+	pilaTipos.pop();
+
 	int retorno = pilaSaltos.top();
 	pilaSaltos.pop();
 	
@@ -1133,7 +1322,10 @@ void accion_1_definicion_proc(string tipo, string nombre) {
 	if ( debug ) {
 		cout << "accion_1_definicion_proc Empieza" << endl;
 	}
-	dirProcedimientos.crearMetodo(tipo, nombre);
+	int direccion = getSiguienteDireccion(yyTipo, 0, local);
+	//cout << "Crear metodo " << nombre << " Direccion: " << direccion << " Tipo: " << yyTipo <<  endl;
+	dirProcedimientos.crearMetodo(tipo, nombre,direccion);
+	cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << nombre << " Direccion: " <<   direccion   << endl;
 
 	if ( debug ) {
 		cout << "accion_1_definicion_proc Termina" << endl;
@@ -1148,7 +1340,7 @@ void accion_2_definicion_proc(string tipo, string nombre, int direccion) {
 	if ( debug ) {
 		cout << "accion_2_definicion_proc Empieza" << endl;
 	}
-
+	//cout << "Crear parametro " << nombre << " Direccion: " << direccion << endl;
 	dirProcedimientos.agregaParametro(tipo, nombre, direccion);
 
 	if ( debug ) {
@@ -1230,8 +1422,29 @@ void accion_7_definicion_proc() {
 		cout << "accion_7_definicion_proc Empieza" << endl;
 	}
 
-	Cuadruplo cuadruploTemp = Cuadruplo("retorno", "", "" , "");
-	cuadruplos.push_back( cuadruploTemp );	
+	int resultado = pilaOperandos.top();
+	pilaOperandos.pop();
+	int tipoOperando = pilaTipos.top();
+	pilaTipos.pop();
+	
+
+	int direccionMetodo = dirProcedimientos.buscaDireccion(funcionNombre);
+	int tipoFuncion = dirProcedimientos.checaTipo(funcionNombre);
+	int tipoOperador  = getIndexOperador("=");
+
+	int tipoResultado = cuboSemantico[tipoOperando][tipoFuncion][tipoOperador];
+	
+	if ( tipoResultado != -1 ) {
+
+		Cuadruplo cuadruploTemp = Cuadruplo("=", to_string(resultado), "" , to_string(direccionMetodo));
+		cuadruplos.push_back( cuadruploTemp );	
+
+	} else {
+		cerr << "Tipos incompatibles en linea: " << line_num <<   endl;
+		exit(-1);
+	}
+
+
 
 	if ( debug ) {
 		cout << "accion_7_definicion_proc Termina" << endl;
@@ -1248,6 +1461,16 @@ void accion_1_llamada_proc(string objetoNombre, string metodoNombre) {
 		cout << "accion_1_llamada_proc Empieza" << endl;
 	}
 
+	bool existePredicado = dirProcedimientos.checaPredicado(metodoNombre);
+	int estructuraVariable = dirProcedimientos.checaEstructura(objetoNombre);
+		
+	// 1 = funciones, 0 = variable, 2 = objeto
+	if (existePredicado == false && estructuraVariable != 1) { 
+		cerr << "ERROR: Method not found:  \"" << metodoNombre << " of variable: " << objetoNombre;
+		cerr << "\" on line " << line_num << endl;
+		exit(-1);
+	}
+	
 
 	if ( debug ) {
 		cout << "accion_1_llamada_proc Termina" << endl;
@@ -1255,6 +1478,7 @@ void accion_1_llamada_proc(string objetoNombre, string metodoNombre) {
 }
 
 void accion_2_llamada_proc() {
+
 	// Generar accipon: Era tamaño (expansion del reagistro de activacion, de acuerdo a tamaño definido )
 	// inicializar contador de parametros k = 1;
 
@@ -1265,6 +1489,9 @@ void accion_2_llamada_proc() {
 		cout << "accion_2_llamada_proc Empieza" << endl;
 	}
 	indexParametro = 0;
+	Cuadruplo cuadruploTemp = Cuadruplo("era", metodoNombre, "" , "");
+	cuadruplos.push_back( cuadruploTemp );	
+	
 
 
 
@@ -1283,8 +1510,26 @@ void accion_3_llamada_proc() {
 	
 
 	if ( debug ) {
-		cout << "accion_3_llamada_proc Empieza" << endl;
+		cout << "x Empieza" << endl;
 	}
+
+	
+	int tipo = pilaTipos.top();
+	pilaTipos.pop();
+	//TODO Aqui truena porque el checa argumento esta esperando algo antes, pero en este caso es solo una funcion
+	bool concuerdaTipo = dirProcedimientos.checaArgumentoTipo(tipo);
+	
+	if ( concuerdaTipo == false ) {
+		cerr << "Wrong argument: on line " << line_num << endl;
+		exit(-1);
+	}
+
+
+	int argument = pilaOperandos.top();
+	pilaOperandos.pop();
+
+	Cuadruplo cuadruploTemp = Cuadruplo("param", to_string(argument), "param"+to_string(indexParametro++), "");
+	cuadruplos.push_back( cuadruploTemp );
 
 
 	if ( debug ) {
@@ -1299,8 +1544,9 @@ void accion_4_llamada_proc() {
 
 	if ( debug ) {
 		cout << "accion_4_llamada_proc Empieza" << endl;
-	}
+	}	
 
+	indexParametro++;
 
 	if ( debug ) {
 		cout << "accion_4_llamada_proc Termina" << endl;
@@ -1316,7 +1562,17 @@ void accion_5_llamada_proc() {
 	if ( debug ) {
 		cout << "accion_5_llamada_proc Empieza" << endl;
 	}
+	
+	bool completezPredicado = dirProcedimientos.checaCompletezPred(true);
 
+	if ( completezPredicado == false ) {
+
+
+		cerr << "Faltan parametros en linea " << line_num << endl;
+		exit(-1);
+
+	
+	}
 
 	if ( debug ) {
 		cout << "accion_5_llamada_proc Termina" << endl;
@@ -1332,8 +1588,24 @@ void accion_6_llamada_proc(string nombreProc) {
 		cout << "accion_6_llamada_proc Empieza" << endl;
 	}
 
-	Cuadruplo cuadruploTemp = Cuadruplo("gosub", nombreProc, to_string(cuadruplos.size()) , "");
-	cuadruplos.push_back( cuadruploTemp );	
+
+	int direccionVariable = dirProcedimientos.buscaDireccion(nombreProc);
+	int tipoVariable = dirProcedimientos.checaTipo(nombreProc);
+	
+	int estructura = dirProcedimientos.checaEstructura(nombreProc);
+
+	// solo hacer esto si es una funcion o objeto
+	if ( estructura != 0 ) {
+
+		pilaOperandos.push(direccionVariable);
+		pilaTipos.push(tipoVariable);
+
+
+
+		Cuadruplo cuadruploTemp = Cuadruplo("gosub", nombreProc, to_string(cuadruplos.size()) , "");
+		cuadruplos.push_back( cuadruploTemp );	
+	}
+	
 
 	if ( debug ) {
 		cout << "accion_6_llamada_proc Termina" << endl;
@@ -1392,48 +1664,133 @@ int getIndexOperador(string operador) {
 
 }
 
-int getSiguienteDireccion(string tipo, bool constante) {
+int getSiguienteDireccion(string tipo, bool constante, bool local) {
 
+	if ( local ) {
 
-	if ( !constante ) {
+		if ( !constante ) {
 
-		if (tipo == "entero") {
-			return offsetEntero + indexEnteros++;
+			if (tipo == "entero") {
+				return offsetEnteroLocal + indexEnterosLocal++;
 
-		} else if ( tipo == "decimal") {
-			return offsetDecimal + indexDecimal++;
+			} else if ( tipo == "decimal") {
+				return offsetDecimalLocal + indexDecimalLocal++;
 
-		} else if ( tipo == "texto") {
-			return offsetTexto + indexTexto++;
+			} else if ( tipo == "texto") {
+				return offsetTextoLocal + indexTextoLocal++;
 
-		} else if ( tipo == "bandera") {
-			return offsetBandera + idnexBandera++;
-			
-		} else if ( tipo == "temporal") {
-			return offsetTemporales + indexTemporales++;
+			} else if ( tipo == "bandera") {
+				return offsetBanderaLocal + idnexBanderaLocal++;
+				
+			} else if ( tipo == "temporal") {
+				return offsetTemporalesLocal + indexTemporalesLocal++;
 
+			} else if ( tipo == "vacio") {
+				return offsetVacioLocal + indexVacioLocal++;
+
+			}
 		}
-	}
-	else {
-		if (tipo == "entero") {
-			return offsetEnteroConstante + indexEnteroConstantes++;
-
-		} else if ( tipo == "decimal") {
-			return offsetDecimalConstante + indexDecimalConstantes++;
-
-		} else if ( tipo == "texto") {
-			return offsetTextoConstante + indexTextoConstantes++;
-
-		} else if ( tipo == "bandera") {
-			return offsetBanderaConstante + idnexBanderaConstantes++;
+		else {
 			
-		} else if ( tipo == "temporal") {
-			return offsetTemporalesConstante + indexTemporalesConstantes++;
+			if (tipo == "entero") {
+				return offsetEnteroConstanteLocal + indexEnteroConstantesLocal++;
 
-		}	
+			} else if ( tipo == "decimal") {
+				return offsetDecimalConstanteLocal + indexDecimalConstantesLocal++;
+
+			} else if ( tipo == "texto") {
+				return offsetTextoConstanteLocal + indexTextoConstantesLocal++;
+
+			} else if ( tipo == "bandera") {
+				return offsetBanderaConstanteLocal + idnexBanderaConstantesLocal++;
+				
+			} else if ( tipo == "temporal") {
+				return offsetTemporalesConstanteLocal + indexTemporalesConstantesLocal++;
+
+			} else if ( tipo == "vacio") {
+				return offsetVacioConstanteLocal + indexVacioConstantesLocal++;
+
+			}	
+		}
+	} else {
+		if ( !constante ) {
+
+			if (tipo == "entero") {
+				return offsetEnteroGlobal + indexEnterosGlobal++;
+
+			} else if ( tipo == "decimal") {
+				return offsetDecimalGlobal + indexDecimalGlobal++;
+
+			} else if ( tipo == "texto") {
+				return offsetTextoGlobal + indexTextoGlobal++;
+
+			} else if ( tipo == "bandera") {
+				return offsetBanderaGlobal + idnexBanderaGlobal++;
+				
+			} else if ( tipo == "temporal") {
+				return offsetTemporalesGlobal + indexTemporalesGlobal++;
+
+			} else if ( tipo == "vacio") {
+				return offsetVacioGlobal + indexVacioGlobal++;
+
+			}
+		}
+		else {
+			if (tipo == "entero") {
+				return offsetEnteroConstanteGlobal + indexEnteroConstantesGlobal++;
+
+			} else if ( tipo == "decimal") {
+				return offsetDecimalConstanteGlobal + indexDecimalConstantesGlobal++;
+
+			} else if ( tipo == "texto") {
+				return offsetTextoConstanteGlobal + indexTextoConstantesGlobal++;
+
+			} else if ( tipo == "bandera") {
+				return offsetBanderaConstanteGlobal + idnexBanderaConstantesGlobal++;
+				
+			} else if ( tipo == "temporal") {
+				return offsetTemporalesConstanteGlobal + indexTemporalesConstantesGlobal++;
+
+			} else if ( tipo == "vacio") {
+				return offsetVacioConstanteGlobal + indexVacioConstantesGlobal++;
+
+			}	
+		}
 	}
 	return 0;
 
+}
+
+void resetOffsetIndexes(bool local) {
+	if ( local ) {
+		indexEnterosLocal       			= 0;
+		indexDecimalLocal       			= 0;
+		idnexBanderaLocal       			= 0;
+		indexTextoLocal         			= 0;
+		indexTemporalesLocal    			= 0;
+		indexVacioLocal   					= 0;
+		indexEnteroConstantesLocal       	= 0;
+		indexDecimalConstantesLocal       	= 0;
+		idnexBanderaConstantesLocal       	= 0;
+		indexTextoConstantesLocal         	= 0;
+		indexTemporalesConstantesLocal    	= 0;
+		indexVacioConstantesLocal    	  	= 0;
+
+	} else {
+
+		indexEnterosGlobal      			= 0;
+		indexDecimalGlobal      			= 0;
+		idnexBanderaGlobal      			= 0;
+		indexTextoGlobal        			= 0;
+		indexTemporalesGlobal   			= 0;
+		indexVacioGlobal  					= 0;
+		indexEnteroConstantesGlobal      	= 0;
+		indexDecimalConstantesGlobal      	= 0;
+		idnexBanderaConstantesGlobal      	= 0;
+		indexTextoConstantesGlobal        	= 0;
+		indexTemporalesConstantesGlobal   	= 0;
+		indexVacioConstantesGlobal   	  	= 0;
+	}
 }
 
 void printCuadruplos() { 
