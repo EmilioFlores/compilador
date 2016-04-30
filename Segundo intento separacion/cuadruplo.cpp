@@ -1,6 +1,6 @@
 
 #include <iostream>
- 
+#include "cuadruplo.h"
 using namespace std;
 
 class Cuadruplo{

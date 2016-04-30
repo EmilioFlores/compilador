@@ -1,4 +1,38 @@
-parser.tab.c:1204:6: error: expected identifier before numeric constant
-parser.tab.c:1204:6: error: expected '}' before numeric constant
-parser.tab.c:1204:6: error: expected unqualified-id before numeric constant
-parser.tab.c:1259:4: error: expected declaration before '}' token
+In file included from prototipos.h:12:0,
+                 from parser.y:13:
+cuadruplo.h:8:7: error: redefinition of 'class Cuadruplo'
+In file included from parser.y:5:0:
+cuadruplo.cpp:6:7: error: previous definition of 'class Cuadruplo'
+In file included from parser.y:15:0:
+dirProcedimientos.cpp:6:7: error: redefinition of 'class dirProcedimientos'
+In file included from declaraciones.h:4:0,
+                 from prototipos.h:15,
+                 from parser.y:13:
+dirProcedimientos.h:5:7: error: previous definition of 'class dirProcedimientos'
+In file included from parser.y:16:0:
+memoria.cpp:3:7: error: redefinition of 'class Memoria'
+In file included from declaraciones.h:2:0,
+                 from prototipos.h:15,
+                 from parser.y:13:
+memoria.h:5:7: error: previous definition of 'class Memoria'
+In file included from parser.y:17:0:
+trie.cpp:4:7: error: redefinition of 'class TrieNode'
+In file included from trie.h:4:0,
+                 from declaraciones.h:3,
+                 from prototipos.h:15,
+                 from parser.y:13:
+TrieNode.h:1:7: error: previous definition of 'class TrieNode'
+In file included from parser.y:17:0:
+trie.cpp:16:7: error: redefinition of 'class Trie'
+In file included from declaraciones.h:3:0,
+                 from prototipos.h:15,
+                 from parser.y:13:
+trie.h:6:7: error: previous definition of 'class Trie'
+parser.y:29:12: error: conflicting declaration 'const bool debug'
+In file included from prototipos.h:15:0,
+                 from parser.y:13:
+declaraciones.h:49:13: error: 'debug' has a previous declaration as 'bool debug'
+parser.y:36:9: error: redefinition of 'Memoria memoria'
+In file included from parser.y:15:0:
+dirProcedimientos.cpp:4:9: error: 'Memoria memoria' previously declared here
+parser.y:40:1: error: 'dirProcedimientos' does not name a type
