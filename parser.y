@@ -3,11 +3,15 @@
 #include <iostream>
 #include <string.h>
 #include "cuadruplo.cpp"
-#include "estructura.cpp"
+//#include "estructura.cpp"
 #include <stack>
 #include <string>     // std::string, std::to_string
 #include <vector>
 #include <sstream>
+
+#include <math.h> 
+
+
 using namespace std;
 
 // stuff from flex that bison needs to know about:
@@ -20,6 +24,7 @@ extern int line_num;
  
 const bool debug = false;
 
+
 struct constante
 {
 	int direccion;
@@ -30,7 +35,6 @@ void yyerror(const char *s);
 void printCuboSemantico();
 void printCuadruplos();
 void rellenar(int fin, int cont);
-
 //Expresiones
 void accion_1_expresiones(string yytext, int tipo);
 void accion_2_expresiones(string operador);
@@ -41,34 +45,25 @@ void accion_6_expresiones(string fondoFalso);
 void accion_7_expresiones();
 void accion_8_expresiones(string operador);
 void accion_9_expresiones();
-
 //Assignaciones
 void accion_1_assignacion(int dirOperando, int tipoVariable);
 void accion_2_assignacion(string operador);
 void accion_3_assignacion();
-
-
 //Estatuto CONDICION-FALLO
 void accion_1_condicion_fallo();
 void accion_2_condicion_fallo();
 void accion_3_condicion_fallo();
-
-
 //Estatuto Ciclo
 void accion_1_ciclo();
 void accion_2_ciclo();
 void accion_3_ciclo();
-
 // estatuto print
 void accion_1_print();
-
 // estatuto read
 void accion_1_read(string yytext);
-
 //Estatuto Haz-Mientras
 void accion_1_haz_mientras();
 void accion_2_haz_mientras();
-
 //Definicion de un procedimiento
 void accion_1_definicion_proc(string tipo, string nombre);
 void accion_2_definicion_proc(string tipo, string nombre, int direccion);
@@ -77,7 +72,6 @@ void accion_4_definicion_proc();
 void accion_5_definicion_proc();
 void accion_6_definicion_proc();
 void accion_7_definicion_proc();
-
 // Llamada un procedimiento
 void accion_1_llamada_proc(string objetoNombre, string metodoNombre);
 void accion_2_llamada_proc();
@@ -86,77 +80,996 @@ void accion_4_llamada_proc();
 void accion_5_llamada_proc();
 void accion_6_llamada_proc(string nombreProc);
 
-void resetOffsetIndexes(bool local);
+void solve();
+
 int getIndexOperador(string operador);
-int getSiguienteDireccion(string tipo, bool constante, bool local);
+string getTipoVariable(int tipo );
+int getSiguienteDireccion(int tipo, bool constante, bool global, bool temporal, bool objeto, bool funcion);
 template <typename T> string to_string(T value);
+int getIndexTipoVariable(string nombre );
+
+
+class TrieNode {
+public:
+    TrieNode *abc[62];
+    bool termina;
+    int varNo;
+    TrieNode() {
+        termina=false;
+        varNo=-1;
+        for (int i = 0 ; i < 62;i++)
+            abc[i]=NULL;
+    }
+};
+class Trie {
+private:
+    TrieNode* root;
+public:
+    Trie() {
+        root = new TrieNode();
+    }
+    int trieAux (char c){
+        if (c>= '0' && c<= '9'){
+            return c-'0';
+        }
+        if (c>= 'a' && c<= 'z'){
+            return (c-'a') + 10;
+        }
+        if (c>= 'A' && c<= 'Z'){
+            return (c-'Z') + 26;
+        }
+        return -1;
+    }
+    bool insert(string word,int place,int num) {
+        TrieNode *aux;
+        aux=root;
+        int val;
+        //se guarda(al revez) con el valor place, que es un int y representa el bloque
+        do{
+            if(aux->abc[place%10]==NULL){
+                aux->abc[place%10]=new TrieNode();
+            }
+            aux = aux->abc[place%10];
+            place /= 10;
+        }while (place>0);
+        
+        for (int i = 0 ; i < word.size();i++){
+            val=trieAux(word[i]);
+            if(aux->abc[val]==NULL){
+                aux->abc[val]=new TrieNode();
+            }
+            aux = aux->abc[val];
+        }
+        if (aux->termina){
+            return false;
+        }
+        aux->varNo=num;
+        num++;
+        aux->termina=true;
+        return true;
+    }
+    
+    // Returns if the word is in the trie.
+    int search(string word,int place) {
+        TrieNode *aux;
+        aux=root;
+        int val;
+        do{
+            if(aux->abc[place%10]==NULL){
+                return -1;
+            }
+            aux = aux->abc[place%10];
+            place /= 10;
+        }while (place>0);
+        for (int i = 0 ; i < word.size();i++){
+            val=trieAux(word[i]);
+            if(aux->abc[val]==NULL){
+                return -1;
+            }
+            aux = aux->abc[val];
+        }
+        return aux->varNo;
+    }
+};
+
+
+struct variable{
+    int tipo;//< 5 si es de los tipos estandares, >= 5 si es un tipo definido
+    string id;//nombre de la variable
+    int estructura;//0 variables, 1 funciones, 2 objetos
+    int bloque;//por si es funcion u objeto
+    int direccion; //direccion a la base de datos
+    bool privacidad;//true si es publico, false si es privado
+    
+};
+
+struct Objeto{
+    vector<int> tipos;//tipos de direcciones a sustituir
+    vector<int> dirCuadruplo;//Direciones a sustituir
+    vector<int> dirReales;//direciones reales de objeto  *en caso de ser un objeto->
+    //sera direccion al mismo arreglo de objetos
+};
+
+
+struct bloque{
+    int tipo;
+    string estructura = "bloque";
+    string nombre;
+    vector <int> vVar;//Variables del bloque
+    vector <int> vParam;//Parametros (en caso de que sea un metodo)
+    //vector <int> vBloquesSup;//Bloques superiores del bloque en cuestion (ayuda a buscar variables globales que puedan ser usadas en el bloque)
+    int inMemoria[4];//Variable para inicializar la memoria con las cantidades
+};
+
+
+class Memoria{
+private:
+    //Arreglos de Vectores de Memoria
+    vector<int> enteros;
+    vector<bool> banderas;
+    vector<double> decimales;
+    vector<string> textos;
+    
+    vector<int> enterosLoc;
+    vector<bool> banderasLoc;
+    vector<double> decimalesLoc;
+    vector<string> textosLoc;
+    
+    vector<int> enterosTemp;
+    vector<bool> banderasTemp;
+    vector<double> decimalesTemp;
+    vector<string> textosTemp;
+    
+    //Arreglos de Vectores de Memoria de Objetos
+    //direciones que apuntan a variables de objetos
+    vector<int> enterosDirObj;
+    vector<int> banderasDirObj;
+    vector<int> decimalesDirObj;
+    vector<int> textosDirObj;
+    vector<int> objetosDirObj;//este ultimo es para los objetos dentro de otros objeots en funciones
+    
+    vector<int> enterosObj;
+    vector<bool> banderasObj;
+    vector<double> decimalesObj;
+    vector<string> textosObj;
+    
+    //direciones que apuntan a variables de funciones
+    vector<int> enterosDirFunc;
+    vector<int> banderasDirFunc;
+    vector<int> decimalesDirFunc;
+    vector<int> textosDirFunc;
+    
+    
+public:
+    int cantEnt=0;
+    int cantBan=0;
+    int cantDec=0;
+    int cantTex=0;
+    
+    int cantEntObj=0;
+    int cantBanObj=0;
+    int cantDecObj=0;
+    int cantTexObj=0;
+    
+    int cantEntDirObj=0;
+    int cantBanDirObj=0;
+    int cantDecDirObj=0;
+    int cantTexDirObj=0;
+    
+    int cantEntDirFunc=0;
+    int cantBanDirFunc=0;
+    int cantDecDirFunc=0;
+    int cantTexDirFunc=0;
+    
+    int entLocActual = 0;
+    int banLocActual = 0;
+    int decLocActual = 0;
+    int texLocActual = 0;
+    
+    //Metodo que inicializara los vectores de memoria dependiendo de la memoria estatica necesaria
+    void inicializa(){
+        
+        enteros.resize(cantEnt);
+
+        banderas.resize(cantBan);
+        decimales.resize(cantDec);
+        textos.resize(cantTex);
+        
+        enterosObj.resize(cantEntObj);
+        banderasObj.resize(cantBanObj);
+        decimalesObj.resize(cantDecObj);
+        textosObj.resize(cantTexObj);
+        
+        enterosDirObj.resize(cantEntDirObj);
+        banderasDirObj.resize(cantBanDirObj);
+        decimalesDirObj.resize(cantDecDirObj);
+        textosDirObj.resize(cantTexDirObj);
+        
+        enterosDirFunc.resize(cantEntDirFunc);
+        banderasDirFunc.resize(cantBanDirFunc);
+        decimalesDirFunc.resize(cantDecDirFunc);
+        textosDirFunc.resize(cantTexDirFunc);
+        
+        enterosTemp.resize(1000);
+        banderasTemp.resize(1000);
+        decimalesTemp.resize(1000);
+        textosTemp.resize(1000);
+        
+        enterosLoc.resize(1000);
+        banderasLoc.resize(1000);
+        decimalesLoc.resize(1000);
+        textosLoc.resize(1000);
+    }
+    
+    //Metodos que regresan el espacio de memoria
+    int pideEntero(int dir){
+        cout << "Direccion recibida: " << dir << " Tamaño: " << enteros.size() << endl;
+
+        return enteros[dir];
+    }
+    bool pideBandera(int dir){
+        return banderas[dir];
+    }
+    double pideDecimal(int dir){
+        return decimales[dir];
+    }
+    string pideTexto(int dir){
+        return textos[dir];
+    }
+    
+    int pideEnteroTemp(int dir){
+        return enterosTemp[dir];
+    }
+    bool pideBanderaTemp(int dir){
+        return banderasTemp[dir];
+    }
+    double pideDecimalTemp(int dir){
+        return decimalesTemp[dir];
+    }
+    string pideTextoTemp(int dir){
+        return textosTemp[dir];
+    }
+    
+    int pideEnteroLoc(int dir){
+        return enterosLoc[dir];
+    }
+    bool pideBanderaLoc(int dir){
+        return banderasLoc[dir];
+    }
+    double pideDecimalLoc(int dir){
+        return decimalesLoc[dir];
+    }
+    string pideTextoLoc(int dir){
+        return textosLoc[dir];
+    }
+    
+    //Metodos que asignan contenido a la memoria
+    bool guardaEntero(int dir, int val){
+        if (dir >= enteros.size()){
+            return false;
+        }
+        enteros[dir]=val;
+        return true;
+    }
+    bool guardaBandera(int dir, bool val){
+        if (dir >= banderas.size()){
+            return false;
+        }
+        banderas[dir]=val;
+        return true;
+    }
+    bool guardaDecimal(int dir, double val){
+        if (dir >= decimales.size()){
+            return false;
+        }
+        decimales[dir]=val;
+        return true;
+    }
+    bool guardaTexto(int dir, string val){
+        if (dir >= textos.size()){
+            return false;
+        }
+        textos[dir]=val;
+        return true;
+    }
+    
+    bool guardaEnteroTemp(int dir, int val){
+        if (dir >= enterosTemp.size()){
+            return false;
+        }
+        enterosTemp[dir]=val;
+        return true;
+    }
+    bool guardaBanderaTemp(int dir, bool val){
+        if (dir >= banderasTemp.size()){
+            return false;
+        }
+        banderasTemp[dir]=val;
+        return true;
+    }
+    bool guardaDecimalTemp(int dir, double val){
+        if (dir >= decimalesTemp.size()){
+            return false;
+        }
+        decimalesTemp[dir]=val;
+        return true;
+    }
+    bool guardaTextoTemp(int dir, string val){
+        if (dir >= textosTemp.size()){
+            return false;
+        }
+        textosTemp[dir]=val;
+        return true;
+    }
+    
+    bool guardaEnteroLoc(int dir, int val){
+        if (dir >= enterosLoc.size()){
+            return false;
+        }
+        enterosLoc[dir]=val;
+        return true;
+    }
+    bool guardaBanderaLoc(int dir, bool val){
+        if (dir >= banderasLoc.size()){
+            return false;
+        }
+        banderasLoc[dir]=val;
+        return true;
+    }
+    bool guardaDecimalLoc(int dir, double val){
+        if (dir >= decimalesLoc.size()){
+            return false;
+        }
+        decimalesLoc[dir]=val;
+        return true;
+    }
+    bool guardaTextoLoc(int dir, string val){
+        if (dir >= textosLoc.size()){
+            return false;
+        }
+        textosLoc[dir]=val;
+        return true;
+    }
+    
+    //Metodos objetos
+    //Metodos que regresan el espacio de memoria
+    int pideDirEnteroObj(int dir){
+        return enterosDirObj[dir];
+    }
+    int pideDirBanderaObj(int dir){
+        return banderasDirObj[dir];
+    }
+    int pideDirDecimalObj(int dir){
+        return decimalesDirObj[dir];
+    }
+    int pideDirTextoObj(int dir){
+        return textosDirObj[dir];
+    }
+    int pideDirObjetoObj(int dir){
+        return objetosDirObj[dir];
+    }
+    int pideEnteroObj(int dir){
+        return enterosObj[dir];
+    }
+    bool pideBanderaObj(int dir){
+        return banderasObj[dir];
+    }
+    double pideDecimalObj(int dir){
+        return decimalesObj[dir];
+    }
+    string pideTextoObj(int dir){
+        return textosObj[dir];
+    }
+    
+    //Metodos que asignan contenido a la memoria
+    bool guardaEnterosDirObj(int dir, int val){
+        if (dir >= enterosDirObj.size()){
+            return false;
+        }
+        enterosDirObj[dir]=val;
+        return true;
+    }
+    bool guardaBanderasDirObj(int dir, int val){
+        if (dir >= banderasDirObj.size()){
+            return false;
+        }
+        banderasDirObj[dir]=val;
+        return true;
+    }
+    bool guardaDecimalesDirObj(int dir, int val){
+        if (dir >= decimalesDirObj.size()){
+            return false;
+        }
+        decimalesDirObj[dir]=val;
+        return true;
+    }
+    bool guardaTextosDirObj(int dir, int val){
+        if (dir >= textosDirObj.size()){
+            return false;
+        }
+        textosDirObj[dir]=val;
+        return true;
+    }
+    bool guardaObjetosDirObj(int dir, int val){
+        if (dir >= objetosDirObj.size()){
+            return false;
+        }
+        objetosDirObj[dir]=val;
+        return true;
+    }
+    
+    bool guardaEnteroObj(int dir, int val){
+        if (dir >= enterosObj.size()){
+            return false;
+        }
+        enterosObj[dir]=val;
+        return true;
+    }
+    bool guardaBanderaObj(int dir, bool val){
+        if (dir >= banderasObj.size()){
+            return false;
+        }
+        banderasObj[dir]=val;
+        return true;
+    }
+    bool guardaDecimalObj(int dir, double val){
+        if (dir >= decimalesObj.size()){
+            return false;
+        }
+        decimalesObj[dir]=val;
+        return true;
+    }
+    bool guardaTextoObj(int dir, string val){
+        if (dir >= textosObj.size()){
+            return false;
+        }
+        textosObj[dir]=val;
+        return true;
+    }
+    
+    
+};
+
+Memoria memoria; 
+
+class dirProcedimientos{
+private:
+    
+public:
+    //checa el id del tipo
+    Trie *arbol =  new Trie(); // arbol de ids
+    vector <variable> vVariables;
+    vector <bloque> vBloques;
+    vector <int> pilaBloques;
+    int cantVariables[2][5];//
+    vector <string> tipos;
+    vector <int> bloqueTipo;//bloque del tipo si es un objeto
+    int bloqueAct;
+    int sigBloque;//es el id del siguiente bloque a crear
+    int varNo;
+    int ultVariabe;//esta es la direccion de la ultima variable que fue checada, para checar predicados, pertenencia objetos etc.
+    int argActual = 0;//argumento actual inicializado en 0
+    string nombreUltVar;
+    int inMemoria[4];//Variable para inicializar la memoria con las cantidades
+    vector<Objeto> vObjetos;
+    
+    dirProcedimientos(){
+        string tiposAux[] = {"bandera","entero","decimal","texto","vacio"};
+        for(int i = 0; i < 5 ;i++){//lleno tipos con los tipos predefinidos
+            tipos.push_back(tiposAux[i]);
+        }
+        bloqueAct = 0;
+        sigBloque = 0;//es el id del siguiente bloque a crear
+        inMemoria[0]=inMemoria[1]=inMemoria[2]=inMemoria[3]=0;
+        varNo = 0;
+        pilaBloques.push_back(0);
+        bloque bAux;
+        bAux.inMemoria[0]=bAux.inMemoria[1]=bAux.inMemoria[2]=bAux.inMemoria[3]=0;
+        bAux.tipo = 4;
+        bAux.nombre = "Programa";
+        vBloques.push_back(bAux);
+    }
+    
+    
+    /*
+     
+     METODOS DE VARIABLES
+     
+     */
+    
+    int buscaDireccion(string id){
+        int iVar;
+        iVar = buscaVariable(id);
+        if (iVar==-1){
+            return -1;
+        }
+        return vVariables[iVar].direccion;
+    }
+    
+    int buscaTipo(string tipo){
+        for (int i = 0 ; i < tipos.size();i++){
+            if (tipos[i]==tipo)
+                return i;
+        }
+        return -1;
+    }
+    
+    //buscaVariable checa si la variable ha sido instanciada antes en el proyecto y regresa su indice la tabla de variables de variables
+    // regresa -1 si no la encontro
+    int buscaVariable (string id){
+        int val=-1;
+        for (int i = pilaBloques.size()-1 ; i >= 0 ; i--){
+            val = arbol->search(id,pilaBloques[i]);
+            if (val>-1){
+                nombreUltVar = id;
+                ultVariabe=val;// para saber cual fue la ultima variable inicializada
+                argActual=0;//se reinicializa argumentos actuales a 0 para saber que no se a checado ningun argumento de esta variable posible metodo
+                return val;
+            }
+        }
+        cout << "No se encontro la variable "<< id << endl;
+        return -1;
+    }
+    
+    int checaTipo(string id){
+        int iV = buscaVariable(id);
+        if (iV==-1)
+            return -1;
+        return vVariables[iV].tipo;
+    }
+    
+    //crearVariable es para checar si puede crear una variable. ej: entero x; o 'Objeto' y; donde Objeto es un tipo previamente definido
+    //esta funcion tambien sirve para decir si una variable es publica a un objeto, con el bool privacidad
+    bool crearVariable(string tipo, string id, bool privacidad,int direccion){
+        variable v;
+        v.tipo = buscaTipo(tipo);
+        if (v.tipo==-1){
+            cout << tipo << " "<< id << " Tipo Inexistente"<<endl;
+            return false;
+        }
+        //checa si la variable esta usada, si no la inserta
+        if (!arbol->insert(id,bloqueAct,varNo)){
+            cout << tipo << " "<< id << " Id usada en el bloque "<<endl;
+            return false;
+        }
+        v.estructura = 0;
+        v.direccion=direccion;
+        v.bloque = -1;
+        if (v.tipo>4){
+            v.estructura=2;
+            v.bloque=bloqueTipo[v.tipo-4];
+            v.direccion=vObjetos.size();
+            creaMemoriaObjeto(v.bloque);
+        }
+        else{
+            if (v.tipo < 4)
+                vBloques[bloqueAct].inMemoria[v.tipo]++;
+        }
+        v.privacidad=privacidad;
+        v.id=id;
+        vVariables.push_back(v);
+        vBloques[bloqueAct].vVar.push_back(varNo);
+        varNo++;//
+        return true;
+    }
+    
+    /*
+     
+     METODOS DE OBJETOS
+     
+     */
+    
+    void creaMemoriaObjeto(int bloque){//crea la memoria para un objeto con la informacion en el bloque que lo define
+        Objeto obj;
+        vObjetos.push_back(obj);
+        int v;
+        int tam=(int)vBloques[bloque].vVar.size();
+        int o =(int) vObjetos.size()-1;
+        vObjetos[o].dirCuadruplo.resize(tam);
+        vObjetos[o].dirReales.resize(tam);
+        vObjetos[o].tipos.resize(tam);
+        for (int i = 0 ; i < tam;i++){
+            v=vBloques[bloque].vVar[i];
+            vObjetos[o].tipos[i]=vVariables[i].tipo;
+            vObjetos[o].dirCuadruplo[i]=vVariables[v].direccion;
+            vObjetos[o].dirReales[i]=espacioMemoriaObjeto(vVariables[i].tipo);
+        }
+    }
+    
+    bool crearObjeto(string tipo){
+        for (int i = 0 ; i < tipos.size() ; i++){
+            if (tipos[i]==tipo){
+                cout << "Tipo ya usado " << tipo << endl;
+                return false;
+            }
+        }
+        bloque bAux;
+        sigBloque++;
+        bAux.tipo = (int) tipos.size();
+        bAux.nombre = tipo;
+        bAux.estructura="objeto";
+        bAux.inMemoria[0]=bAux.inMemoria[1]=bAux.inMemoria[2]=bAux.inMemoria[3]=0;
+        vBloques.push_back(bAux);
+        tipos.push_back(tipo);
+        bloqueAct = sigBloque;
+        bloqueTipo.push_back(sigBloque);
+        pilaBloques.push_back(sigBloque);
+        return true;
+    }
+    
+    int espacioMemoriaObjeto(int tipo){
+        switch (tipo) {
+            case 0:
+                memoria.cantBanObj++;
+                return memoria.cantBanObj-1;
+                break;
+            case 1:
+                memoria.cantEntObj++;
+                return memoria.cantEntObj-1;
+                break;
+            case 2:
+                memoria.cantDecObj++;
+                return memoria.cantDecObj-1;
+                break;
+            case 3:
+                memoria.cantTexObj++;
+                return memoria.cantTexObj-1;
+                break;
+            case 4:
+                return -1;
+                break;
+            default:
+                if(tipo>4){
+                    int dir =(int) vObjetos.size();//guardo la direccion del objeto a crear
+                    creaMemoriaObjeto(tipo-4);//le doy espacio de memoria con objeto con direccion que es tipo-4 por la relacion arreglo de tipos y arreglo de bloques
+                    return dir;
+                }
+                return -1;
+                break;
+        };
+        return -1;
+    }
+    
+    /*
+     
+     METODOS DE FUNCIONES
+     
+     */
+    
+    
+    bool agregaParametro (string tipo, string id, int direccion){
+        if (crearVariable(tipo,id,false,direccion)){
+            vBloques[bloqueAct].vParam.push_back(varNo-1);//-1 porque en crearVariable se le suma uno
+            return true;
+        }
+        return false;
+    }
+    
+    //esta es para argumentos normales
+    bool checaArgumentoID(string id){
+        int iAux = ultVariabe;// se guardan para mantener los datos del metodo que llamo los argumentos
+        string sAux = nombreUltVar;
+        if (vVariables[ultVariabe].estructura!=1){
+            cout << "La variable "<<nombreUltVar<<" no es un metodo no debe tener argumentos"<<endl;
+            return false;
+        }
+        if (argActual+1>vBloques[vVariables[ultVariabe].bloque].vParam.size()){
+            cout <<"Se excedio en argumentos"<<endl;
+            return false;
+        }
+        if (vVariables[buscaVariable(id)].tipo!=vVariables[vBloques[vVariables[iAux].bloque].vParam[argActual]].tipo)
+        {
+            cout << "No coinciden los tipos del argumento #"<<argActual<<endl;
+            return false;
+        }
+        argActual++;
+        ultVariabe=iAux;
+        nombreUltVar = sAux;
+        return true;
+    }
+    
+     int checaEstructura(string id){
+        int iV = buscaVariable(id);
+        if (iV==-1)
+            return -1;
+        return vVariables[iV].estructura;
+    }
+    //esta es para constantes
+    bool checaArgumentoTipo(int tipo){
+        int iAux = ultVariabe;// se guardan para mantener los datos del metodo que llamo los argumentos
+        string sAux = nombreUltVar;
+        if (vVariables[ultVariabe].estructura!=1){
+            cout << "La variable "<<nombreUltVar<<" no es un metodo no debe tener argumentos"<<endl;
+            return false;
+        }
+        if (argActual+1>vBloques[vVariables[ultVariabe].bloque].vParam.size()){
+            cout <<"Se excedio en argumentos"<<endl;
+            return false;
+        }
+        if (tipo!=vVariables[vBloques[vVariables[iAux].bloque].vParam[argActual]].tipo)
+        {
+            cout << "No coinciden los tipos del argumento #"<<argActual+1<<endl;
+            return false;
+        }
+        argActual++;
+        ultVariabe=iAux;
+        nombreUltVar = sAux;
+        return true;
+    }
+    
+    // se llama al final de checar cada metodo
+    bool checaCompletezPred(bool metodo){
+        if (vVariables[ultVariabe].estructura==1)//checa si la variable es un metodo, si no no
+        {
+            if (!metodo){
+                cout << "Falto la declaracion de argumentos del metodo"<<endl;
+                return false;
+            }
+            
+            if (argActual!=vBloques[vVariables[ultVariabe].bloque].vParam.size()){
+                cout << "Faltan argumentos" << endl;
+                return false;
+            }
+            return true;
+        }
+        else{
+            cout << "La variable no es un metodo"<<endl;
+            return false;
+        }
+    }
+    
+    bool checaPredicado(string id){
+        int iAux = ultVariabe; //guardamos la ultima variable usada que corresponde al objeto invocador
+        string sAux = nombreUltVar;
+        
+        if (vVariables[iAux].estructura!=2){
+            cout << "La variable "+sAux+" no es un objeto no puede invocar predicados"<<endl;
+            return false;
+        }
+        int bloqueM =vVariables[iAux].bloque;
+        int iVar=-1;
+        for (int  i = 0 ; i < vBloques[bloqueM].vVar.size();i++){
+            if (vVariables[vBloques[bloqueM].vVar[i]].id==id){
+                iVar=vBloques[bloqueM].vVar[i];
+            }
+        }
+        if(iVar==-1){
+            cout << "No se encontro la variable publica "+id+" dentro de "+nombreUltVar<<endl;
+            return false;
+        }
+        ultVariabe=iVar;
+        
+        return true;
+    }
+    
+    bool crearMetodo (string tipo, string id, int direccion){
+        variable v;
+        v.tipo = buscaTipo(tipo);
+        if (v.tipo==-1){
+            cout << tipo << " "<< id << " Tipo Inexistente"<<endl;
+            return false;
+        }
+        if (!arbol->insert(id,bloqueAct,varNo)){//guarda el id en el bloque anterior
+            cout << tipo << " "<< id << " Id usada en el bloque "<<endl;
+            return false;
+        }
+        sigBloque++;
+        if (!arbol->insert(id,sigBloque,varNo)){//guarda el id en el bloque actual para que no se pueda redefinir adentro
+            cout << tipo << " "<< id << " Id usada en el bloque "<<endl;
+            return false;
+        }
+        v.estructura = 1;
+        v.direccion=direccion;
+        v.bloque = sigBloque;//los metodos señalan a un bloque para enseñar sus parametros
+        bloque bAux;
+        bAux.tipo = v.tipo;
+        bAux.nombre = id;
+        bAux.estructura="funcion";
+        bAux.inMemoria[0]=bAux.inMemoria[1]=bAux.inMemoria[2]=bAux.inMemoria[3]=0;
+        v.id=id;
+        v.privacidad=true;// se les da privacidad publica por default
+        vVariables.push_back(v);
+        vBloques[bloqueAct].vVar.push_back(varNo);
+        vBloques.push_back(bAux);
+        bloqueTipo.push_back(sigBloque);
+        tipos.push_back("Funcion");//placeholder para mantener el orden de la relacion tipos, tipoBloque, vBloques
+        pilaBloques.push_back(sigBloque);
+        bloqueAct = sigBloque;
+        varNo++;
+        return true;
+    }
+    
+    /*
+     
+     METODOS DE DIRECCIONES *ERA*
+     
+     */
+    
+    //clase auxiliar de subs
+    void copiaDirecciones(int tipo,int espacio, int val){
+        switch (tipo) {
+            case 0:
+                memoria.guardaBanderasDirObj(espacio, val);
+                break;
+            case 1:
+                memoria.guardaEnterosDirObj(espacio, val);
+                break;
+            case 2:
+                memoria.guardaDecimalesDirObj(espacio, val);
+                break;
+            case 3:
+                memoria.guardaTextosDirObj(espacio, val);
+                break;
+            case 4:
+                break;
+            default:
+                if(tipo>4){
+                    memoria.guardaObjetosDirObj(espacio, val);
+                }
+                break;
+        };
+    }
+    
+    
+    
+    //clase para copiar el estado actual del vector
+    void subsDireccionesObj(int dir){
+        int tam = (int)vObjetos[dir].dirReales.size();
+        for (int i = 0 ; i < tam ; i++){
+            copiaDirecciones(vObjetos[dir].tipos[i],vObjetos[dir].dirCuadruplo[i],vObjetos[dir].dirReales[i]);
+        }
+    }
+    
+    /*
+     
+     METODOS DE OBJETOS Y FUNCIONES
+     
+     */
+    
+    void terminaBloque(){
+        pilaBloques.pop_back();
+        bloqueAct=pilaBloques.back();
+    }
+    
+    /*
+     
+     METODOS DE MEMORIA
+     
+     */
+    
+    void inicializaMemoria(){
+        for (int i = 0; i< vBloques.size();i++){
+            if (vBloques[i].estructura=="bloque"){
+                memoria.cantBan+=vBloques[i].inMemoria[0];
+                memoria.cantEnt+=vBloques[i].inMemoria[1];
+                memoria.cantDec+=vBloques[i].inMemoria[2];
+                memoria.cantTex+=vBloques[i].inMemoria[3];
+            }
+            if (vBloques[i].estructura=="objeto"){
+                memoria.cantBanDirObj+=vBloques[i].inMemoria[0];
+                memoria.cantEntDirObj+=vBloques[i].inMemoria[1];
+                memoria.cantDecDirObj+=vBloques[i].inMemoria[2];
+                memoria.cantTexDirObj+=vBloques[i].inMemoria[3];
+            }
+            if (vBloques[i].estructura=="funcion"){
+                memoria.cantBanDirFunc+=vBloques[i].inMemoria[0];
+                memoria.cantEntDirFunc+=vBloques[i].inMemoria[1];
+                memoria.cantDecDirFunc+=vBloques[i].inMemoria[2];
+                memoria.cantTexDirFunc+=vBloques[i].inMemoria[3];
+            }
+        }
+        cout << "Memoria cant ent:" << memoria.cantEnt << endl;
+        memoria.inicializa();
+    }
+};
 
 
 dirProcedimientos dirProcedimientos ;
+
+
+
+
+
 string yyTipo = "";
 string objetoNombre = "default";
 string metodoNombre = "";
 string funcionNombre = "";
 
 
-int offsetEnteroGlobal     		 	= 1000;
-int offsetEnteroConstanteGlobal  	= 1900;
-int offsetDecimalGlobal    		 	= 2000;
-int offsetDecimalConstanteGlobal 	= 2900;
-int offsetBanderaGlobal    		 	= 3000;
-int offsetBanderaConstanteGlobal 	= 3900;
-int offsetTextoGlobal      		 	= 4000;
-int offsetTextoConstanteGlobal   	= 4900;
-int offsetTemporalesGlobal 		 	= 5000;
-int offsetTemporalesConstanteGlobal = 5900;
-int offsetVacioGlobal 				= 6000;
-int offsetVacioConstanteGlobal 		= 6900;
+// GLOBAL
+#define OFF_BAND_GLOBAL 0
+#define OFF_ENT_GLOBAL 1000
+#define OFF_DEC_GLOBAL 2000
+#define OFF_TEXT_GLOBAL 3000
+// TEMPORAL
+#define OFF_BAND_TEMP 4000
+#define OFF_ENT_TEMP 5000
+#define OFF_DEC_TEMP 6000
+#define OFF_TEXT_TEMP 7000
+// CONSTANTE
+#define OFF_BAND_CONST 8000
+#define OFF_ENT_CONST 9000
+#define OFF_DEC_CONST 10000
+#define OFF_TEXT_CONST 11000
+// OBJETO
+#define OFF_BAND_DIR_OBJ 12000
+#define OFF_ENT_DIR_OBJ 13000
+#define OFF_DEC_DIR_OBJ 14000
+#define OFF_TEXT_DIR_OBJ 15000
+// FUNCION
+#define OFF_BAND_DIR_FUNCION 16000
+#define OFF_ENT_DIR_FUNCION 17000
+#define OFF_DEC_DIR_FUNCION 18000
+#define OFF_TEXT_DIR_FUNCION 19000
 
-int offsetEnteroLocal     			= 7000;
-int offsetEnteroConstanteLocal 		= 7900;
-int offsetDecimalLocal    			= 8000;
-int offsetDecimalConstanteLocal 	= 8900;
-int offsetBanderaLocal    			= 9000;
-int offsetBanderaConstanteLocal 	= 9900;
-int offsetTextoLocal      			= 10000;
-int offsetTextoConstanteLocal 		= 10900;
-int offsetTemporalesLocal 			= 11000;
-int offsetTemporalesConstanteLocal 	= 11900;
-int offsetVacioLocal 				= 12000;
-int offsetVacioConstanteLocal 		= 12900;
+
+
+#define OFF_LOWER_LIMIT 0
+#define OFF_UPPER_LIMIT 20000
+
+
+#define _GLOBAL     0
+#define _TEMPORAL   1
+#define _CONSTANTE  2
+#define _FUNCION    3
+#define _OBJETO     4
+#define _ERROR      5
+
+
+#define _BANDERA 0
+#define _ENTERO  1
+#define _DECIMAL 2
+#define _TEXTO   3
+
+#define _PLUS 0
+#define _MINUS 1
+#define _TIMES 2
+#define _SLASH 3
+#define _EQLEQL 4
+#define _NEQ 5
+#define _GTR 6
+#define _LSS 7
+#define _EQL 8
+#define _GTROEQL 9 
+#define _LSSOEQL 10
+#define _OR 11
+#define _AND 12
+#define _LEESYM 13 
+#define _MUESTRASYM 14
+#define _GOTOT 15
+#define _GOTOF 16
+#define _GOTO 17
+#define _ERA 18
+#define _GSUB 19
+#define _RETURN 20
+#define _PARAM 21
+#define _VER 22
+#define _END 23
 
 
 
-int indexEnterosGlobal      			= 0;
-int indexDecimalGlobal      			= 0;
-int idnexBanderaGlobal      			= 0;
-int indexTextoGlobal        			= 0;
-int indexTemporalesGlobal   			= 0;
-int indexVacioGlobal  					= 0;
-int indexEnteroConstantesGlobal      	= 0;
-int indexDecimalConstantesGlobal      	= 0;
-int idnexBanderaConstantesGlobal      	= 0;
-int indexTextoConstantesGlobal        	= 0;
-int indexTemporalesConstantesGlobal   	= 0;
-int indexVacioConstantesGlobal   	  	= 0;
+int offsetGlobales[4] = { 0, 1000, 2000, 3000 };
+int offsetTemporales[4] = {4000, 5000, 6000, 7000};
+int offsetConstantes[4] = {8000, 9000, 10000, 11000};
+int offsetDirObjetos[4] = {12000, 13000, 14000, 15000};
+int offsetDirFunciones[4] = {16000, 17000, 18000, 19000};
 
-int indexEnterosLocal       			= 0;
-int indexDecimalLocal       			= 0;
-int idnexBanderaLocal       			= 0;
-int indexTextoLocal         			= 0;
-int indexTemporalesLocal    			= 0;
-int indexVacioLocal   					= 0;
-int indexEnteroConstantesLocal       	= 0;
-int indexDecimalConstantesLocal       	= 0;
-int idnexBanderaConstantesLocal       	= 0;
-int indexTextoConstantesLocal         	= 0;
-int indexTemporalesConstantesLocal    	= 0;
-int indexVacioConstantesLocal    	  	= 0;
+int indexGlobales[4] = {0};
+int indexTemporales[4] = {0};
+int indexConstantes[4] = {0};
+int indexDirObjetos[4] = {0};
+int indexDirFunciones[4] = {0};
+
+
 
 int indexParametro = 0;
 
 bool metodo = false;
-bool local = false;
+bool global = true;
+bool objeto = false;
+bool temporal = false;
+bool funcion = false; 
+
 stack<int> pilaOperandos;
 stack<string> pilaOperadores;
 stack<int> pilaTipos;
@@ -242,6 +1155,8 @@ int cuboSemantico[4][4][13] = 	{
 %token RPAREN
 %token LCURLY
 %token RCURLY
+%token LBRACKET
+%token RBRACKET
 %token SEMICOLON
 %token COMMA
 %token DOT
@@ -251,6 +1166,11 @@ int cuboSemantico[4][4][13] = 	{
 %token COLON
 %token LSS
 %token GTR
+%token LSSOEQL
+%token GTROEQL
+%token OR
+%token AND
+
 
 
 %token CONDICIONSYM
@@ -299,17 +1219,19 @@ Objetos				:  Objeto ;
 
 Objeto 				: OBJETOSYM  IDENTIFICADOR { 
 						objetoNombre = yytext; 
+						objeto = true;
 						dirProcedimientos.crearObjeto(objetoNombre); 
 
 					}  LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON {
-						resetOffsetIndexes(local);
+						//resetOffsetIndexes(local);
+						objeto = false;
 						dirProcedimientos.terminaBloque();
 					} ;
 
-AtributosPrivados	: PRIVADOSYM LCURLY { local = true; } VariablesObjetos Funciones  { local = false; } RCURLY
+AtributosPrivados	: PRIVADOSYM LCURLY  VariablesObjetos Funciones   RCURLY
 					|  epsilon ;
 
-AtributosPublicos	: PUBLICOSYM LCURLY { local = true; } Variables FuncionesObjetos { local = false; } RCURLY 
+AtributosPublicos	: PUBLICOSYM LCURLY  Variables FuncionesObjetos   RCURLY 
 					|  epsilon ;
 
 
@@ -327,11 +1249,13 @@ FuncionesObjetos	: FuncionObjeto ;
 Funcion  			: FUNCIONSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {
 						funcionNombre = $4;
 						accion_1_definicion_proc(yyTipo, $4);
-					 	local = true; 
+					 	funcion = true; 
+					 	global = false;
 					} Params BloqueFuncion SEMICOLON {
 						
-						resetOffsetIndexes(local);
-						local = false; 
+						
+					 	global = true;
+						funcion = false; 
 					  	dirProcedimientos.terminaBloque();
 					} Funcion
 					| epsilon ;
@@ -340,11 +1264,11 @@ FuncionObjeto		: FUNCIONSYM  Tipo { yyTipo = yytext } IDENTIFICADOR {
 						funcionNombre = $4;
 						//dirProcedimientos.crearMetodo(yyTipo, $4);
 						accion_1_definicion_proc(yyTipo, $4);
-						local = true; 
+						global = false; 
 
 					} ParamsObjeto BloqueFuncion SEMICOLON {
-					  resetOffsetIndexes(local);
-					  local = false; 
+					  // resetOffsetIndexes(local);
+					  global = true; 
 					  dirProcedimientos.terminaBloque();
 					} FuncionObjeto
 					| epsilon ;
@@ -361,7 +1285,7 @@ Params				: LPAREN  Param  RPAREN ;
 ParamsObjeto		: LPAREN  ParamObjeto  RPAREN ;
 
 Param 				: Tipo { yyTipo = yytext } IDENTIFICADOR {
-						int direccion_virtual = getSiguienteDireccion(yyTipo, 0, local);
+						int direccion_virtual = getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion);
 
 						accion_2_definicion_proc(yyTipo, $3, direccion_virtual);
 					} Param1 
@@ -370,7 +1294,7 @@ Param1				: COMMA Param
 					| epsilon ;
 
 ParamObjeto 		: Tipo { yyTipo = yytext } IDENTIFICADOR {
-						int direccion_virtual = getSiguienteDireccion(yyTipo, 0, local);
+						int direccion_virtual = getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion);
 						accion_2_definicion_proc(yyTipo, $3, direccion_virtual);
 						// dirProcedimientos.agregaParametro(yyTipo, $3, direccion_virtual);
 
@@ -527,10 +1451,12 @@ Termino1			: TIMES {
 					| epsilon	;
 
 Factor				: LPAREN { accion_6_expresiones("("); } Expresion { accion_7_expresiones(); }  RPAREN
-					| Factor1 VarCteExp 
+					| Factor1 VarCteExp Factor2
 Factor1 			: PLUS
 					| MINUS
 					| epsilon	;
+Factor2				:	LBRACKET Expresion RBRACKET 
+					|	epsilon ;
 
 
 
@@ -569,26 +1495,27 @@ VariablesObjetos	: VariableObjeto SEMICOLON VariablesObjetos
 
 Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR  {  
 									//TODO Hace funcion que me regrese la direccion. 
-									if (debug ) {
-									}
-									// Si la variable era local o global 
+									
 									int direccion;
 									
-									direccion = getSiguienteDireccion(yyTipo, 0,  local);
+									direccion = getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0,  global, temporal, objeto, funcion);
 
 									
-									cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << $4 << " Direccion: " <<   direccion << " Local: " << local   << endl;
+									//cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << $4 << " Direccion: " <<   direccion << " global: " << global   << endl;
 									
 									dirProcedimientos.crearVariable(yyTipo, $4, 1, direccion );
 
-								   }  ;
+								   }  Variable1 ;
+Variable1			: LBRACKET  Expresion  Variable2 RBRACKET 
+					| epsilon;
+Variable2			: COMMA  Expresion Variable2
+					| epsilon;
+
 VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   {  
 									//TODO Hace funcion que me regrese la direccion. 
-									if (debug ) {
-										cout << "Crear Objeto Tipo: " << yyTipo << " Nombre: " << $4 << endl;
-									}
+									
 
-									dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(yyTipo, 0, local));  
+									dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion));
 								   }  ; ;
 //Variable2			: COMMA IDENTIFICADOR Variable2
 //					| epsilon ;
@@ -635,7 +1562,6 @@ epsilon				:	;
 
 
 
-
 %%
 
 int main(int argc, char **argv) {
@@ -650,6 +1576,9 @@ int main(int argc, char **argv) {
   	}
   	else {
 		yyparse();
+        dirProcedimientos.inicializaMemoria();
+        solve();		
+
 		cout << "Success reading file" << endl; 
   	}
 	return 0;
@@ -670,42 +1599,40 @@ void yyerror(const char *s) {
 }
 
 void accion_1_expresiones(string yytext, int tipo){
-	if (debug ) {
-		cout << "accion_1_expresiones Empieza " << line_num <<   endl;
-	}
+	
 	// Si no era una variable registrada y es constante
 	if ( tipo != 4 ) {
 		// crea variable constante en el scope
 
 		constante constante; 
-
+		global = false;
 		switch (tipo) {
 			case 0: // bandera
 
-				constante.direccion = getSiguienteDireccion("bandera", 1, local);
+				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 0;
 				constante.valor = yytext;
 
 			break;
 			case 1: // entero
-				constante.direccion = getSiguienteDireccion("entero", 1, local);
+				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 1;
 				constante.valor = yytext;
 			break;
 			case 2: // decimal
-				constante.direccion = getSiguienteDireccion("decimal", 1, local);
+				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 2;
 				constante.valor = yytext;
 
 			break;
 			case 3: // texto
-				constante.direccion = getSiguienteDireccion("texto", 1, local);
+				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 3;
 				constante.valor = yytext;
 
 			break;
 		}
-		
+		global = true;
 		
 		constantes.push_back(constante);			
 		pilaOperandos.push(constante.direccion);
@@ -719,10 +1646,8 @@ void accion_1_expresiones(string yytext, int tipo){
 		// la variable ya estaba registrada
 
 		int direccionVariable = dirProcedimientos.buscaDireccion(yytext);
-		if (debug ) {
-
-		cout << "accion_1_expresiones Else >>> " << yytext <<  " <<< " <<  endl;
-		}
+		
+		
 		if (direccionVariable != -1 ) {
 
 			
@@ -751,37 +1676,25 @@ void accion_1_expresiones(string yytext, int tipo){
 			exit(0);
 		}
 	}
-	if (debug ) {
-		cout << "accion_1_expresiones Termina  " << line_num <<  endl;
-	}
+	
 
 }
 
 void accion_2_expresiones(string operador){
-	if (debug ) { 
-		cout << "accion_2_expresiones Empieza  " <<  line_num <<  endl;
-	}
+	
 	pilaOperadores.push(operador);
-	if (debug ) {
-		cout << "accion_2_expresiones Termina  " <<  line_num <<  endl;
-	}
+	
 }
 
 void accion_3_expresiones(string operador){
-	if (debug ) {
-		cout << "accion_3_expresiones Empieza  " <<  line_num <<  endl;
-	}
+	
 	pilaOperadores.push(operador);
-	if (debug ) {
-		cout << "accion_3_expresiones Termina  " << line_num  << endl;
-	}
+	
 }
 
 void accion_4_expresiones() {
 	// Si top de pOperadores = + or -
-	if (debug ) {
-		cout << "accion_4_expresiones Empieza   " << line_num <<  endl;
-	}
+	
 	if ( pilaOperadores.size() != 0 ) {
 
 		if ( pilaOperadores.top() == "+" || pilaOperadores.top() == "-") {
@@ -806,7 +1719,7 @@ void accion_4_expresiones() {
 
 			if (tipoResultado != -1 ) {
 
-
+				temporal = true;
 				int der, izq;
 
 				der = pilaOperandos.top();
@@ -816,14 +1729,14 @@ void accion_4_expresiones() {
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = getSiguienteDireccion("temporal",0,local);
+				int resultado = getSiguienteDireccion(tipoResultado,0,global, temporal, objeto,  funcion);
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
 
 				pilaOperandos.push(resultado);
 
 				pilaTipos.push(tipoResultado);
-				
+				temporal = false;				
 
 			}	
 			else {
@@ -833,22 +1746,16 @@ void accion_4_expresiones() {
 
 		}
 	}
-	if (debug ) {
-		cout << "accion_4_expresiones Termina   " << line_num <<  endl;
-	}
+	
 }
 
 
 void accion_5_expresiones() {
 	// Si top de pOperadores = * or /
-	if (debug ) {
-		cout << "accion_5_expresiones Empieza  " << line_num <<  endl;
-	}
+	
 	if ( pilaOperadores.size() != 0 ) {
 		if ( pilaOperadores.top() == "/" || pilaOperadores.top() == "*") {
-			if (debug ) { 
-				cout << "accion_5_expresiones If 1  >>>  <<< " <<  endl;
-			}
+			
 			int tipoDer = -1, tipoIzq = -1;
 			int tipoResultado = -1, tipoOperador;
 			tipoDer = pilaTipos.top();
@@ -856,28 +1763,19 @@ void accion_5_expresiones() {
 
 			tipoIzq = pilaTipos.top();
 			pilaTipos.pop();
-			if (debug ) {
-
-				cout << "accion_5_expresiones If 2   " << line_num <<   endl;
-			}
+			
 			//Checa si son permitidas las operaciones
 			string operador = pilaOperadores.top();
 			pilaOperadores.pop();
-			if (debug ) {
-				cout << "accion_5_expresiones If 3  >>>   " << line_num << endl;
-			}
+			
 			tipoOperador  = getIndexOperador(operador);
-			if (debug ) {
-				cout << "accion_5_expresiones If 4  >>>   " << line_num <<  endl;
-			}
+			
 			tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
-			if (debug ) {
-				cout << "accion_5_expresiones If 5  >>>   " << line_num <<  endl;
-			}
+			
 
 			if (tipoResultado != -1 ) {
 
-
+				temporal = true;
 				int der, izq;
 
 				der = pilaOperandos.top();
@@ -885,9 +1783,9 @@ void accion_5_expresiones() {
 
 				izq = pilaOperandos.top();
 				pilaOperandos.pop();
-
+				cout << "getsiguietneDireccion " << tipoResultado << " const: " << 0 << " glob: " << global << " temp: " << temporal << " objeto: " << objeto << " funcion: " << funcion << endl; 
 				// Aumenta los temporales en 1
-				int resultado = getSiguienteDireccion("temporal", 0, local);
+				int resultado = getSiguienteDireccion(tipoResultado, 0, global, temporal, objeto, funcion);
 				
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
@@ -896,6 +1794,7 @@ void accion_5_expresiones() {
 
 				pilaTipos.push(tipoResultado);
 				
+				temporal = false;
 
 			}	
 			else {
@@ -905,44 +1804,28 @@ void accion_5_expresiones() {
 
 		}
 	}
-	if (debug ) {
-		cout << "accion_5_expresiones Termina  " << line_num <<  endl;
-	}
+	
 }
 
 void accion_6_expresiones(string fondoFalso){
-	if (debug ) {
-		cout << "accion_6_expresiones Empieza  " <<  line_num <<  endl;
-	}
+	
 	pilaOperadores.push(fondoFalso);
-	if (debug ) {
-		cout << "accion_6_expresiones Termina  " <<  line_num <<  endl;
-	}
+	
 }
 void accion_7_expresiones(){
-	if (debug ) {
-		cout << "accion_7_expresiones Empieza   " << line_num << endl;
-	}
+	
 	pilaOperadores.pop();
-	if (debug ) {
-		cout << "accion_7_expresiones Termina   " << line_num << endl;
-	}
+	
 }
 void accion_8_expresiones(string operador){
-	if (debug ) {
-		cout << "accion_8_expresiones Empieza  " <<  line_num << endl;
-	}
+	
 	
 	pilaOperadores.push(operador);
-	if (debug ) {
-		cout << "accion_8_expresiones Termina  " <<  line_num << endl;
-	}
+	
 }
 
 void accion_9_expresiones(){
-	if (debug ) {
-		cout << "accion_9_expresiones Empieza   " << line_num  << endl;
-	}
+	
 	
 	// Si top de pOperadores = > or < 
 	if ( pilaOperadores.size() != 0 ) {
@@ -966,8 +1849,8 @@ void accion_9_expresiones(){
 			if (tipoResultado != -1 ) {
 
 
+				temporal = true;
 				int der, izq;
-
 				der = pilaOperandos.top();
 				pilaOperandos.pop();
 
@@ -975,7 +1858,7 @@ void accion_9_expresiones(){
 				pilaOperandos.pop();
 
 				// Aumenta los temporales en 1
-				int resultado = getSiguienteDireccion("temporal", 0, local);
+				int resultado = getSiguienteDireccion(tipoResultado, 0, global, temporal, objeto, funcion);
 				
 				Cuadruplo cuadruploTemp = Cuadruplo(operador, to_string(izq), to_string(der), to_string(resultado));
 				cuadruplos.push_back( cuadruploTemp );
@@ -983,6 +1866,7 @@ void accion_9_expresiones(){
 				pilaOperandos.push(resultado);
 
 				pilaTipos.push(tipoResultado);
+				temporal = false;
 
 			}	
 			else {
@@ -992,35 +1876,25 @@ void accion_9_expresiones(){
 
 		}
 	}
-	if (debug ) {
-		cout << "accion_9_expresiones Termina   " << line_num <<  endl;
-	}
+	
 }
 
 
 void accion_1_assignacion(int dirOperando, int tipoVariable){
 	//Meter id en PilaO
-	if (debug ) {
-		cout << "accion_1_assignacion Empieza" <<  endl;
-	}
+	
 
 	pilaTipos.push(tipoVariable);
 	pilaOperandos.push(dirOperando);
 
-	if (debug ) {
-		cout << "accion_1_assignacion Termina" <<  endl;
-	}
+	
 }
 
 void accion_2_assignacion(string operador){
 	//Meter = en pilaOperadores
-	if (debug ) {
-		cout << "accion_2_assignacion Empieza" <<  endl;
-	}
+	
 	pilaOperadores.push(operador);
-	if (debug ) {
-		cout << "accion_2_assignacion Termina" <<  endl;
-	}
+	
 }
 void accion_3_assignacion( ){
 	// sacar der de pilaO
@@ -1028,11 +1902,6 @@ void accion_3_assignacion( ){
 	// asigna = pOperadores.pop()
 	// genera
 	//		asigna, der, , izq
-	if (debug ) {
-		cout << "accion_3_assignacion Empieza" <<  endl;
-	}
-
-
 	
 	int der = pilaOperandos.top();
 	pilaOperandos.pop();
@@ -1069,11 +1938,6 @@ void accion_3_assignacion( ){
 				exit(-1);
 	}
 
-	if (debug ) {
-		cout << "accion_3_assignacion Termina" <<  endl;
-	}
-
-
 }
 
 void accion_1_condicion_fallo() {
@@ -1084,9 +1948,7 @@ void accion_1_condicion_fallo() {
 	//		Generar gotoF, resultado, , ___
 	//		PUSH PSaltos(cont-1)
 
-	if ( debug ) {
-		cout << "accion_1_condicion_fallo Empieza" << endl;
-	}
+	
 	int aux = pilaTipos.top();
 	pilaTipos.pop();
 
@@ -1105,9 +1967,7 @@ void accion_1_condicion_fallo() {
 		pilaSaltos.push( cuadruplos.size() -1 );
 
 	}
-	if ( debug ) {
-		cout << "accion_1_condicion_fallo Termina" << endl;
-	}
+	
 }
 
 void accion_2_condicion_fallo(){
@@ -1115,9 +1975,7 @@ void accion_2_condicion_fallo(){
 	// Sacar falso de PSaltos
 	//rellenar(falso,cont)
 	//PUSH PSaltos (cont-1)
-	if ( debug ) {
-		cout << "accion_2_condicion_fallo Empieza" << endl;
-	}
+	
 	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(-1));
 	cuadruplos.push_back( cuadruploTemp );	
 
@@ -1128,53 +1986,34 @@ void accion_2_condicion_fallo(){
 	
 	pilaSaltos.push( cuadruplos.size() -1 );
 
-	if ( debug ) {
-		cout << "accion_2_condicion_fallo Termina" << endl;
-	}
+	
 }
 
 void accion_3_condicion_fallo() {
 	//Sacar fin de PSaltos
 	//rellenar (fin, cont);
-	if (debug ) {
-		cout << "acciopn_3_condicion_fallo Empieza   " << line_num <<  endl;
-	}
+	
 	int fin = pilaSaltos.top();
 	pilaSaltos.pop();
 
 	rellenar(fin, cuadruplos.size()  );
 
-	if (debug ) {
-		cout << "acciopn_3_condicion_fallo Termina   " << line_num <<  endl;
-	}
-
 }
 
 void accion_1_print() {
 	
-
-
-	if ( debug ) {
-		cout << "accion_1_print Empieza" << endl;
-	}
-
 	int res = pilaOperandos.top();
 	pilaOperandos.pop();
 
 	Cuadruplo cuadruploTemp = Cuadruplo("print", "", "" , to_string(res));
 	cuadruplos.push_back( cuadruploTemp );	
 
-	if ( debug ) {
-		cout << "accion_1_print Termina" << endl;
-	}
+	
 }
 
 
 void accion_1_read(string nombre) { 
 
-	if ( debug ) {
-		cout << "accion_1_read Empieza" << endl;
-	}
 
 	int variableIndex = dirProcedimientos.buscaVariable(nombre);
 
@@ -1188,24 +2027,15 @@ void accion_1_read(string nombre) {
 	Cuadruplo cuadruploTemp = Cuadruplo("read", "", "" , nombre );
 	cuadruplos.push_back( cuadruploTemp );	
 
-	if ( debug ) {
-		cout << "accion_1_read Termina" << endl;
-	}
+	
 
 }
 void accion_1_ciclo() {
 	// meter cont en PSaltos
-	
-
-	if ( debug ) {
-		cout << "accion_1_ciclo Empieza" << endl;
-	}
 
 	pilaSaltos.push( cuadruplos.size() );
 
-	if ( debug ) {
-		cout << "accion_1_ciclo Termina" << endl;
-	}
+	
 }
 
 void accion_2_ciclo() {
@@ -1215,11 +2045,6 @@ void accion_2_ciclo() {
 	//		sacar resultado de pilaO
 	//		generar gotofalso, , ,resultado
 	//		PUSH PSaltos (cont-1)
-	
-
-	if ( debug ) {
-		cout << "accion_2_ciclo Empieza" << endl;
-	}
 	
 	int aux = pilaTipos.top();
 	pilaTipos.pop();
@@ -1238,21 +2063,13 @@ void accion_2_ciclo() {
 
 	}
 
-	if ( debug ) {
-		cout << "accion_2_ciclo Termina" << endl;
-	}
+	
 }
 
 void accion_3_ciclo() {
 	// sacar falso de pSaltos, sacar retorno de pSaltos
 	// generar goto retorno
 	// rellenar(salso, cont)
-	
-
-	if ( debug ) {
-		cout << "accion_3_ciclo Empieza" << endl;
-	}
-	
 	
 	int falso = pilaSaltos.top();
 	pilaSaltos.pop();
@@ -1266,34 +2083,24 @@ void accion_3_ciclo() {
 	rellenar(falso, cuadruplos.size()  );
 
 
-	if ( debug ) {
-		cout << "accion_3_ciclo Termina" << endl;
-	}
+	
 }
 
 void accion_1_haz_mientras() {
 	// meter cont en PSaltos
 	
 
-	if ( debug ) {
-		cout << "accion_1_haz_mientras Empieza" << endl;
-	}
+	if ( debug ) {}
 
 	pilaSaltos.push( cuadruplos.size() );
 
-	if ( debug ) {
-		cout << "accion_1_haz_mientras Termina" << endl;
-	}
+	
 }
 
 void accion_2_haz_mientras() {
 	// sacar resultado de pSaltos, sacar retorno de pSaltos
 	// generar gotofalso resultado retorno
 	
-
-	if ( debug ) {
-		cout << "accion_2_haz_mientras Empieza" << endl;
-	}
 
 	int resultado = pilaOperandos.top();
 	pilaOperandos.pop();
@@ -1308,9 +2115,6 @@ void accion_2_haz_mientras() {
 	cuadruplos.push_back( cuadruploTemp );
 
 
-	if ( debug ) {
-		cout << "accion_2_haz_mientras Termina" << endl;
-	}
 }
 
 
@@ -1319,96 +2123,19 @@ void accion_1_definicion_proc(string tipo, string nombre) {
 	// Verificar la semantica
 	
 
-	if ( debug ) {
-		cout << "accion_1_definicion_proc Empieza" << endl;
-	}
-	int direccion = getSiguienteDireccion(yyTipo, 0, local);
+	
+	int direccion = getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion);
 	//cout << "Crear metodo " << nombre << " Direccion: " << direccion << " Tipo: " << yyTipo <<  endl;
 	dirProcedimientos.crearMetodo(tipo, nombre,direccion);
 	cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << nombre << " Direccion: " <<   direccion   << endl;
 
-	if ( debug ) {
-		cout << "accion_1_definicion_proc Termina" << endl;
-	}
+	
 }
 
 void accion_2_definicion_proc(string tipo, string nombre, int direccion) {
 	// Ligar cada parametro a la tabla de parametros del dir de procs
-	
-	
-
-	if ( debug ) {
-		cout << "accion_2_definicion_proc Empieza" << endl;
-	}
 	//cout << "Crear parametro " << nombre << " Direccion: " << direccion << endl;
 	dirProcedimientos.agregaParametro(tipo, nombre, direccion);
-
-	if ( debug ) {
-		cout << "accion_2_definicion_proc Termina" << endl;
-	}
-}
-
-
-void accion_3_definicion_proc() {
-	// Dar de alta el tipo de los parametros
-	// Esto se hace en la accion_2_definicion_proc
-	
-	if ( debug ) {
-		cout << "accion_3_definicion_proc Empieza" << endl;
-	}
-
-
-	if ( debug ) {
-		cout << "accion_3_definicion_proc Termina" << endl;
-	}
-}
-
-
-void accion_4_definicion_proc() {
-	// Dar de alta en el Dir de  Procs el numero de parametros detectados
-	// Esto lo conseguimos con el vector de parametros, haciendo un .size(); 
-
-	if ( debug ) {
-		cout << "accion_4_definicion_proc Empieza" << endl;
-	}
-
-
-	if ( debug ) {
-		cout << "accion_4_definicion_proc Termina" << endl;
-	}
-}
-
-
-void accion_5_definicion_proc() {
-	// Dar de alta en el Dir de Procs el numero de variables locales definidas	
-	// Esto lo conseguimos con el vector de variables haciendo un .size();
-	
-
-	if ( debug ) {
-		cout << "accion_5_definicion_proc Empieza" << endl;
-	}
-
-
-	if ( debug ) {
-		cout << "accion_5_definicion_proc Termina" << endl;
-	}
-}
-
-
-void accion_6_definicion_proc() {
-	// Dar de alta en el dir de procs el numero de cuadruplo en el que inicia el proc.
-	
-	
-
-	if ( debug ) {
-		cout << "accion_6_definicion_proc Empieza" << endl;
-	}
-
-
-
-	if ( debug ) {
-		cout << "accion_6_definicion_proc Termina" << endl;
-	}
 }
 
 
@@ -1416,11 +2143,6 @@ void accion_7_definicion_proc() {
 	// Liberar la tabla de variables locales del procedimiento
 	// Generar una accion de RETORNO
 	
-	
-
-	if ( debug ) {
-		cout << "accion_7_definicion_proc Empieza" << endl;
-	}
 
 	int resultado = pilaOperandos.top();
 	pilaOperandos.pop();
@@ -1443,23 +2165,13 @@ void accion_7_definicion_proc() {
 		cerr << "Tipos incompatibles en linea: " << line_num <<   endl;
 		exit(-1);
 	}
-
-
-
-	if ( debug ) {
-		cout << "accion_7_definicion_proc Termina" << endl;
-	}
+	
 }
 
 
 void accion_1_llamada_proc(string objetoNombre, string metodoNombre) {
 	// Verificar que el procedimiento exista como tal en el Dir. de procs
-	
-	
-
-	if ( debug ) {
-		cout << "accion_1_llamada_proc Empieza" << endl;
-	}
+		
 
 	bool existePredicado = dirProcedimientos.checaPredicado(metodoNombre);
 	int estructuraVariable = dirProcedimientos.checaEstructura(objetoNombre);
@@ -1472,9 +2184,7 @@ void accion_1_llamada_proc(string objetoNombre, string metodoNombre) {
 	}
 	
 
-	if ( debug ) {
-		cout << "accion_1_llamada_proc Termina" << endl;
-	}
+	
 }
 
 void accion_2_llamada_proc() {
@@ -1482,37 +2192,16 @@ void accion_2_llamada_proc() {
 	// Generar accipon: Era tamaño (expansion del reagistro de activacion, de acuerdo a tamaño definido )
 	// inicializar contador de parametros k = 1;
 
-	
-	
-
-	if ( debug ) {
-		cout << "accion_2_llamada_proc Empieza" << endl;
-	}
 	indexParametro = 0;
 	Cuadruplo cuadruploTemp = Cuadruplo("era", metodoNombre, "" , "");
 	cuadruplos.push_back( cuadruploTemp );	
 	
-
-
-
-	if ( debug ) {
-		cout << "accion_2_llamada_proc Termina" << endl;
-	}
 }
 
 void accion_3_llamada_proc() {
 	// Argumento ? pop de pilaOperandos, tipoArg = pop.Pilatipos
 	// Verificar tipo de argumento contra el parametro k 
 	// Generar PARAMETRO, Argumento, parametro k 
-
-
-	
-	
-
-	if ( debug ) {
-		cout << "x Empieza" << endl;
-	}
-
 	
 	int tipo = pilaTipos.top();
 	pilaTipos.pop();
@@ -1532,37 +2221,18 @@ void accion_3_llamada_proc() {
 	cuadruplos.push_back( cuadruploTemp );
 
 
-	if ( debug ) {
-		cout << "accion_3_llamada_proc Termina" << endl;
-	}
+	
 }
 
 void accion_4_llamada_proc() {
 	// K = K + 1, apuntar al siguiente parametro
-	
-	
-
-	if ( debug ) {
-		cout << "accion_4_llamada_proc Empieza" << endl;
-	}	
-
 	indexParametro++;
 
-	if ( debug ) {
-		cout << "accion_4_llamada_proc Termina" << endl;
-	}
+	
 }
 
 void accion_5_llamada_proc() {
-	// Verificar que el ultimo parametro apunte a nulo ( en nuestro caso checar el size del vector de params contra k );
-
-	
-	
-
-	if ( debug ) {
-		cout << "accion_5_llamada_proc Empieza" << endl;
-	}
-	
+	// Verificar que el ultimo parametro apunte a nulo ( en nuestro caso checar el size del vector de params contra k )
 	bool completezPredicado = dirProcedimientos.checaCompletezPred(true);
 
 	if ( completezPredicado == false ) {
@@ -1574,20 +2244,13 @@ void accion_5_llamada_proc() {
 	
 	}
 
-	if ( debug ) {
-		cout << "accion_5_llamada_proc Termina" << endl;
-	}
+	
 }
 
 void accion_6_llamada_proc(string nombreProc) {
 	// Generar GOSUB , nombre proc, dir de inicio
 	
 	
-
-	if ( debug ) {
-		cout << "accion_6_llamada_proc Empieza" << endl;
-	}
-
 
 	int direccionVariable = dirProcedimientos.buscaDireccion(nombreProc);
 	int tipoVariable = dirProcedimientos.checaTipo(nombreProc);
@@ -1607,12 +2270,8 @@ void accion_6_llamada_proc(string nombreProc) {
 	}
 	
 
-	if ( debug ) {
-		cout << "accion_6_llamada_proc Termina" << endl;
-	}
+	
 }
-
-
 
 
 
@@ -1631,9 +2290,8 @@ void printCuboSemantico() {
 	}
 }
 
-int getIndexOperador(string operador) {
 
-	 //  +     -     *     /    ==    !=     >     <     =    >=    <=    ||     &&
+int getIndexOperador(string operador) {
 	if ( operador == "+")
 			return 0;
 	else if ( operador == "-")
@@ -1664,133 +2322,59 @@ int getIndexOperador(string operador) {
 
 }
 
-int getSiguienteDireccion(string tipo, bool constante, bool local) {
+int getSiguienteDireccion(int tipo, bool constante, bool global, bool temporal, bool objeto, bool funcion) {
 
-	if ( local ) {
+	
+	if ( constante) {
+		return offsetConstantes[tipo]+ indexConstantes[tipo]++;
 
-		if ( !constante ) {
+	} else if ( temporal ) {
+		return offsetTemporales[tipo]+ indexTemporales[tipo]++;
+	
+	} else if ( objeto ) {
+		return offsetDirObjetos[tipo]+ indexDirObjetos[tipo]++;
 
-			if (tipo == "entero") {
-				return offsetEnteroLocal + indexEnterosLocal++;
-
-			} else if ( tipo == "decimal") {
-				return offsetDecimalLocal + indexDecimalLocal++;
-
-			} else if ( tipo == "texto") {
-				return offsetTextoLocal + indexTextoLocal++;
-
-			} else if ( tipo == "bandera") {
-				return offsetBanderaLocal + idnexBanderaLocal++;
-				
-			} else if ( tipo == "temporal") {
-				return offsetTemporalesLocal + indexTemporalesLocal++;
-
-			} else if ( tipo == "vacio") {
-				return offsetVacioLocal + indexVacioLocal++;
-
-			}
-		}
-		else {
-			
-			if (tipo == "entero") {
-				return offsetEnteroConstanteLocal + indexEnteroConstantesLocal++;
-
-			} else if ( tipo == "decimal") {
-				return offsetDecimalConstanteLocal + indexDecimalConstantesLocal++;
-
-			} else if ( tipo == "texto") {
-				return offsetTextoConstanteLocal + indexTextoConstantesLocal++;
-
-			} else if ( tipo == "bandera") {
-				return offsetBanderaConstanteLocal + idnexBanderaConstantesLocal++;
-				
-			} else if ( tipo == "temporal") {
-				return offsetTemporalesConstanteLocal + indexTemporalesConstantesLocal++;
-
-			} else if ( tipo == "vacio") {
-				return offsetVacioConstanteLocal + indexVacioConstantesLocal++;
-
-			}	
-		}
-	} else {
-		if ( !constante ) {
-
-			if (tipo == "entero") {
-				return offsetEnteroGlobal + indexEnterosGlobal++;
-
-			} else if ( tipo == "decimal") {
-				return offsetDecimalGlobal + indexDecimalGlobal++;
-
-			} else if ( tipo == "texto") {
-				return offsetTextoGlobal + indexTextoGlobal++;
-
-			} else if ( tipo == "bandera") {
-				return offsetBanderaGlobal + idnexBanderaGlobal++;
-				
-			} else if ( tipo == "temporal") {
-				return offsetTemporalesGlobal + indexTemporalesGlobal++;
-
-			} else if ( tipo == "vacio") {
-				return offsetVacioGlobal + indexVacioGlobal++;
-
-			}
-		}
-		else {
-			if (tipo == "entero") {
-				return offsetEnteroConstanteGlobal + indexEnteroConstantesGlobal++;
-
-			} else if ( tipo == "decimal") {
-				return offsetDecimalConstanteGlobal + indexDecimalConstantesGlobal++;
-
-			} else if ( tipo == "texto") {
-				return offsetTextoConstanteGlobal + indexTextoConstantesGlobal++;
-
-			} else if ( tipo == "bandera") {
-				return offsetBanderaConstanteGlobal + idnexBanderaConstantesGlobal++;
-				
-			} else if ( tipo == "temporal") {
-				return offsetTemporalesConstanteGlobal + indexTemporalesConstantesGlobal++;
-
-			} else if ( tipo == "vacio") {
-				return offsetVacioConstanteGlobal + indexVacioConstantesGlobal++;
-
-			}	
-		}
+	}  else if ( funcion ) {
+		return offsetDirFunciones[tipo]+ indexDirFunciones[tipo]++;
 	}
-	return 0;
+	else if ( global ) {
+		return offsetGlobales[tipo]+ indexGlobales[tipo]++;
+		
+	}
+
+	return -1;
 
 }
 
-void resetOffsetIndexes(bool local) {
-	if ( local ) {
-		indexEnterosLocal       			= 0;
-		indexDecimalLocal       			= 0;
-		idnexBanderaLocal       			= 0;
-		indexTextoLocal         			= 0;
-		indexTemporalesLocal    			= 0;
-		indexVacioLocal   					= 0;
-		indexEnteroConstantesLocal       	= 0;
-		indexDecimalConstantesLocal       	= 0;
-		idnexBanderaConstantesLocal       	= 0;
-		indexTextoConstantesLocal         	= 0;
-		indexTemporalesConstantesLocal    	= 0;
-		indexVacioConstantesLocal    	  	= 0;
+string getTipoVariable(int tipo ) {
+	switch (tipo) {
+		case 0:
+			return "bandera";
+			break;
+		case 1:
+			return "entero";
+			break;
+		case 2: 
+			return "decimal";
+			break;
+		case 3:
+			return "texto";
+			break;
+		case 4:
+			return "vacio";
+			break;
 
-	} else {
-
-		indexEnterosGlobal      			= 0;
-		indexDecimalGlobal      			= 0;
-		idnexBanderaGlobal      			= 0;
-		indexTextoGlobal        			= 0;
-		indexTemporalesGlobal   			= 0;
-		indexVacioGlobal  					= 0;
-		indexEnteroConstantesGlobal      	= 0;
-		indexDecimalConstantesGlobal      	= 0;
-		idnexBanderaConstantesGlobal      	= 0;
-		indexTextoConstantesGlobal        	= 0;
-		indexTemporalesConstantesGlobal   	= 0;
-		indexVacioConstantesGlobal   	  	= 0;
+		return "vacio";
 	}
+
+}
+
+int getIndexTipoVariable(string nombre ) { 
+	if ( nombre == "bandera") return 0;
+	else if (nombre == "entero") return 1;
+	else if ( nombre == "decimal") return 2;
+	else if (nombre == "texto" ) return 3;
+	else return -1 ;
 }
 
 void printCuadruplos() { 
@@ -1819,4 +2403,152 @@ template <typename T> string to_string(T value)
       //convert the string stream into a string and return
       return os.str() ;
     }
+
+
+
+/** 
+	getScope
+	Funcion que apartir de una direccion regresa el scope en el que se encuentra
+	@param dir direccion a buscar
+	@return el scope en el que se encuentra la direccion.
+**/
+int getScope(int dir){
+
+	if(dir >= OFF_LOWER_LIMIT && dir < OFF_BAND_TEMP){
+		return _GLOBAL;
+	}else if(dir >= OFF_BAND_TEMP && dir < OFF_BAND_CONST){
+		return _TEMPORAL;
+	}else if(dir >= OFF_BAND_CONST && dir < OFF_BAND_DIR_OBJ){
+		return _CONSTANTE;
+	}else if(dir >= OFF_BAND_DIR_OBJ && dir <= OFF_BAND_DIR_FUNCION){
+		return _FUNCION;
+	}else if(dir >= OFF_BAND_DIR_FUNCION && dir <= OFF_UPPER_LIMIT){
+		return _OBJETO;
+	}else {
+		return _ERROR;
+	}
+}
+
+/**
+	getTipoDireccion
+	Recibe una direccion y un scope y regresa el tipo de dato de esta direccion para leer el objeto 
+	@param direccion representa la direccion a analizar, ejemplo 16500
+	@param scope representa el scope en el que se encuentra la direccion
+	@return el tipo de variable que representa esta direccion,0 bandera, 1 entero, 2 decimal 3 texto
+
+**/
+int getTipoDireccion ( int dir, int scope ) {
+	int tipoDireccion = -1 ;
+    switch (scope) {
+        case _GLOBAL:
+                tipoDireccion = floor( ( dir - OFF_BAND_GLOBAL  )/ 1000 ) ; 
+        break;
+        case _TEMPORAL: 
+                tipoDireccion = floor( ( dir - OFF_BAND_TEMP  )/ 1000 ) ;
+        break;
+        case _CONSTANTE: 
+                tipoDireccion = floor( ( dir - OFF_BAND_CONST  )/ 1000 ) ; 
+        break;
+        case _FUNCION:
+                
+                tipoDireccion = floor( ( dir - OFF_BAND_DIR_OBJ  )/ 1000 ) ; 
+                
+
+        break;
+        case _OBJETO:
+
+                tipoDireccion = floor( ( dir - OFF_BAND_DIR_FUNCION  )/ 1000 ) ; 
+        break;
+
+    }
+	return tipoDireccion; 
+
+}
+
+/**
+**/
+int getOperandoIndex(string operador){
+
+    if ( operador == "+") { return 0; }
+    if ( operador == "-") { return 1; }
+    if ( operador == "*") { return 2; }
+    if ( operador == "/") { return 3; }
+    if ( operador == "==") { return 4; }
+    if ( operador == "!=") { return 5; }
+    if ( operador == ">") { return 6; }
+    if ( operador == "<") { return 7; }
+    if ( operador == "=") { return 8; }
+    if ( operador == ">=") { return 9; }
+    if ( operador == "<=") { return 10; }
+    if ( operador == "||") { return 11; }
+    if ( operador == "&&") { return 12; }
+    if ( operador == "lee") { return 13; }
+    if ( operador == "muestra") { return 14; }
+    if ( operador == "gotof") { return 15; }
+    if ( operador == "gotot") { return 16; }
+    if ( operador == "goto") { return 17; }
+    if ( operador == "era") { return 18; }
+    if ( operador == "gosub") { return 19; }
+    if ( operador == "retorno") { return 20; }
+    if ( operador == "param") { return 21; }
+    if ( operador == "ver") { return 22; }
+    if ( operador == "end") { return 23; }
+    return - 1;
+}
+
+
+void plus_op (Cuadruplo current) {
+
+
+	//TODO checkTemporal, local, objeto global
+		//TODO check INT , Double 
+    int dirIzq = atoi(current.getIzq().c_str());
+    int dirDer = atoi(current.getDer().c_str());
+    int dirRes = atoi(current.getRes().c_str());
+
+	int scopeIzq = getScope(dirIzq); 
+	int scopeDer = getScope(dirDer); 
+
+    switch (tipoIzq ) {
+        
+    }
+
+	int tipoIzq = getTipoDireccion(dirIzq, scopeIzq);
+	int tipoDer = getTipoDireccion(dirDer, scopeDer);
+
+    int valorIzq = memoria.pideEntero(dirIzq - OFF_ENT_CONST );
+    valorIzq = atoi(constantes[dirIzq - OFF_ENT_CONST].valor.c_str());
+
+    int valorDer = memoria.pideEntero(dirDer - OFF_ENT_CONST );
+    valorDer = atoi(constantes[dirDer - OFF_ENT_CONST].valor.c_str());
+
+    memoria.guardaEntero( dirRes - OFF_ENT_TEMP , valorIzq + valorDer);
+
+
+    
+}
+void solve() {
+
+
+    for(int i  = 0; i < cuadruplos.size(); i++){
+        Cuadruplo current = cuadruplos[i];
+        /*
+                
+        string op;
+        string der;
+        string izq;
+        string res;
+
+        */
+        
+        switch ( getOperandoIndex(current.getOp() ))  {
+            //  +     -     *     /    ==    !=     >     <     =    >=    <=    ||     &&
+            case _PLUS    : plus_op(current);   break; // Funcion que hace la suma
+            
+            break;
+        }
+    }
+
+
+}
 

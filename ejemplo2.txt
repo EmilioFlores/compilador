@@ -8,37 +8,45 @@ objeto Rectangulo {
 	}
 
 	publico {
-		var entero y ;
-		var entero z ;
-
 
 
 		funcion entero getTest2 () {
 
-			var entero x ;
+			var entero y;
+			var entero uu ;
+			var entero dd ;
+			var entero yyy ;
+			var entero hfg ;
+			x = x + y + dd + yyy + hfg;
 			
 			regresa getTest2() ;
 		}; 
 	}
-
 };
 
 
 
 funcion entero getTest3(entero x, entero xx ) {
 	var entero y;
-	var entero yy;
-
-	regresa getTest3(3,4);
+	var entero x ;
+	var entero dd ;
+	var entero yyy ;
+	var entero hfg ;
+	x = x + y + dd + yyy + hfg;
+	regresa 2;
 	
 };
 
 
-funcion entero getTest4(entero x, entero xx ) {
-	var entero xxx;
-	var entero xxxx;
 
-	regresa getTest3(4,5);
+funcion entero getTest5(entero x, entero xx ) {
+	var entero y;
+	var entero x ;
+	var entero dd ;
+	var entero yyy ;
+	var entero hfg ;
+	x = x + y + dd + yyy + hfg;
+	regresa 2;
 	
 };
 
@@ -46,10 +54,16 @@ funcion entero getTest4(entero x, entero xx ) {
 programa {
 	
 
+	
+	var entero y ;
 	var entero x ;
-	var entero xx ;
-	var entero xxx ;
-	x = 4 + 2.6 + getTest3(5,8)  ;
+	var entero dd ;
+	var entero yyy ;
+	var entero hfg ;
+	x = x + y + dd + yyy + hfg;
+
+	
+	
 	
 		
 

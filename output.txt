@@ -1,0 +1,4 @@
+parser.tab.c:1204:6: error: expected identifier before numeric constant
+parser.tab.c:1204:6: error: expected '}' before numeric constant
+parser.tab.c:1204:6: error: expected unqualified-id before numeric constant
+parser.tab.c:1259:4: error: expected declaration before '}' token

@@ -23,6 +23,8 @@ ID [a-z][a-z0-9]*
 ")"                  			{ return RPAREN;     }
 "{"                  			{ return LCURLY;     }
 "}"                  			{ return RCURLY;     }
+"["                  			{ return LBRACKET;     }
+"]"                  			{ return RBRACKET;     }
 ";"                  			{ return SEMICOLON;  }
 ","                  			{ return COMMA;      }
 "."                  			{ return DOT;      }
@@ -32,6 +34,10 @@ ID [a-z][a-z0-9]*
 ":"                 			{ return COLON;        }
 "<"                  			{ return LSS;        }
 ">"                  			{ return GTR;        }
+"<="                  			{ return LSSOEQL;        }
+">="                  			{ return GTROEQL;        }
+"||"                  			{ return OR;        }
+"&&"                  			{ return AND;        }
 
 "condicion"           			{ return CONDICIONSYM;      }
 "programa"            			{ return PROGRAMASYM;    }
