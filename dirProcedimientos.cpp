@@ -59,6 +59,16 @@ public:
         return vVariables[iVar].direccion;
     }
     
+
+    int buscaBloque(string id){
+        int iVar;
+        iVar = buscaVariable(id);
+        if (iVar==-1){
+            return -1;
+        }
+        return vVariables[iVar].bloque;
+    }
+
     int buscaTipo(string tipo){
         for (int i = 0 ; i < tipos.size();i++){
             if (tipos[i]==tipo)
@@ -343,6 +353,7 @@ public:
         v.privacidad=true;// se les da privacidad publica por default
         vVariables.push_back(v);
         vBloques[bloqueAct].vVar.push_back(varNo);
+        vBloques[bloqueAct].inMemoria[v.tipo]++;
         vBloques.push_back(bAux);
         bloqueTipo.push_back(sigBloque);
         tipos.push_back("Funcion");//placeholder para mantener el orden de la relacion tipos, tipoBloque, vBloques
@@ -431,7 +442,6 @@ public:
                 memoria.cantTexDirFunc+=vBloques[i].inMemoria[3];
             }
         }
-        cout << "Memoria cant ent:" << memoria.cantEnt << endl;
         memoria.inicializa();
     }
 };

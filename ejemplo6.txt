@@ -26,21 +26,13 @@ programa {
 
 	
 
-	var decimal x;
-	var bandera y;
+	var entero x;
+	var entero y;
 	lee x;
 
-
-	
-
-	muestraLinea("Afuera haz mientras ");
-	haz {
-		x=x*2;
-		y = x < 50;
-		muestraLinea("           ", x);
-
-	} mientras (y );
-	
+	ciclo (x = 1, x <  10, x = x + 1 ) {
+		muestraLinea(x);
+	};
 	
 	
 }

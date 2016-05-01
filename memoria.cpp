@@ -77,7 +77,6 @@ public:
         banderasObj.resize(cantBanObj);
         decimalesObj.resize(cantDecObj);
         textosObj.resize(cantTexObj);
-        
         enterosDirObj.resize(cantEntDirObj);
         banderasDirObj.resize(cantBanDirObj);
         decimalesDirObj.resize(cantDecDirObj);

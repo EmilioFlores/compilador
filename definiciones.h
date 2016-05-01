@@ -69,4 +69,5 @@
 #define _PARAM 21
 #define _VER 22
 #define _END 23
+#define _SALTOLINEA 24
 #endif

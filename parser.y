@@ -545,9 +545,13 @@ Ciclo				: CICLOSYM {
 							accion_1_ciclo();
 					} LPAREN Ciclo1 COMMA Expresion {
 							accion_2_ciclo();
-					} COMMA Ciclo1 RPAREN Bloque {
+					} COMMA {
+							accion_4_ciclo();
+					} Ciclo1 {
+							accion_5_ciclo();
+					} RPAREN Bloque {
 							accion_3_ciclo();
-					}  ; 
+					}; 
 					| HAZSYM {
 						accion_1_haz_mientras();
 					} Bloque MIENTRASSYM LPAREN Expresion RPAREN {
@@ -556,15 +560,23 @@ Ciclo				: CICLOSYM {
 Ciclo1 				: Asignacion 
 					| epsilon ;
 
-Escritura			: MUESTRASYM LPAREN Expresion { accion_1_print(); }  EstatutosSalida RPAREN  ;
+Escritura			: MUESTRASYM LPAREN Expresion { accion_1_print(); }  EstatutosSalida RPAREN 
+					| MUESTRALINEASYM LPAREN Expresion { accion_1_print(); } EstatutosSalidaLinea RPAREN { accion_2_print(); } ;
 
 EstatutosSalida		: COMMA Expresion { accion_1_print(); } EstatutosSalida
 					| epsilon ;
 
+EstatutosSalidaLinea		: COMMA Expresion { accion_1_print(); } EstatutosSalidaLinea
+							| epsilon ;
+
 
 Lectura				: LEESYM IDENTIFICADOR { accion_1_read(yytext); } ;
 
-Main 				: PROGRAMASYM Bloque { printCuadruplos(); }
+Main 				: PROGRAMASYM {
+						int inicio = pilaSaltos.top();
+						pilaSaltos.pop();
+						rellenar(inicio, cuadruplos.size() + -1 );
+					} Bloque { printCuadruplos(); }
 
 epsilon				:	;
 
@@ -576,20 +588,23 @@ epsilon				:	;
 int main(int argc, char **argv) {
 	// open a file handle to a particular file:
 	// FILE *myfile = fopen("a.snazzle.file", "r");
-	
-	
-	if ((argc > 1) && (freopen(argv[1], "r", stdin) == NULL))
-  	{
-    	cerr << argv[0] << ": File " << argv[1] << " cannot be opened.\n";
-    	exit( 1 );{}
-  	}
-  	else {
-		yyparse();
-        dirProcedimientos.inicializaMemoria();
-        solve();		
 
-		cout << "Success reading file" << endl; 
-  	}
+	yyin = fopen(argv[1], "r");
+	
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(-1));
+	cuadruplos.push_back( cuadruploTemp );	
+
+	pilaSaltos.push(cuadruplos.size() -1 );
+
+	
+	yyparse();
+	
+    dirProcedimientos.inicializaMemoria();
+    
+	solve();
+
+	cout << "Success reading file" << endl; 
+
 	return 0;
 
 	
@@ -612,7 +627,6 @@ void accion_1_expresiones(string yytext, int tipo){
 	// Si no era una variable registrada y es constante
 	if ( tipo != 4 ) {
 		// crea variable constante en el scope
-
 		constante constante; 
 		global = false;
 		switch (tipo) {
@@ -621,8 +635,7 @@ void accion_1_expresiones(string yytext, int tipo){
 				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 0;
 				constante.valor = yytext;
-				constantesBandera.push_back(constante);
-				cout << "Valor constante" << yytext	 << endl;		
+				constantesBandera.push_back(constante);		
 
 			break;
 			case 1: // entero
@@ -642,7 +655,7 @@ void accion_1_expresiones(string yytext, int tipo){
 				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 3;
 				constante.valor = yytext;
-				constantesTexto.push_back(constante);			
+				constantesTexto.push_back(constante);
 
 			break;
 		}
@@ -730,9 +743,6 @@ void accion_4_expresiones() {
 
 			tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
 
-			cout << "Tipo Izq: " << tipoIzq << endl;
-			cout << "Tipo Der: " << tipoDer << endl;
-			cout << "Tipo result: " << tipoResultado << endl;
 			if (tipoResultado != -1 ) {
 
 				temporal = true;
@@ -1024,7 +1034,17 @@ void accion_1_print() {
 	int res = pilaOperandos.top();
 	pilaOperandos.pop();
 
-	Cuadruplo cuadruploTemp = Cuadruplo("print", "", "" , to_string(res));
+	Cuadruplo cuadruploTemp = Cuadruplo("muestra", "", "" , to_string(res));
+	cuadruplos.push_back( cuadruploTemp );	
+
+	
+}
+
+void accion_2_print() {
+	
+	
+
+	Cuadruplo cuadruploTemp = Cuadruplo("saltolinea", "", "" , "");
 	cuadruplos.push_back( cuadruploTemp );	
 
 	
@@ -1042,8 +1062,8 @@ void accion_1_read(string nombre) {
 		exit(-1);
 	}
 
-
-	Cuadruplo cuadruploTemp = Cuadruplo("read", "", "" , nombre );
+	int direccionVariable = dirProcedimientos.buscaDireccion(nombre);
+	Cuadruplo cuadruploTemp = Cuadruplo("lee", "", "" , to_string(direccionVariable) );
 	cuadruplos.push_back( cuadruploTemp );	
 
 	
@@ -1090,19 +1110,47 @@ void accion_3_ciclo() {
 	// generar goto retorno
 	// rellenar(salso, cont)
 	
+
+
+
 	int falso = pilaSaltos.top();
 	pilaSaltos.pop();
 
-	int retorno = pilaSaltos.top();
-	pilaSaltos.pop();
 	
-	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(retorno));
+	cuadruploTemp = Cuadruplo("goto", "", "", to_string(falso));
 	cuadruplos.push_back( cuadruploTemp );
 
-	rellenar(falso, cuadruplos.size()  );
+	
 
+	cout << "PilaSalots top: " << pilaSaltos.size() << " Cuadruplo: " << cuadruplos.size() << endl;
 
 	
+}
+
+void accion_4_ciclo() {
+	
+
+	int estatutos = pilaSaltos.top();
+	pilaSaltos.pop();
+
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(estatutos));
+	cuadruplos.push_back( cuadruploTemp );
+
+	pilaSaltos.push( cuadruplos.size() - 1  );
+	
+
+}
+void accion_5_ciclo() {
+	
+	int incrementos = pilaSaltos.top();
+	pilaSaltos.pop();
+	
+	cout << "Relleno el " << incrementos << " con " << cuadruplos.size() << endl;
+	rellenar(incrementos, cuadruplos.size()  );
+
+	
+
+
 }
 
 void accion_1_haz_mientras() {
@@ -1130,7 +1178,7 @@ void accion_2_haz_mientras() {
 	pilaSaltos.pop();
 	
 
-	Cuadruplo cuadruploTemp = Cuadruplo("gotoF", to_string(resultado), "", to_string(retorno));
+	Cuadruplo cuadruploTemp = Cuadruplo("gotoT", to_string(resultado), "", to_string(retorno));
 	cuadruplos.push_back( cuadruploTemp );
 
 
@@ -1212,7 +1260,8 @@ void accion_2_llamada_proc() {
 	// inicializar contador de parametros k = 1;
 
 	indexParametro = 0;
-	Cuadruplo cuadruploTemp = Cuadruplo("era", metodoNombre, "" , "");
+	int bloqueMetodo = dirProcedimientos.buscaBloque(metodoNombre);
+	Cuadruplo cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodo), "" , "");
 	cuadruplos.push_back( cuadruploTemp );	
 	
 }
@@ -1440,9 +1489,9 @@ int getScope(int dir){
 	}else if(dir >= OFF_BAND_CONST && dir < OFF_BAND_DIR_OBJ){
 		return _CONSTANTE;
 	}else if(dir >= OFF_BAND_DIR_OBJ && dir <= OFF_BAND_DIR_FUNCION){
-		return _FUNCION;
-	}else if(dir >= OFF_BAND_DIR_FUNCION && dir <= OFF_UPPER_LIMIT){
 		return _OBJETO;
+	}else if(dir >= OFF_BAND_DIR_FUNCION && dir <= OFF_UPPER_LIMIT){
+		return _FUNCION;
 	}else {
 		return _ERROR;
 	}
@@ -1458,6 +1507,7 @@ int getScope(int dir){
 **/
 int getTipoDireccion ( int dir, int scope ) {
 	int tipoDireccion = -1 ;
+
     switch (scope) {
         case _GLOBAL:
                 tipoDireccion = floor( ( dir - OFF_BAND_GLOBAL  )/ 1000 ) ; 
@@ -1470,13 +1520,13 @@ int getTipoDireccion ( int dir, int scope ) {
         break;
         case _FUNCION:
                 
-                tipoDireccion = floor( ( dir - OFF_BAND_DIR_OBJ  )/ 1000 ) ; 
+                tipoDireccion = floor( ( dir - OFF_BAND_DIR_FUNCION  )/ 1000 ) ; 
                 
 
         break;
         case _OBJETO:
 
-                tipoDireccion = floor( ( dir - OFF_BAND_DIR_FUNCION  )/ 1000 ) ; 
+                tipoDireccion = floor( ( dir - OFF_BAND_DIR_OBJ  )/ 1000 ) ; 
         break;
 
     }
@@ -1507,8 +1557,8 @@ int getOperandoIndex(string operador){
     if ( operador == "&&") { return _AND; }
     if ( operador == "lee") { return _LEESYM; }
     if ( operador == "muestra") { return _MUESTRASYM; }
-    if ( operador == "gotof") { return _GOTOF; }
-    if ( operador == "gotot") { return _GOTOT; }
+    if ( operador == "gotoF") { return _GOTOF; }
+    if ( operador == "gotoT") { return _GOTOT; }
     if ( operador == "goto") { return _GOTO; }
     if ( operador == "era") { return _ERA; }
     if ( operador == "gosub") { return _GSUB; }
@@ -1516,6 +1566,7 @@ int getOperandoIndex(string operador){
     if ( operador == "param") { return _PARAM; }
     if ( operador == "ver") { return _VER; }
     if ( operador == "end") { return _END; }
+    if ( operador == "saltolinea") { return _SALTOLINEA; }
     return - 1;
 }
 
@@ -1544,13 +1595,13 @@ int pideEntero (int dir) {
                 
         break;
         case _FUNCION:
-                
                 valor =  memoria.pideEnteroLoc(  memoria.pideDirEnteroFunc( dir - OFF_ENT_DIR_FUNCION ));
-        break;
-        case _OBJETO:
 
+        break;
+        case _OBJETO: {
                 valor =  memoria.pideEnteroObj(  memoria.pideDirEnteroObj( dir - OFF_ENT_DIR_OBJ ));
                 
+        }				
         break;
 
     }
@@ -1587,7 +1638,7 @@ bool pideBandera (int dir) {
                 
                 valor =  memoria.pideBanderaLoc(  memoria.pideDirBanderaFunc( dir - OFF_BAND_DIR_FUNCION ));
         break;
-        case _OBJETO:
+        case _OBJETO: 
 
                 valor =  memoria.pideBanderaObj(  memoria.pideDirBanderaObj( dir - OFF_BAND_DIR_OBJ ));
                 
@@ -1617,7 +1668,7 @@ string pideTexto (int dir) {
                 
         break;
         case _CONSTANTE: 
-        		valor =  atoi(constantesTexto[dir- OFF_TEXT_CONST ].valor.c_str());
+        		valor =  constantesTexto[dir- OFF_TEXT_CONST ].valor;
         break;
         case _FUNCION:
                 
@@ -1746,11 +1797,7 @@ void guardaDecimal (int dir, double valor) {
                 memoria.guardaDecimal( dir - OFF_DEC_GLOBAL , valor );
         break;
         case _TEMPORAL: {
-        		cout << "Guarda decimal division: " << valor  << "Dir: " << dir << endl;
-        		cout << "Offset: " << dir - OFF_DEC_TEMP << endl;
-                memoria.guardaDecimalTemp( dir - OFF_DEC_TEMP , valor );
-                cout << pideDecimal(dir) << endl;
-        
+                memoria.guardaDecimalTemp( dir - OFF_DEC_TEMP , valor );        
         }
         break;
         case _CONSTANTE: 
@@ -1820,7 +1867,6 @@ void plus_op(Cuadruplo current){
     if (i+d==2){
         iRes = pideEntero(dirIzq) + pideEntero(dirDer);
         guardaEntero(dirRes,iRes);
-        cout << "Guarda suma entero 1: " << iRes << endl;
         return;
 
     } else if (i+d==4) {
@@ -1828,7 +1874,7 @@ void plus_op(Cuadruplo current){
     	dRes = pideDecimal(dirIzq) + pideDecimal(dirDer);    	
 
     } else if (i==2){
-    	cout << pideDecimal(dirIzq) << endl;
+
 
         dRes = pideEntero(dirDer) + pideDecimal(dirIzq);
     }
@@ -1836,7 +1882,6 @@ void plus_op(Cuadruplo current){
       dRes = pideDecimal(dirDer) + pideEntero(dirIzq);
     }
     guardaDecimal(dirRes,dRes);
-    cout << "Guarda suma decimal 1: " << dRes << endl;
     
 }
 
@@ -1858,7 +1903,6 @@ void minus_op(Cuadruplo current){
     if (i+d==2){
         iRes = pideEntero(dirIzq) - pideEntero(dirDer);
         guardaEntero(dirRes,iRes);
-        cout << "Guarda resta entero 1: " << iRes << endl;
         return;
     } else  if (i+d==4){
         dRes = pideDecimal(dirIzq) - pideDecimal(dirDer);
@@ -1869,7 +1913,6 @@ void minus_op(Cuadruplo current){
     else{
         dRes = pideEntero(dirIzq) - pideDecimal(dirDer);
     }
-    cout << "Guarda resta decimal 2: " << dRes << endl;
     guardaDecimal(dirRes,dRes);
 }
 
@@ -1890,22 +1933,18 @@ void times_op(Cuadruplo current){
     r=getTipoDireccion(dirRes,getScope(dirRes));
 
     if (i+d==2){
+
         iRes = pideEntero(dirIzq) * pideEntero(dirDer);
         guardaEntero(dirRes,iRes);
-    	cout << "Guarda multiplicacion entero 1: " << iRes << endl;
         return;
     } else if (i+d==4){
         dRes = pideDecimal(dirIzq) * pideDecimal(dirDer);
     } else if (i==2){
-
-    	cout << pideEntero(dirDer) << endl;
-		cout << pideDecimal(dirIzq) << endl;
         dRes = pideDecimal(dirIzq) * pideEntero(dirDer);
     }
     else{
         dRes = pideEntero(dirIzq) * pideDecimal(dirDer);
     }
-    cout << "Guarda multiplicacion decimal 2: " << dRes << endl;
     guardaDecimal(dirRes,dRes);
 }
 
@@ -1934,7 +1973,7 @@ void divide_op(Cuadruplo current){
     else{
         dRes = pideEntero(dirIzq) / pideDecimal(dirDer);
     }
-	cout << "Guarda divicion entero 1: " << dRes << endl;
+
     guardaDecimal(dirRes,dRes);
 }
 
@@ -1968,7 +2007,6 @@ void equal_op(Cuadruplo current){
     } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) == pideDecimal(dirDer));
     }
-	cout << "Guarda bandera entero 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2002,7 +2040,6 @@ void notequal_op(Cuadruplo current){
     } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) != pideDecimal(dirDer));
     }
-    cout << "Guarda bandera notequal  1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2034,7 +2071,7 @@ void more_op(Cuadruplo current){
     } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) > pideDecimal(dirDer));
     }
-    cout << "Guarda bandera more 1: " << bRes << endl;
+
     guardaBandera(dirRes,bRes);
 }
 
@@ -2043,7 +2080,7 @@ void more_op(Cuadruplo current){
  * Funcion utilizada para llevar a cabo la operacion logica de < de dos operandos
  * @param cuadruplo, representando el cuadruplo actual
  */
-void less_op(Cuadruplo current){
+void less_op(Cuadruplo current) {
     int dirIzq = atoi(current.getIzq().c_str());
     int dirDer = atoi(current.getDer().c_str());
     int dirRes = atoi(current.getRes().c_str());
@@ -2066,7 +2103,6 @@ void less_op(Cuadruplo current){
     } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) < pideDecimal(dirDer));
     }
-        cout << "Guarda bandera less 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2098,7 +2134,7 @@ void moreeq_op(Cuadruplo current){
     } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) >= pideDecimal(dirDer));
     }
-        cout << "Guarda bandera moreequal 1: " << bRes << endl;
+
     guardaBandera(dirRes,bRes);
 }
 
@@ -2130,7 +2166,7 @@ void lesseq_op(Cuadruplo current){
     } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) <= pideDecimal(dirDer));
     }
-    cout << "Guarda bandera lessequal 1: " << bRes << endl;
+
     guardaBandera(dirRes,bRes);
 }
 
@@ -2145,7 +2181,7 @@ void or_op(Cuadruplo current){
     int dirRes = atoi(current.getRes().c_str());
     bool bRes;
     bRes=(pideBandera(dirIzq) || pideBandera(dirDer));
-    cout << "Guarda bandera or 1: " << bRes << endl;
+
     guardaBandera(dirRes,bRes);
 }
 
@@ -2160,7 +2196,7 @@ void and_op(Cuadruplo current){
     int dirRes = atoi(current.getRes().c_str());
     bool bRes;
     bRes=(pideBandera(dirIzq) && pideBandera(dirDer));
-    cout << "Guarda bandera and 1: " << bRes << endl;
+
     guardaBandera(dirRes,bRes);
 }
 
@@ -2176,16 +2212,19 @@ void assign_op(Cuadruplo current){
   int i,r;
   i=getTipoDireccion(dirIzq,getScope(dirIzq));
   r=getTipoDireccion(dirRes,getScope(dirRes));
-  cout << "Tipo resultado: " << r << endl;
   switch(r){
     case 0:
       guardaBandera(dirRes,pideBandera(dirIzq));
       break;
     case 1:
-      if(i==1)
+      if(i==1) {
+     	
         guardaEntero(dirRes,pideEntero(dirIzq));
-      else
+      }
+      else {
+      	
         guardaEntero(dirRes,pideDecimal(dirIzq));
+      }
       break;
     case 2:
       if(i==1)
@@ -2194,7 +2233,8 @@ void assign_op(Cuadruplo current){
         guardaDecimal(dirRes,pideDecimal(dirIzq));
       break;
     case 3:
-      guardaBandera(dirRes,pideBandera(dirIzq));
+      guardaTexto(dirRes,pideTexto(dirIzq));
+
       break;
     default:
       break;
@@ -2220,8 +2260,15 @@ void print_op(Cuadruplo current){
     case 2:
     cout << pideDecimal(dirRes);
       break;
-    case 3:
-    cout << pideTexto(dirRes);
+    case 3: {
+
+    	string token = pideTexto(dirRes);
+    	if ( getScope(dirRes) == 2) {
+			token = token.substr(1,token.size()-2);
+    	}
+
+    	cout << token;
+    }
       break;
     default:
       break;
@@ -2263,7 +2310,7 @@ bool checkType(int type, string var){
     }
     for (int i = 1 ;i < var.size() ;i++){
       if (!isdigit(var[i])){
-        if (var[0]=='.'&&!dot)
+        if (var[i]=='.'&&!dot)
           dot=true;
         else
           return false;
@@ -2281,6 +2328,7 @@ bool checkType(int type, string var){
  */
 
 bool read_op(Cuadruplo current){
+  
   string input;
   int r;
   int dirRes = atoi(current.getRes().c_str());
@@ -2327,6 +2375,37 @@ bool read_op(Cuadruplo current){
 
 
 /**
+ * indexGOTOF
+ * Funcion utilizada para representar el GOTOF
+ * @param cuadruplo, representando el cuadruplo actual: @param i, para saber cual era la original
+ * @return valor entero que es la direccion del cuadruplo a seguir
+ */
+int indexGOTOF(int i,Cuadruplo current){
+  bool b;
+  int dirRes = atoi(current.getRes().c_str());
+  int dirIzq = atoi(current.getIzq().c_str());
+
+  b = pideBandera(dirIzq);
+  return b ? i : (dirRes-1);//-1 porque al final de la iteracion hara i++
+}
+
+/**
+ * indexGOTOT
+ * Funcion utilizada para representar el GOTOT
+ * @param cuadruplo, representando el cuadruplo actual: @param i, para saber cual era la original
+ * @return valor entero que es la direccion del cuadruplo a seguir
+ */
+int indexGOTOT(int i,Cuadruplo current){
+  bool b;
+  int dirRes = atoi(current.getRes().c_str());
+  int dirIzq = atoi(current.getIzq().c_str());
+  b = pideBandera(dirIzq);
+  return b ?  (dirRes-1) : i;//-1 porque al final de la iteracion hara i++
+}
+
+
+
+/**
  *  solve
  *  Metodo utilizado como si fuera la virtual machine. 
  */
@@ -2360,11 +2439,17 @@ void solve() {
             case _LSSOEQL : lesseq_op(current);   break; // Funcion que hace <=
             case _OR      : or_op(current);   break; // Funcion que hace ||
             case _AND     : and_op(current);   break; // Funcion que hace &&
-            case _MUESTRASYM  : print_op(current);   break; // Funcion que el output
+            case _MUESTRASYM : print_op(current);   break; // Funcion que el output
+            case _SALTOLINEA : cout << endl ;   break; // Funcion que el output
             case _LEESYM  : read_op(current);   break; // Funcion que hace la lectura 
             case _EQL     : assign_op(current);   break; // Funcion que hace la asignacion
+			case _GOTO    : i = atoi(current.getRes().c_str()) ;  break;// -1 para equilibrar el i++
+			case _GOTOF   : i = indexGOTOF(i,current);  break;
+			case _GOTOT   : i = indexGOTOT(i,current); break;
+
 
         }
+        
     }
 }
 

@@ -82,7 +82,7 @@ ID [a-z][a-z0-9]*
 									yylval.ival = atoi(yytext);
 									return ENTERO;
 								 }
-\"{letter}({letter}|{digit})*\" { 
+\"(\\.|[^"])*\"					{ 	
 									yylval.sval = strdup(yytext);
 									return TEXTO;
 								}

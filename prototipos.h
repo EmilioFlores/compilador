@@ -24,8 +24,11 @@ void accion_3_condicion_fallo();
 void accion_1_ciclo();
 void accion_2_ciclo();
 void accion_3_ciclo();
+void accion_4_ciclo();
+void accion_5_ciclo();
 // estatuto print
 void accion_1_print();
+void accion_2_print();
 // estatuto read
 void accion_1_read(string yytext);
 //Estatuto Haz-Mientras
