@@ -101,8 +101,6 @@ public:
     
     //Metodos que regresan el espacio de memoria
     int pideEntero(int dir){
-        cout << "Direccion recibida: " << dir << " Tamaño: " << enteros.size() << endl;
-
         return enteros[dir];
     }
     bool pideBandera(int dir){

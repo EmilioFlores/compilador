@@ -79,7 +79,10 @@ stack<int> pilaTipos;
 stack<int> pilaSaltos;
 
 vector<Cuadruplo> cuadruplos; 
-vector<constante> constantes;
+vector<constante> constantesEnteras;
+vector<constante> constantesDecimales;
+vector<constante> constantesTexto;
+vector<constante> constantesBandera;
 
 int cuboSemantico[4][4][13] = 	{
 								  	{  // bandera 0
@@ -95,7 +98,7 @@ int cuboSemantico[4][4][13] = 	{
                                         //  0     1     2     3     4     5     6     7     8     9    10    11     12
                                         //  +     -     *     /    ==    !=     >     <     =    >=    <=    ||     &&
                                         {  -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1   },  // bandera 0
-                                        {   1  ,  1  ,  1  ,  1  ,  0  ,  0  ,  0  ,  0  ,  1  ,  0  ,  0  , -1  , -1   },  // entero  1
+                                        {   1  ,  1  ,  1  ,  2  ,  0  ,  0  ,  0  ,  0  ,  1  ,  0  ,  0  , -1  , -1   },  // entero  1
                                         {   2  ,  2  ,  2  ,  2  ,  0  ,  0  ,  0  ,  0  ,  1  ,  0  ,  0  , -1  , -1   },  // decimal 2
                                         {  -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1  , -1   },  // texto   3
                                     },
@@ -197,8 +200,6 @@ int cuboSemantico[4][4][13] = 	{
 %token FUNCIONSYM
 %token REGRESASYM
 %token INCLUIRSYM
-%token FALSOSYM
-%token VERDADEROSYM
 %token OBJETOSYM
 %token PRIVADOSYM
 %token PUBLICOSYM
@@ -419,6 +420,7 @@ Asignacion 			: IDENTIFICADOR {
 								accion_2_assignacion("=");
 						}
 						Expresion {
+
 								accion_3_assignacion();
 								
 						} ;
@@ -433,6 +435,10 @@ Expresion2 			: LSS { accion_8_expresiones(yytext); }
 					| GTR { accion_8_expresiones(yytext); }
 					| EQLEQL { accion_8_expresiones(yytext); }
 					| NEQ { accion_8_expresiones(yytext); } ;
+					| LSSOEQL { accion_8_expresiones(yytext); } ;
+					| GTROEQL { accion_8_expresiones(yytext); } ;
+					| AND { accion_8_expresiones(yytext); } ;
+					| OR { accion_8_expresiones(yytext); } ;
 
 Exp 				: Termino { accion_4_expresiones(); }	Exp1 ;
 Exp1				: PLUS {
@@ -615,29 +621,33 @@ void accion_1_expresiones(string yytext, int tipo){
 				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 0;
 				constante.valor = yytext;
+				constantesBandera.push_back(constante);
+				cout << "Valor constante" << yytext	 << endl;		
 
 			break;
 			case 1: // entero
 				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 1;
 				constante.valor = yytext;
+				constantesEnteras.push_back(constante);			
 			break;
 			case 2: // decimal
 				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 2;
-				constante.valor = yytext;
+				constante.valor = yytext;		
+				constantesDecimales.push_back(constante);			
 
 			break;
 			case 3: // texto
 				constante.direccion = getSiguienteDireccion(tipo, 1, global, temporal, objeto, funcion);
 				constante.tipo = 3;
 				constante.valor = yytext;
+				constantesTexto.push_back(constante);			
 
 			break;
 		}
 		global = true;
 		
-		constantes.push_back(constante);			
 		pilaOperandos.push(constante.direccion);
 		pilaTipos.push(constante.tipo);
 		
@@ -720,6 +730,9 @@ void accion_4_expresiones() {
 
 			tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
 
+			cout << "Tipo Izq: " << tipoIzq << endl;
+			cout << "Tipo Der: " << tipoDer << endl;
+			cout << "Tipo result: " << tipoResultado << endl;
 			if (tipoResultado != -1 ) {
 
 				temporal = true;
@@ -832,7 +845,9 @@ void accion_9_expresiones(){
 	
 	// Si top de pOperadores = > or < 
 	if ( pilaOperadores.size() != 0 ) {
-		if ( pilaOperadores.top() == ">" || pilaOperadores.top() == "<" || pilaOperadores.top() == "==" || pilaOperadores.top() == "!=") {
+		if ( pilaOperadores.top() == ">" || pilaOperadores.top() == "<" || pilaOperadores.top() == "==" 
+			|| pilaOperadores.top() == "!=" || pilaOperadores.top() == ">=" || pilaOperadores.top() == "<="
+			|| pilaOperadores.top() == "||" || pilaOperadores.top() == "&&") {
 
 			int tipoDer = -1, tipoIzq = -1;
 			int tipoResultado = -1, tipoOperador;
@@ -931,6 +946,7 @@ void accion_3_assignacion( ){
 
 	int tipoOperador  = getIndexOperador(asigna);
 	int tipoResultado = cuboSemantico[tipoIzq][tipoDer][tipoOperador];
+
 
 	if ( tipoResultado != -1 ) {
 
@@ -1513,18 +1529,19 @@ int getOperandoIndex(string operador){
     @return el valor del entero conseguido en memoria
 **/
 int pideEntero (int dir) { 
-    int scope = getScope(dir); 
+    int scope = getScope(dir);
     int valor = -1;
     switch (scope) {
         case _GLOBAL:
                 valor =  memoria.pideEntero( dir - OFF_ENT_GLOBAL );
         break;
         case _TEMPORAL: 
-                valor =  memoria.pideEntero( dir - OFF_ENT_TEMP );
+                valor =  memoria.pideEnteroTemp( dir - OFF_ENT_TEMP );
                 
         break;
         case _CONSTANTE: 
-                valor =  memoria.pideEntero( dir - OFF_ENT_CONST );
+        		valor =  atoi(constantesEnteras[dir- OFF_ENT_CONST ].valor.c_str());
+                
         break;
         case _FUNCION:
                 
@@ -1556,11 +1573,15 @@ bool pideBandera (int dir) {
                 valor =  memoria.pideBandera( dir - OFF_BAND_GLOBAL );
         break;
         case _TEMPORAL: 
-                valor =  memoria.pideBandera( dir - OFF_BAND_TEMP );
+                valor =  memoria.pideBanderaTemp( dir - OFF_BAND_TEMP );
                 
         break;
-        case _CONSTANTE: 
-                valor =  memoria.pideBandera( dir - OFF_BAND_CONST );
+        case _CONSTANTE: {
+
+        		string val =  constantesBandera[dir- OFF_BAND_CONST ].valor;
+        		valor = val == "falso" ? 0 : 1 ;
+        }
+
         break;
         case _FUNCION:
                 
@@ -1592,11 +1613,11 @@ string pideTexto (int dir) {
                 valor =  memoria.pideTexto( dir - OFF_TEXT_GLOBAL );
         break;
         case _TEMPORAL: 
-                valor =  memoria.pideTexto( dir - OFF_TEXT_TEMP );
+                valor =  memoria.pideTextoTemp( dir - OFF_TEXT_TEMP );
                 
         break;
         case _CONSTANTE: 
-                valor =  memoria.pideTexto( dir - OFF_TEXT_CONST );
+        		valor =  atoi(constantesTexto[dir- OFF_TEXT_CONST ].valor.c_str());
         break;
         case _FUNCION:
                 
@@ -1628,11 +1649,12 @@ double pideDecimal (int dir) {
                 valor =  memoria.pideDecimal( dir - OFF_DEC_GLOBAL );
         break;
         case _TEMPORAL: 
-                valor =  memoria.pideDecimal( dir - OFF_DEC_TEMP );
-                
+                valor =  memoria.pideDecimalTemp( dir - OFF_DEC_TEMP );
+
         break;
         case _CONSTANTE: 
-                valor =  memoria.pideDecimal( dir - OFF_DEC_CONST );
+        		valor =  atof(constantesDecimales[dir- OFF_DEC_CONST ].valor.c_str());
+      
         break;
         case _FUNCION:
                 
@@ -1663,7 +1685,9 @@ void guardaEntero (int dir, int valor) {
                 memoria.guardaEntero( dir - OFF_ENT_GLOBAL , valor );
         break;
         case _TEMPORAL: 
-                memoria.guardaEntero( dir - OFF_ENT_TEMP , valor );
+        		
+                memoria.guardaEnteroTemp( dir - OFF_ENT_TEMP , valor );
+
         break;
         case _CONSTANTE: 
                 memoria.guardaEntero( dir - OFF_ENT_CONST , valor ); 
@@ -1692,7 +1716,7 @@ void guardaBandera (int dir, bool valor) {
                 memoria.guardaBandera( dir - OFF_BAND_GLOBAL , valor );
         break;
         case _TEMPORAL: 
-                memoria.guardaBandera( dir - OFF_BAND_TEMP , valor );
+                memoria.guardaBanderaTemp( dir - OFF_BAND_TEMP , valor );
         break;
         case _CONSTANTE: 
                 memoria.guardaBandera( dir - OFF_BAND_CONST , valor ); 
@@ -1721,11 +1745,16 @@ void guardaDecimal (int dir, double valor) {
         case _GLOBAL:
                 memoria.guardaDecimal( dir - OFF_DEC_GLOBAL , valor );
         break;
-        case _TEMPORAL: 
-                memoria.guardaDecimal( dir - OFF_DEC_TEMP , valor );
+        case _TEMPORAL: {
+        		cout << "Guarda decimal division: " << valor  << "Dir: " << dir << endl;
+        		cout << "Offset: " << dir - OFF_DEC_TEMP << endl;
+                memoria.guardaDecimalTemp( dir - OFF_DEC_TEMP , valor );
+                cout << pideDecimal(dir) << endl;
+        
+        }
         break;
         case _CONSTANTE: 
-                memoria.guardaDecimal( dir - OFF_DEC_CONST , valor ); 
+                memoria.guardaDecimalTemp( dir - OFF_DEC_CONST , valor ); 
         break;
         case _FUNCION:
                 memoria.guardaDecimalLoc(  memoria.pideDirDecimalFunc( dir - OFF_DEC_DIR_FUNCION), valor );
@@ -1754,7 +1783,7 @@ void guardaTexto (int dir, string valor) {
                 memoria.guardaTexto( dir - OFF_TEXT_GLOBAL , valor );
         break;
         case _TEMPORAL: 
-                memoria.guardaTexto( dir - OFF_TEXT_TEMP , valor );
+                memoria.guardaTextoTemp( dir - OFF_TEXT_TEMP , valor );
         break;
         case _CONSTANTE: 
                 memoria.guardaTexto( dir - OFF_TEXT_CONST , valor ); 
@@ -1778,6 +1807,7 @@ void guardaTexto (int dir, string valor) {
  * @param cuadruplo, representando el cuadruplo actual
  */
 void plus_op(Cuadruplo current){
+
     int dirIzq = atoi(current.getIzq().c_str());
     int dirDer = atoi(current.getDer().c_str());
     int dirRes = atoi(current.getRes().c_str());
@@ -1790,18 +1820,24 @@ void plus_op(Cuadruplo current){
     if (i+d==2){
         iRes = pideEntero(dirIzq) + pideEntero(dirDer);
         guardaEntero(dirRes,iRes);
+        cout << "Guarda suma entero 1: " << iRes << endl;
         return;
+
+    } else if (i+d==4) {
+
+    	dRes = pideDecimal(dirIzq) + pideDecimal(dirDer);    	
+
+    } else if (i==2){
+    	cout << pideDecimal(dirIzq) << endl;
+
+        dRes = pideEntero(dirDer) + pideDecimal(dirIzq);
     }
-    if (i+d==4){
-          dRes = pideDecimal(dirIzq) + pideDecimal(dirDer);
-      }
-        if (i=2){
-            dRes = pideDecimal(dirIzq) + pideEntero(dirDer);
-        }
-        else{
-          dRes = pideDecimal(dirDer) + pideEntero(dirIzq);
+    else{
+      dRes = pideDecimal(dirDer) + pideEntero(dirIzq);
     }
     guardaDecimal(dirRes,dRes);
+    cout << "Guarda suma decimal 1: " << dRes << endl;
+    
 }
 
 /**
@@ -1822,17 +1858,18 @@ void minus_op(Cuadruplo current){
     if (i+d==2){
         iRes = pideEntero(dirIzq) - pideEntero(dirDer);
         guardaEntero(dirRes,iRes);
+        cout << "Guarda resta entero 1: " << iRes << endl;
         return;
-    }
-    if (i+d==4){
+    } else  if (i+d==4){
         dRes = pideDecimal(dirIzq) - pideDecimal(dirDer);
-    }
-    if (i=2){
+
+    } else  if (i==2){
         dRes = pideDecimal(dirIzq) - pideEntero(dirDer);
     }
     else{
         dRes = pideEntero(dirIzq) - pideDecimal(dirDer);
     }
+    cout << "Guarda resta decimal 2: " << dRes << endl;
     guardaDecimal(dirRes,dRes);
 }
 
@@ -1851,20 +1888,24 @@ void times_op(Cuadruplo current){
     i=getTipoDireccion(dirIzq,getScope(dirIzq));
     d=getTipoDireccion(dirDer,getScope(dirDer));
     r=getTipoDireccion(dirRes,getScope(dirRes));
+
     if (i+d==2){
         iRes = pideEntero(dirIzq) * pideEntero(dirDer);
         guardaEntero(dirRes,iRes);
+    	cout << "Guarda multiplicacion entero 1: " << iRes << endl;
         return;
-    }
-    if (i+d==4){
+    } else if (i+d==4){
         dRes = pideDecimal(dirIzq) * pideDecimal(dirDer);
-    }
-    if (i=2){
+    } else if (i==2){
+
+    	cout << pideEntero(dirDer) << endl;
+		cout << pideDecimal(dirIzq) << endl;
         dRes = pideDecimal(dirIzq) * pideEntero(dirDer);
     }
     else{
         dRes = pideEntero(dirIzq) * pideDecimal(dirDer);
     }
+    cout << "Guarda multiplicacion decimal 2: " << dRes << endl;
     guardaDecimal(dirRes,dRes);
 }
 
@@ -1884,19 +1925,16 @@ void divide_op(Cuadruplo current){
     d=getTipoDireccion(dirDer,getScope(dirDer));
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i+d==2){
-        iRes = pideEntero(dirIzq) / pideEntero(dirDer);
-        guardaEntero(dirRes,iRes);
-        return;
-    }
-    if (i+d==4){
+        dRes = pideEntero(dirIzq) / pideEntero(dirDer);
+    } else if (i+d==4){
         dRes = pideDecimal(dirIzq) / pideDecimal(dirDer);
-    }
-    if (i=2){
+    } else if (i==2){
         dRes = pideDecimal(dirIzq) / pideEntero(dirDer);
     }
     else{
         dRes = pideEntero(dirIzq) / pideDecimal(dirDer);
     }
+	cout << "Guarda divicion entero 1: " << dRes << endl;
     guardaDecimal(dirRes,dRes);
 }
 
@@ -1916,24 +1954,21 @@ void equal_op(Cuadruplo current){
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i + d == 6){
         bRes=(pideTexto(dirIzq) == pideTexto(dirDer));
-    }
-    if (i + d == 3){
-        if (i=2){
+    } else if (i + d == 3){
+        if (i==2){
             bRes = (pideDecimal(dirIzq) == pideEntero(dirDer));
         }
         else{
             bRes = (pideEntero(dirIzq) == pideDecimal(dirDer));
         }
-    }
-    if (i + d == 0){
+    } else if (i + d == 0){
         bRes=(pideBandera(dirIzq) == pideBandera(dirDer));
-    }
-    if (i + d == 2){
+    } else if (i + d == 2){
         bRes=(pideEntero(dirIzq) == pideEntero(dirDer));
-    }
-    if (i + d == 4){
+    } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) == pideDecimal(dirDer));
     }
+	cout << "Guarda bandera entero 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -1953,24 +1988,21 @@ void notequal_op(Cuadruplo current){
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i + d == 6){
         bRes=(pideTexto(dirIzq) == pideTexto(dirDer));
-    }
-    if (i + d == 3){
-        if (i=2){
+    } else if (i + d == 3){
+        if (i==2){
             bRes = (pideDecimal(dirIzq) != pideEntero(dirDer));
         }
         else{
             bRes = (pideEntero(dirIzq) != pideDecimal(dirDer));
         }
-    }
-    if (i + d == 0){
+    } else if (i + d == 0){
         bRes=(pideBandera(dirIzq) != pideBandera(dirDer));
-    }
-    if (i + d == 2){
+    } else if (i + d == 2){
         bRes=(pideEntero(dirIzq) != pideEntero(dirDer));
-    }
-    if (i + d == 4){
+    } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) != pideDecimal(dirDer));
     }
+    cout << "Guarda bandera notequal  1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -1989,22 +2021,20 @@ void more_op(Cuadruplo current){
     d=getTipoDireccion(dirDer,getScope(dirDer));
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i + d == 3){
-        if (i=2){
+        if (i==2){
             bRes = (pideDecimal(dirIzq) > pideEntero(dirDer));
         }
         else{
             bRes = (pideEntero(dirIzq) > pideDecimal(dirDer));
         }
-    }
-    if (i + d == 0){
+    } else if (i + d == 0){
         bRes=(pideBandera(dirIzq) > pideBandera(dirDer));
-    }
-    if (i + d == 2){
+    } else if (i + d == 2){
         bRes=(pideEntero(dirIzq) > pideEntero(dirDer));
-    }
-    if (i + d == 4){
+    } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) > pideDecimal(dirDer));
     }
+    cout << "Guarda bandera more 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2023,22 +2053,20 @@ void less_op(Cuadruplo current){
     d=getTipoDireccion(dirDer,getScope(dirDer));
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i + d == 3){
-        if (i=2){
+        if (i==2){
             bRes = (pideDecimal(dirIzq) < pideEntero(dirDer));
         }
         else{
             bRes = (pideEntero(dirIzq) < pideDecimal(dirDer));
         }
-    }
-    if (i + d == 0){
+    } else if (i + d == 0){
         bRes=(pideBandera(dirIzq) < pideBandera(dirDer));
-    }
-    if (i + d == 2){
+    } else if (i + d == 2){
         bRes=(pideEntero(dirIzq) < pideEntero(dirDer));
-    }
-    if (i + d == 4){
+    } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) < pideDecimal(dirDer));
     }
+        cout << "Guarda bandera less 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2057,22 +2085,20 @@ void moreeq_op(Cuadruplo current){
     d=getTipoDireccion(dirDer,getScope(dirDer));
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i + d == 3){
-        if (i=2){
+        if (i==2){
             bRes = (pideDecimal(dirIzq) >= pideEntero(dirDer));
         }
         else{
             bRes = (pideEntero(dirIzq) >= pideDecimal(dirDer));
         }
-    }
-    if (i + d == 0){
+    } else if (i + d == 0){
         bRes=(pideBandera(dirIzq) >= pideBandera(dirDer));
-    }
-    if (i + d == 2){
+    } else if (i + d == 2){
         bRes=(pideEntero(dirIzq) >= pideEntero(dirDer));
-    }
-    if (i + d == 4){
+    } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) >= pideDecimal(dirDer));
     }
+        cout << "Guarda bandera moreequal 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2091,22 +2117,20 @@ void lesseq_op(Cuadruplo current){
     d=getTipoDireccion(dirDer,getScope(dirDer));
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i + d == 3){
-        if (i=2){
+        if (i==2){
             bRes = (pideDecimal(dirIzq) <= pideEntero(dirDer));
         }
         else{
             bRes = (pideEntero(dirIzq) <= pideDecimal(dirDer));
         }
-    }
-    if (i + d == 0){
+    } else if (i + d == 0){
         bRes=(pideBandera(dirIzq) <= pideBandera(dirDer));
-    }
-    if (i + d == 2){
+    } else if (i + d == 2){
         bRes=(pideEntero(dirIzq) <= pideEntero(dirDer));
-    }
-    if (i + d == 4){
+    } else if (i + d == 4){
         bRes=(pideDecimal(dirIzq) <= pideDecimal(dirDer));
     }
+    cout << "Guarda bandera lessequal 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2121,6 +2145,7 @@ void or_op(Cuadruplo current){
     int dirRes = atoi(current.getRes().c_str());
     bool bRes;
     bRes=(pideBandera(dirIzq) || pideBandera(dirDer));
+    cout << "Guarda bandera or 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
@@ -2135,9 +2160,170 @@ void and_op(Cuadruplo current){
     int dirRes = atoi(current.getRes().c_str());
     bool bRes;
     bRes=(pideBandera(dirIzq) && pideBandera(dirDer));
+    cout << "Guarda bandera and 1: " << bRes << endl;
     guardaBandera(dirRes,bRes);
 }
 
+
+/**
+ * assign_op
+ * Funcion utilizada para llevar a cabo la operacion logica de = de dos operandos
+ * @param cuadruplo, representando el cuadruplo actual
+ */
+void assign_op(Cuadruplo current){
+  int dirIzq = atoi(current.getIzq().c_str());
+  int dirRes = atoi(current.getRes().c_str());
+  int i,r;
+  i=getTipoDireccion(dirIzq,getScope(dirIzq));
+  r=getTipoDireccion(dirRes,getScope(dirRes));
+  cout << "Tipo resultado: " << r << endl;
+  switch(r){
+    case 0:
+      guardaBandera(dirRes,pideBandera(dirIzq));
+      break;
+    case 1:
+      if(i==1)
+        guardaEntero(dirRes,pideEntero(dirIzq));
+      else
+        guardaEntero(dirRes,pideDecimal(dirIzq));
+      break;
+    case 2:
+      if(i==1)
+        guardaDecimal(dirRes,pideEntero(dirIzq) + 0.0);
+      else
+        guardaDecimal(dirRes,pideDecimal(dirIzq));
+      break;
+    case 3:
+      guardaBandera(dirRes,pideBandera(dirIzq));
+      break;
+    default:
+      break;
+  }
+}
+
+/**
+ * print_op
+ * Funcion utilizada para llevar a cabo la operacion logica de muestra() de una direccion de memoria
+ * @param cuadruplo, representando el cuadruplo actual
+ */
+void print_op(Cuadruplo current){
+  int dirRes = atoi(current.getRes().c_str());
+  int r;
+  r=getTipoDireccion(dirRes,getScope(dirRes));
+  switch(r){
+    case 0:
+      cout << pideBandera(dirRes);
+      break;
+    case 1:
+    cout << pideEntero(dirRes);
+      break;
+    case 2:
+    cout << pideDecimal(dirRes);
+      break;
+    case 3:
+    cout << pideTexto(dirRes);
+      break;
+    default:
+      break;
+  }
+}
+
+/**
+ * checkType
+ * Funcion utilizada para checar si lo que se lee es correcto para enteros o decimales
+ * @param type, que es el tipo de variable; var, string que es la variable a probar
+ * @return valor buleano para decir si esta correcto el string de entrada
+ */
+bool checkType(int type, string var){
+  bool dot=false;
+
+  //Checa que sea entero valido
+  if (type==1){
+    if (!isdigit(var[0])){
+      if(var[0]!='+'&&var[0]!='-'){
+        return false;
+      }
+    }
+    for (int i = 1 ;i < var.size() ;i++){
+      if (!isdigit(var[i])){
+        return false;
+      }
+    }
+    return true;
+  }
+//checa que sea un decimal valido
+  if (type==2){
+    if (!isdigit(var[0])){
+      if(var[0]!='+'&&var[0]!='-'){
+        if (var[0]=='.')
+          dot=true;
+        else
+          return false;
+      }
+    }
+    for (int i = 1 ;i < var.size() ;i++){
+      if (!isdigit(var[i])){
+        if (var[0]=='.'&&!dot)
+          dot=true;
+        else
+          return false;
+      }
+    }
+    return true;
+  }
+}
+
+/**
+ * read_op
+ * Funcion utilizada para leer contenido del usuario para memoria
+ * @param cuadruplo, representando el cuadruplo actual
+ * @return valor buleano para decir si se pudo ejecutar la funcion
+ */
+
+bool read_op(Cuadruplo current){
+  string input;
+  int r;
+  int dirRes = atoi(current.getRes().c_str());
+  r=getTipoDireccion(dirRes,getScope(dirRes));
+  if (r==0){
+    bool b;
+    cin >> b;
+    guardaBandera(dirRes,b);
+    return true;
+  }
+  cin >> input;
+  switch(r){
+    case 1:
+      if (checkType(1,input)){
+        int res = atoi(input.c_str());
+        guardaEntero(dirRes,res);
+        return true;
+      }
+      else{
+        cout <<"No se pudo leer entero"<<endl;
+        return false;
+      }
+      break;
+    case 2:
+      if (checkType(2,input)){
+        double res = atof(input.c_str());
+        guardaDecimal(dirRes,res);
+        return true;
+      }
+      else{
+        cout <<"No se pudo leer decimal"<<endl;
+        return false;
+      }
+      break;
+    case 3:
+      guardaTexto(dirRes,input);
+      return true;
+      break;
+    default:
+      return false;
+      break;
+  }
+}
 
 
 /**
@@ -2158,26 +2344,27 @@ void solve() {
 
 
         */
-        
+        //cout << "Current: " << current.getOp() << " getOpIndex: " <<  getOperandoIndex(current.getOp() ) << endl;
         switch ( getOperandoIndex(current.getOp() ))  {
+
             //  +     -     *     /    ==    !=     >     <     =    >=    <=    ||     &&
             case _PLUS    : plus_op(current);   break; // Funcion que hace la suma
-            case _MINUS    : minus_op(current);   break; // Funcion que hace la resta
-            case _TIMES    : times_op(current);   break; // Funcion que hace la multiplicacion
-            case _SLASH    : divide_op(current);   break; // Funcion que hace la division
-            case _EQLEQL    : equal_op(current);   break; // Funcion que hace ==
-            case _NEQ    : notequal_op(current);   break; // Funcion que hace !=
-            case _GTR    : more_op(current);   break; // Funcion que hace >
-            case _LSS    : less_op(current);   break; // Funcion que hace <
-            case _GTROEQL    : moreeq_op(current);   break; // Funcion que hace >=
-            case _LSSOEQL    : lesseq_op(current);   break; // Funcion que hace <=
-            case _OR    : or_op(current);   break; // Funcion que hace ||
-            case _AND    : and_op(current);   break; // Funcion que hace &&
-            
-            break;
+            case _MINUS   : minus_op(current);   break; // Funcion que hace la resta
+            case _TIMES   : times_op(current);   break; // Funcion que hace la multiplicacion
+            case _SLASH   : divide_op(current);   break; // Funcion que hace la division
+            case _EQLEQL  : equal_op(current);   break; // Funcion que hace ==
+            case _NEQ     : notequal_op(current);   break; // Funcion que hace !=
+            case _GTR     : more_op(current);   break; // Funcion que hace >
+            case _LSS     : less_op(current);   break; // Funcion que hace <
+            case _GTROEQL : moreeq_op(current);   break; // Funcion que hace >=
+            case _LSSOEQL : lesseq_op(current);   break; // Funcion que hace <=
+            case _OR      : or_op(current);   break; // Funcion que hace ||
+            case _AND     : and_op(current);   break; // Funcion que hace &&
+            case _MUESTRASYM  : print_op(current);   break; // Funcion que el output
+            case _LEESYM  : read_op(current);   break; // Funcion que hace la lectura 
+            case _EQL     : assign_op(current);   break; // Funcion que hace la asignacion
+
         }
     }
-
-
 }
 

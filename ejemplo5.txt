@@ -26,15 +26,10 @@ programa {
 
 	
 	var entero y ;
-	var entero x ;
-	var entero xx ;
 
-	y = 4 + 5 ;
-	y = 10 + 10 ;
+	y =  2 * 53 + 2*53;
+	
 
-	
-	
-	
 		
 
 	

@@ -60,8 +60,12 @@ ID [a-z][a-z0-9]*
 "funcion"						{ return FUNCIONSYM; }
 "regresa"						{ return REGRESASYM; }
 "incluir"						{ return INCLUIRSYM; }
-"falso"							{ return FALSOSYM; }
-"verdadero"						{ return VERDADEROSYM; }
+"falso"							{   yylval.bval = 0; 
+									return BANDERA; 
+								}
+"verdadero"						{ 	yylval.bval = 1; 
+									return BANDERA; 
+								}
 "objeto"						{ return OBJETOSYM; }
 "privado"						{ return PRIVADOSYM; }
 "publico"						{ return PUBLICOSYM; }
