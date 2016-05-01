@@ -26,6 +26,7 @@ void accion_2_ciclo();
 void accion_3_ciclo();
 void accion_4_ciclo();
 void accion_5_ciclo();
+void accion_6_ciclo();
 // estatuto print
 void accion_1_print();
 void accion_2_print();

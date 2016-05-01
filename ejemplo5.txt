@@ -31,9 +31,7 @@ programa {
 	lee x;
 
 
-	
 
-	muestraLinea("Afuera haz mientras ");
 	haz {
 		x=x*2;
 		y = x < 50;

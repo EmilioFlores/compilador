@@ -542,15 +542,19 @@ Condicion1			: FALLOSYM {
 
 
 Ciclo				: CICLOSYM {
-							accion_1_ciclo();
-					} LPAREN Ciclo1 COMMA Expresion {
-							accion_2_ciclo();
+							
+					} LPAREN Ciclo1 COMMA {
+						accion_1_ciclo();
+					} Expresion {
+						accion_2_ciclo();
 					} COMMA {
-							accion_4_ciclo();
+						accion_3_ciclo();
 					} Ciclo1 {
-							accion_5_ciclo();
-					} RPAREN Bloque {
-							accion_3_ciclo();
+						accion_4_ciclo();
+					} RPAREN {
+						accion_5_ciclo();
+					} Bloque {
+						accion_6_ciclo();
 					}; 
 					| HAZSYM {
 						accion_1_haz_mientras();
@@ -1100,58 +1104,84 @@ void accion_2_ciclo() {
 		
 		pilaSaltos.push( cuadruplos.size() -1 );
 
+		cuadruploTemp = Cuadruplo("goto", "", "" , to_string(-1)); //bloque
+		cuadruplos.push_back( cuadruploTemp );
+		
+		pilaSaltos.push( cuadruplos.size() -1 );
+
 	}
 
 	
 }
 
 void accion_3_ciclo() {
-	// sacar falso de pSaltos, sacar retorno de pSaltos
-	// generar goto retorno
-	// rellenar(salso, cont)
+	// generar ppushPila salto del asigna
 	
 
-
-
-	int falso = pilaSaltos.top();
-	pilaSaltos.pop();
-
-	
-	cuadruploTemp = Cuadruplo("goto", "", "", to_string(falso));
-	cuadruplos.push_back( cuadruploTemp );
-
-	
-
-	cout << "PilaSalots top: " << pilaSaltos.size() << " Cuadruplo: " << cuadruplos.size() << endl;
+	pilaSaltos.push( cuadruplos.size()  ); 
 
 	
 }
 
 void accion_4_ciclo() {
-	
+	// Generar accion de goto retorno despues de la asignacion del ciclo
 
-	int estatutos = pilaSaltos.top();
+	int asigna = pilaSaltos.top();
 	pilaSaltos.pop();
 
-	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(estatutos));
+	int gotoBloque = pilaSaltos.top();
+	pilaSaltos.pop();
+
+	int gotoFalso = pilaSaltos.top();
+	pilaSaltos.pop();
+
+	int retorno = pilaSaltos.top();
+	pilaSaltos.pop();
+
+
+
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(retorno));
 	cuadruplos.push_back( cuadruploTemp );
 
-	pilaSaltos.push( cuadruplos.size() - 1  );
+	pilaSaltos.push( gotoFalso );
+	pilaSaltos.push( gotoBloque );
+	pilaSaltos.push( asigna );
 	
 
 }
 void accion_5_ciclo() {
-	
-	int incrementos = pilaSaltos.top();
+	// Genera accion de relleno de bloque hacia primera instruccion de estatutos de bloque
+
+	int asigna = pilaSaltos.top();
+	pilaSaltos.pop();
+
+	int bloque = pilaSaltos.top();
 	pilaSaltos.pop();
 	
-	cout << "Relleno el " << incrementos << " con " << cuadruplos.size() << endl;
-	rellenar(incrementos, cuadruplos.size()  );
+	rellenar(bloque, cuadruplos.size()  );
 
-	
-
+	pilaSaltos.push( asigna );
 
 }
+void accion_6_ciclo() {
+	// Genera accion de relleno de asigna
+
+	int asigna = pilaSaltos.top();
+	pilaSaltos.pop();
+	
+	Cuadruplo cuadruploTemp = Cuadruplo("goto", "", "", to_string(asigna));
+	cuadruplos.push_back( cuadruploTemp );
+
+	int falso = pilaSaltos.top();
+	pilaSaltos.pop();
+	
+	rellenar(falso, cuadruplos.size()  );
+
+}
+
+
+
+
 
 void accion_1_haz_mientras() {
 	// meter cont en PSaltos
@@ -2423,6 +2453,7 @@ void solve() {
 
 
         */
+
         //cout << "Current: " << current.getOp() << " getOpIndex: " <<  getOperandoIndex(current.getOp() ) << endl;
         switch ( getOperandoIndex(current.getOp() ))  {
 
@@ -2443,9 +2474,9 @@ void solve() {
             case _SALTOLINEA : cout << endl ;   break; // Funcion que el output
             case _LEESYM  : read_op(current);   break; // Funcion que hace la lectura 
             case _EQL     : assign_op(current);   break; // Funcion que hace la asignacion
-			case _GOTO    : i = atoi(current.getRes().c_str()) ;  break;// -1 para equilibrar el i++
-			case _GOTOF   : i = indexGOTOF(i,current);  break;
-			case _GOTOT   : i = indexGOTOT(i,current); break;
+			case _GOTO    : i = atoi(current.getRes().c_str()) - 1  ;  break;// -1 para equilibrar el i++
+			case _GOTOF   : i = indexGOTOF(i,current);   break;
+			case _GOTOT   : i = indexGOTOT(i,current);  break;
 
 
         }
