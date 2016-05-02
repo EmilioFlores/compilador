@@ -1,8 +1,7 @@
 
+programa  			::= Objetos Funciones Main
 
-programa  			::= Librerias Objetos Funciones Main
-
-Objetos				::= Librerias Objeto
+Objetos				::= Objeto
 
 Objeto 				::= "objeto" Identificador "{" AtributosPrivados AtributosPublicos "}" ";"
 
@@ -13,9 +12,7 @@ AtributosPublicos	::= "publico" "{" Variables Funciones "}"
 					|
 
 
-Librerias 			::= Libreria
 
-Libreria  			::= "incluir" "<" Identificador ">" Libreria
 					|
 
 
@@ -53,7 +50,7 @@ BloqueFuncion				::= "{" Variables BloqueFuncion1 "regresa" Identificador ";" "}
 BloqueFuncion1				::=	Estatuto BloqueFuncion1 | 
 
 
-Estatuto			::= Asignacion ';'
+Estatuto			::= Asignacion 
 						| Condicion
 						| Ciclo
 						| Escritura
@@ -69,8 +66,7 @@ Asignacion 			::=	Identificador "=" Expresion ";"
 Expresion			::=	Exp Expresion1
 Expresion1 			::= expresion2 Exp 
 						| 
-Expresion2 			::= ">" | "<" | "!="
-
+Expresion2 			::= ">" | "<" | "!=" | ">=" | "<=" | "||" | "&&" 
 
 Exp 				::= Termino Exp1
 Exp1 				::= ("+" | "-") | 
@@ -83,9 +79,11 @@ Factor 				::=	"(" Expresion ")"
 Factor1 			::= "+" | "-" | 
 
 
-VarCte				::=	Identificador
+VarCte				::=	Llamada
 					|	INT
-					|	FLOAT 
+					|	FLOAT
+					|	BOOL
+					|	TEXT
 
 Variables			::= Variable ";" Variables
 					| 
@@ -107,12 +105,10 @@ Ciclo				::=	"ciclo" "(" ( Asignacion | ) "," Expresion "," ( Asignacion | ) ")"
 // muestra         (“Somos ” +  x +  “personas en la tierra”);
 // muestraLinea (“Somos ” + x + “personas en la tierra”);
 
-Escritura			::=	"muestraLinea " "(" EstatutosSalida ")" ";"
-					| 	"muestra" "(" EstatutosSalida ")" ";"
+Escritura			::=	"muestraLinea " "(" Expresion EstatutosSalida ")" ";"
+					| 	"muestra" "(" Expresion EstatutosSalida ")" ";"
 
-EstatutosSalida		::= Llamada
-					| Expresion
-					| VarCte
+EstatutosSalida		::= "," Expresion 
 					|
 
 
@@ -122,6 +118,8 @@ Main 				::= "programa"  Bloque
 
 FLOAT 				::= (Digito)+ "." (Digito)+
 INT 				::= (Digito)+
+TEXT                ::= .*
+BOOL 				::= "falso" | "verdadero"
 Letra				::= [a-zA-Z]
 Digito				::=	[0-9]
 Identificador		::= Letra ( Letra | Digito )*
