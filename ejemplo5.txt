@@ -8,37 +8,38 @@ objeto Rectangulo {
 	}
 
 	publico {
-
-
 		funcion entero getTest2 () {
 
+			var entero test2  ;
+			regresa test2 ; 
+		};
 
-			regresa getTest2() ;
-		}; 
 	}
 };
 
 
 
+funcion entero getTest3(entero x) {
+		
+		muestraLinea(" Valor de x:         ", x );
+		condicion ( x > 30 ) { 
+			x = 5;
+		} fallo { 
+			x = 10;
+		};
+
+		regresa x;
+};
+
 
 programa {
 	
 
+
+	var entero x;
+	x = 1 + getTest3(5);
 	
-
-	var decimal x;
-	var bandera y;
-	lee x;
-
-
-
-	haz {
-		x=x*2;
-		y = x < 50;
-		muestraLinea("           ", x);
-
-	} mientras (y );
-	
-	
+	muestraLinea(" ");
+	muestraLinea( x );
 	
 }

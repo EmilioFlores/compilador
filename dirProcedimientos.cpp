@@ -25,6 +25,8 @@ public:
     string nombreUltVar;
     int inMemoria[4];//Variable para inicializar la memoria con las cantidades
     vector<Objeto> vObjetos;
+    vector<Objeto> vFunciones;
+    vector<pair<int,int>> pilaArgumentos;
     
     dirProcedimientos(){
         string tiposAux[] = {"bandera","entero","decimal","texto","vacio"};
@@ -60,6 +62,11 @@ public:
     }
     
 
+    string nombreTipo(int tipo){
+        return tipos[tipo];
+    }
+
+    
     int buscaBloque(string id){
         int iVar;
         iVar = buscaVariable(id);
@@ -67,6 +74,14 @@ public:
             return -1;
         }
         return vVariables[iVar].bloque;
+    }
+
+    int buscaBloque(string padreTipo, string nombre){//busca bloque para llamadas a metodos de funciones
+        for (int i = 0; i < vBloques.size();i++){
+            if (vBloques[i].padre==padreTipo&&vBloques[i].nombre==nombre)
+                return i;
+        }
+        return -1;
     }
 
     int buscaTipo(string tipo){
@@ -100,7 +115,12 @@ public:
             return -1;
         return vVariables[iV].tipo;
     }
-    
+    bool esVariable(int id){
+        if (vVariables[id].estructura==0)
+            return true;
+        return false;
+    }
+
     //crearVariable es para checar si puede crear una variable. ej: entero x; o 'Objeto' y; donde Objeto es un tipo previamente definido
     //esta funcion tambien sirve para decir si una variable es publica a un objeto, con el bool privacidad
     bool crearVariable(string tipo, string id, bool privacidad,int direccion){
@@ -213,6 +233,44 @@ public:
         return -1;
     }
     
+
+    int dameCuadruplo(int bloque){
+        return vBloques[bloque].direccionCuadruplo;
+    }
+
+    void era(int bloque){
+        Objeto funcion;
+        funcion.tipos.resize(vBloques[bloque].vVar.size());
+        funcion.dirCuadruplo.resize(vBloques[bloque].vVar.size());
+        funcion.dirReales.resize(vBloques[bloque].vVar.size());
+        int iVar;
+        for (int i = 0 ; i < funcion.tipos.size() ; i++){
+            iVar=vBloques[bloque].vVar[i];
+            funcion.tipos[i]=vVariables[i].tipo;
+            funcion.dirCuadruplo[i]=vVariables[i].direccion;
+            funcion.dirReales[i]=copiaDireccionesFunc(vVariables[i].tipo,vVariables[i].direccion);
+        }
+        vFunciones.push_back(funcion);
+    }
+    
+    void retorno(){
+    
+        int dir=(int)vFunciones.size()-1;
+        int tam = (int)vFunciones[dir].dirReales.size();
+        for (int i = 0 ; i < tam ; i++){
+            quitaEspacio(vFunciones[dir].tipos[i]);
+        }
+        vFunciones.pop_back();
+        dir--;
+        if (dir > 0){
+            tam = (int)vFunciones[dir].dirReales.size();
+            for (int i = 0 ; i < tam ; i++){
+                copiaDireccionesFuncRet(vFunciones[dir].tipos[i],vFunciones[dir].dirCuadruplo[i],vFunciones[dir].dirReales[i]);
+            }
+        }
+    }
+
+
     /*
      
      METODOS DE FUNCIONES
@@ -259,24 +317,14 @@ public:
     }
     //esta es para constantes
     bool checaArgumentoTipo(int tipo){
-        int iAux = ultVariabe;// se guardan para mantener los datos del metodo que llamo los argumentos
-        string sAux = nombreUltVar;
-        if (vVariables[ultVariabe].estructura!=1){
-            cout << "La variable "<<nombreUltVar<<" no es un metodo no debe tener argumentos"<<endl;
+        int cantidadArg=(int)vBloques[pilaArgumentos.back().first].vParam.size();
+        int argChecados=pilaArgumentos.back().second;
+        if (argChecados==cantidadArg){
             return false;
         }
-        if (argActual+1>vBloques[vVariables[ultVariabe].bloque].vParam.size()){
-            cout <<"Se excedio en argumentos"<<endl;
+        int iVar =vBloques[pilaArgumentos.back().first].vParam[argChecados];
+        if (vVariables[iVar].tipo!=tipo)
             return false;
-        }
-        if (tipo!=vVariables[vBloques[vVariables[iAux].bloque].vParam[argActual]].tipo)
-        {
-            cout << "No coinciden los tipos del argumento #"<<argActual+1<<endl;
-            return false;
-        }
-        argActual++;
-        ultVariabe=iAux;
-        nombreUltVar = sAux;
         return true;
     }
     
@@ -300,6 +348,35 @@ public:
             return false;
         }
     }
+
+    bool comienzaArgumentos(int tipo, string metodo){
+        string sTipo;
+        if (tipo==-1){
+            sTipo="Programa";
+        }
+        else{
+            sTipo=tipos[tipo];
+        }
+        pair<int,int> par;//el primero es la direccion del bloque, el segundo es el argumento actual
+        par.first=buscaBloque(sTipo,metodo);
+        if (par.first==-1){
+            return false;
+        }
+        pilaArgumentos.push_back(par);
+        return true;
+    }
+   
+    bool terminaArgumentos(){
+        int cantidadArg=(int)vBloques[pilaArgumentos.back().first].vParam.size();
+        int argChecados=pilaArgumentos.back().second;
+        pilaArgumentos.pop_back();
+        if (argChecados<cantidadArg){
+            return false;
+        }
+        return true;
+    }
+   
+
     
     bool checaPredicado(string id){
         int iAux = ultVariabe; //guardamos la ultima variable usada que corresponde al objeto invocador
@@ -324,8 +401,8 @@ public:
         
         return true;
     }
-    
-    bool crearMetodo (string tipo, string id, int direccion){
+     
+    bool crearMetodo (string tipo, string id, int direccion, int direccionCuadruplo){
         variable v;
         v.tipo = buscaTipo(tipo);
         if (v.tipo==-1){
@@ -343,10 +420,13 @@ public:
         }
         v.estructura = 1;
         v.direccion=direccion;
+        
         v.bloque = sigBloque;//los metodos señalan a un bloque para enseñar sus parametros
         bloque bAux;
         bAux.tipo = v.tipo;
         bAux.nombre = id;
+        bAux.padre=vBloques[bloqueAct].nombre;
+        bAux.direccionCuadruplo=direccionCuadruplo;
         bAux.estructura="funcion";
         bAux.inMemoria[0]=bAux.inMemoria[1]=bAux.inMemoria[2]=bAux.inMemoria[3]=0;
         v.id=id;
@@ -363,14 +443,15 @@ public:
         return true;
     }
     
+    
     /*
      
      METODOS DE DIRECCIONES *ERA*
      
      */
     
-    //clase auxiliar de subs
-    void copiaDirecciones(int tipo,int espacio, int val){
+     //clase auxiliar de subs
+    void copiaDireccionesObj(int tipo,int espacio, int val){
         switch (tipo) {
             case 0:
                 memoria.guardaBanderasDirObj(espacio, val);
@@ -389,10 +470,83 @@ public:
             default:
                 if(tipo>4){
                     memoria.guardaObjetosDirObj(espacio, val);
+                    subsDireccionesObj(val);
                 }
                 break;
         };
     }
+    int copiaDireccionesFunc(int tipo,int espacio){
+        switch (tipo) {
+            case 0:
+                memoria.guardaDecimalesDirFunc(espacio, memoria.banLocActual);
+                memoria.banLocActual++;
+                return (memoria.banLocActual-1);
+                break;
+            case 1:
+                memoria.guardaEnterosDirFunc(espacio, memoria.entLocActual);
+                memoria.entLocActual++;
+                return (memoria.entLocActual-1);
+                break;
+            case 2:
+                memoria.guardaDecimalesDirFunc(espacio, memoria.decLocActual);
+                memoria.decLocActual++;
+                return (memoria.decLocActual-1);
+                break;
+            case 3:
+                memoria.guardaTextosDirFunc(espacio, memoria.texLocActual);
+                memoria.texLocActual++;
+                return (memoria.texLocActual-1);
+                break;
+            case 4:
+                break;
+            default:
+                break;
+        }
+        return -1;
+    }
+    int copiaDireccionesFuncRet(int tipo,int espacio,int val){
+        switch (tipo) {
+            case 0:
+                memoria.guardaBanderasDirObj(espacio, val);
+                break;
+            case 1:
+                memoria.guardaBanderasDirObj(espacio, val);
+                break;
+            case 2:
+                memoria.guardaBanderasDirObj(espacio, val);
+                break;
+            case 3:
+                memoria.guardaBanderasDirObj(espacio, val);
+                break;
+            case 4:
+                break;
+            default:
+                break;
+        }
+        return -1;
+    }
+    
+    void quitaEspacio(int tipo){
+        switch (tipo) {
+            case 0:
+                memoria.banLocActual--;
+                break;
+            case 1:
+                memoria.entLocActual--;
+                break;
+            case 2:
+                memoria.decLocActual--;
+                break;
+            case 3:
+                memoria.texLocActual--;
+                break;
+            case 4:
+                break;
+            default:
+                break;
+        }
+    }
+    
     
     
     
@@ -400,7 +554,7 @@ public:
     void subsDireccionesObj(int dir){
         int tam = (int)vObjetos[dir].dirReales.size();
         for (int i = 0 ; i < tam ; i++){
-            copiaDirecciones(vObjetos[dir].tipos[i],vObjetos[dir].dirCuadruplo[i],vObjetos[dir].dirReales[i]);
+            copiaDireccionesObj(vObjetos[dir].tipos[i],vObjetos[dir].dirCuadruplo[i],vObjetos[dir].dirReales[i]);
         }
     }
     

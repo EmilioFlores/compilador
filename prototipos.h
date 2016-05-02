@@ -44,7 +44,8 @@ void accion_5_definicion_proc();
 void accion_6_definicion_proc();
 void accion_7_definicion_proc();
 // Llamada un procedimiento
-void accion_1_llamada_proc(string objetoNombre, string metodoNombre);
+void accion_1_llamada_proc_predicado(string objetoNombre, string metodoNombre);
+void accion_1_llamada_proc_no_predicado(string objetoNombre, string metodoNombre);
 void accion_2_llamada_proc();
 void accion_3_llamada_proc();
 void accion_4_llamada_proc();

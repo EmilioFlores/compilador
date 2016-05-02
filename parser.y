@@ -77,6 +77,7 @@ stack<int> pilaOperandos;
 stack<string> pilaOperadores;
 stack<int> pilaTipos;
 stack<int> pilaSaltos;
+stack<int> pilaSUB;
 
 vector<Cuadruplo> cuadruplos; 
 vector<constante> constantesEnteras;
@@ -308,7 +309,21 @@ ParamObjeto1		: COMMA ParamObjeto
 					| epsilon ;
 
 
-Args				: Expresion { 
+Args				: {
+
+					  int tipoObjeto = -1;
+					  // Si es un metodo de un objeto, entocnes consigo el tipo del objeto que invoca
+					  if ( metodo ) { 
+					   	tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);
+					  }
+
+					   if ( !dirProcedimientos.comienzaArgumentos(tipoObjeto, objetoNombre)) {
+
+					   		cout << "Error:" << endl;
+					   		exit(-1);
+					   }
+
+					} Expresion { 
 					  accion_3_llamada_proc();
 					} Args1
 					| epsilon ;
@@ -316,7 +331,10 @@ Args				: Expresion {
 Args1				: COMMA Expresion {
 					  accion_3_llamada_proc();
 					} Args1
-					| epsilon ;
+					| epsilon {
+						dirProcedimientos.terminaArgumentos();
+
+					};
 
 
 
@@ -366,13 +384,13 @@ Llamada				: IDENTIFICADOR {
 
 
 					}  Llamada1 Llamada2  {
-						accion_6_llamada_proc(metodoNombre);
+						accion_6_llamada_proc(objetoNombre);
 					} ;
 Llamada1			: DOT IDENTIFICADOR {
 					  metodoNombre = $2;
 					  metodo = true;
-						
-						accion_1_llamada_proc(objetoNombre, metodoNombre);
+						// aqui es un metodo
+						accion_1_llamada_proc_predicado(objetoNombre, metodoNombre);
 					} Llamada1
 					| epsilon ;
 Llamada2			: LPAREN {
@@ -381,28 +399,33 @@ Llamada2			: LPAREN {
 						//cout << "Metodo nombre" << metodoNombre << endl;
 						// Si es una funcion, no tenia .getX(), solo era getX()
 						if ( metodo == false) {
-
-							accion_1_llamada_proc(objetoNombre, metodoNombre);
+							// aqui es una funcion o una variable
+							accion_1_llamada_proc_no_predicado(objetoNombre, metodoNombre);
 						}
-						
+					
 						
 						accion_2_llamada_proc();
+
 					} Args RPAREN  {
 						accion_7_expresiones();
 						accion_5_llamada_proc();
 
 					}
 					| epsilon {
-						
 						if ( metodo ) {
 							//cout << "Metodo: " << metodoNombre << endl;
+							// es una variable de objeto, ejemplo x.valorX
 							accion_1_expresiones(metodoNombre, 4);
 						}
 						else {
 							//cout << "Variable: " << objetoNombre << endl;
+
+
+
 							accion_1_expresiones(objetoNombre, 4);
 
 						}
+
 					};
 
 Asignacion 			: IDENTIFICADOR {
@@ -415,6 +438,13 @@ Asignacion 			: IDENTIFICADOR {
 											cerr << "\" on line " << line_num << endl;
 											exit(-1);
 										}
+										int esVariable = dirProcedimientos.esVariable(variableIndex);
+										if ( !esVariable ) { 
+											cerr << "ERROR: en el simbolo  \"" << yytext;
+											cerr << "\"  no se puede asignar contenido a un metodo, en linea " << line_num << endl;
+											exit(-1);
+										}
+										
 									} 
 						EQL  {
 								accion_2_assignacion("=");
@@ -511,21 +541,22 @@ Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR  {
 
 									
 									//cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << $4 << " Direccion: " <<   direccion << " global: " << global   << endl;
-									
-									dirProcedimientos.crearVariable(yyTipo, $4, 1, direccion );
+									//cout << "Bloque actual en variable: " << dirProcedimientos.bloqueAct  << endl;
+									if ( !dirProcedimientos.crearVariable(yyTipo, $4, 1, direccion )) {
+										exit (-1);
+									};
 
 								   }  Variable1 ;
-Variable1			: LBRACKET  Expresion  Variable2 RBRACKET 
+Variable1			: LBRACKET Expresion RBRACKET 
 					| epsilon;
-Variable2			: COMMA  Expresion Variable2
-					| epsilon;
+
 
 VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   {  
 									//TODO Hace funcion que me regrese la direccion. 
 									
 
 									dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion));
-								   }  ; ;
+								   }   ;
 //Variable2			: COMMA IDENTIFICADOR Variable2
 //					| epsilon ;
 
@@ -579,7 +610,7 @@ Lectura				: LEESYM IDENTIFICADOR { accion_1_read(yytext); } ;
 Main 				: PROGRAMASYM {
 						int inicio = pilaSaltos.top();
 						pilaSaltos.pop();
-						rellenar(inicio, cuadruplos.size() + -1 );
+						rellenar(inicio, cuadruplos.size()  );
 					} Bloque { printCuadruplos(); }
 
 epsilon				:	;
@@ -677,7 +708,6 @@ void accion_1_expresiones(string yytext, int tipo){
 
 		int direccionVariable = dirProcedimientos.buscaDireccion(yytext);
 		
-		
 		if (direccionVariable != -1 ) {
 
 			
@@ -688,7 +718,7 @@ void accion_1_expresiones(string yytext, int tipo){
 
 			//0 bandera, 1 entero, 2 decimal, 3 texto
 			// estructura 0 variable, 1 funcion
-			if (tipoVariable < 4 && ( estructuraVariable == 0 || estructuraVariable == 1)  ) {
+			if (tipoVariable < 4 && ( estructuraVariable == 0 )  ) {
 			
 
 
@@ -813,7 +843,7 @@ void accion_5_expresiones() {
 
 				izq = pilaOperandos.top();
 				pilaOperandos.pop();
-				cout << "getsiguietneDireccion " << tipoResultado << " const: " << 0 << " glob: " << global << " temp: " << temporal << " objeto: " << objeto << " funcion: " << funcion << endl; 
+				//cout << "getsiguietneDireccion " << tipoResultado << " const: " << 0 << " glob: " << global << " temp: " << temporal << " objeto: " << objeto << " funcion: " << funcion << endl; 
 				// Aumenta los temporales en 1
 				int resultado = getSiguienteDireccion(tipoResultado, 0, global, temporal, objeto, funcion);
 				
@@ -1059,9 +1089,18 @@ void accion_1_read(string nombre) {
 
 
 	int variableIndex = dirProcedimientos.buscaVariable(nombre);
+	bool esVariable = dirProcedimientos.esVariable(variableIndex);
+
+
 
    if (variableIndex == -1 ) { 
 		cerr << "ERROR: Variable not found:  \"" << nombre;
+		cerr << "\" on line " << line_num << endl;
+		exit(-1);
+	}
+
+   if ( !esVariable ) { 
+		cerr << "ERROR: No se pueden leer metodos:  \"" << nombre;
 		cerr << "\" on line " << line_num << endl;
 		exit(-1);
 	}
@@ -1223,8 +1262,11 @@ void accion_1_definicion_proc(string tipo, string nombre) {
 	
 	int direccion = getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion);
 	//cout << "Crear metodo " << nombre << " Direccion: " << direccion << " Tipo: " << yyTipo <<  endl;
-	dirProcedimientos.crearMetodo(tipo, nombre,direccion);
-	cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << nombre << " Direccion: " <<   direccion   << endl;
+	if ( !dirProcedimientos.crearMetodo(tipo, nombre,direccion, cuadruplos.size() ) ) {
+		exit(-1);
+	};
+
+	//cout << "Crear variable Tipo: " << yyTipo << " Nombre: " << nombre << " Direccion: " <<   direccion   << endl;
 
 	
 }
@@ -1266,20 +1308,39 @@ void accion_7_definicion_proc() {
 }
 
 
-void accion_1_llamada_proc(string objetoNombre, string metodoNombre) {
+void accion_1_llamada_proc_predicado(string objetoNombre, string metodoNombre) {
 	// Verificar que el procedimiento exista como tal en el Dir. de procs
 		
-
-	bool existePredicado = dirProcedimientos.checaPredicado(metodoNombre);
+	/*
+	bool existePredicado = dirProcedimientos.checaPredicado(objetoNombre);
 	int estructuraVariable = dirProcedimientos.checaEstructura(objetoNombre);
 		
 	// 1 = funciones, 0 = variable, 2 = objeto
+	cout << "NOmbre objeto: " << objetoNombre << " metodoNombre: "<<  metodoNombre<<  " existePredicado: " << existePredicado << " estructuraVariable: " << estructuraVariable << endl;
 	if (existePredicado == false && estructuraVariable != 1) { 
 		cerr << "ERROR: Method not found:  \"" << metodoNombre << " of variable: " << objetoNombre;
 		cerr << "\" on line " << line_num << endl;
 		exit(-1);
 	}
 	
+	*/
+}
+
+void accion_1_llamada_proc_no_predicado(string objetoNombre, string metodoNombre) {
+	// Verificar que el procedimiento exista como tal en el Dir. de procs
+	/*	
+
+	bool existeMetodo = dirProcedimientos.checaPredicado(objetoNombre);
+	int estructuraVariable = dirProcedimientos.checaEstructura(objetoNombre);
+		
+	// 1 = funciones, 0 = variable, 2 = objeto
+	cout << "NOmbre objeto: " << objetoNombre << " metodoNombre: "<<  metodoNombre<<  " existePredicado: " << existePredicado << " estructuraVariable: " << estructuraVariable << endl;
+	if (existePredicado == false && estructuraVariable != 1) { 
+		cerr << "ERROR: Method not found:  \"" << metodoNombre << " of variable: " << objetoNombre;
+		cerr << "\" on line " << line_num << endl;
+		exit(-1);
+	}
+	*/
 
 	
 }
@@ -1290,9 +1351,27 @@ void accion_2_llamada_proc() {
 	// inicializar contador de parametros k = 1;
 
 	indexParametro = 0;
-	int bloqueMetodo = dirProcedimientos.buscaBloque(metodoNombre);
-	Cuadruplo cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodo), "" , "");
-	cuadruplos.push_back( cuadruploTemp );	
+	
+	// Si es una variable o funcion de un objeto, como hago un era de un obj de la direccion del objeto
+	if ( metodo ) {
+		int direccion = dirProcedimientos.buscaDireccion(objetoNombre);
+		//cout << "Metodo nombre: " << metodoNombre  << " objetoNombre: " << objetoNombre << " metodo: " << metodo << endl;
+		Cuadruplo cuadruploTemp = Cuadruplo("eraObj", to_string(direccion), "" , "");
+		cuadruplos.push_back( cuadruploTemp );
+
+		int tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);
+		int bloqueMetodo = dirProcedimientos.buscaBloque(dirProcedimientos.nombreTipo(tipoObjeto), metodoNombre);
+		//cout << "tipo objeto: "<< tipoObjeto<< " nombre: " <<  dirProcedimientos.nombreTipo(tipoObjeto) <<  " objetoNombre: " << objetoNombre << endl; 
+		cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodo), "" , "");
+		cuadruplos.push_back( cuadruploTemp );
+
+	} else {
+
+		// Este es un era normal de funcion
+		int bloqueMetodo = dirProcedimientos.buscaBloque(objetoNombre);
+		Cuadruplo cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodo), "" , "");
+		cuadruplos.push_back( cuadruploTemp );	
+	}
 	
 }
 
@@ -1300,7 +1379,7 @@ void accion_3_llamada_proc() {
 	// Argumento ? pop de pilaOperandos, tipoArg = pop.Pilatipos
 	// Verificar tipo de argumento contra el parametro k 
 	// Generar PARAMETRO, Argumento, parametro k 
-	
+
 	int tipo = pilaTipos.top();
 	pilaTipos.pop();
 	//TODO Aqui truena porque el checa argumento esta esperando algo antes, pero en este caso es solo una funcion
@@ -1315,7 +1394,7 @@ void accion_3_llamada_proc() {
 	int argument = pilaOperandos.top();
 	pilaOperandos.pop();
 
-	Cuadruplo cuadruploTemp = Cuadruplo("param", to_string(argument), "param"+to_string(indexParametro++), "");
+	Cuadruplo cuadruploTemp = Cuadruplo("param", to_string(argument), to_string(indexParametro++), "");
 	cuadruplos.push_back( cuadruploTemp );
 
 
@@ -1330,6 +1409,7 @@ void accion_4_llamada_proc() {
 }
 
 void accion_5_llamada_proc() {
+	/*
 	// Verificar que el ultimo parametro apunte a nulo ( en nuestro caso checar el size del vector de params contra k )
 	bool completezPredicado = dirProcedimientos.checaCompletezPred(true);
 
@@ -1341,7 +1421,7 @@ void accion_5_llamada_proc() {
 
 	
 	}
-
+	*/
 	
 }
 
@@ -1350,21 +1430,34 @@ void accion_6_llamada_proc(string nombreProc) {
 	
 	
 
-	int direccionVariable = dirProcedimientos.buscaDireccion(nombreProc);
-	int tipoVariable = dirProcedimientos.checaTipo(nombreProc);
-	
-	int estructura = dirProcedimientos.checaEstructura(nombreProc);
-
+	//cout << "Metodo nombre: " << metodoNombre  << " objetoNombre: " << objetoNombre << " metodo: " << metodo << endl;
 	// solo hacer esto si es una funcion o objeto
+
+	int estructura = dirProcedimientos.checaEstructura(nombreProc);
 	if ( estructura != 0 ) {
 
-		pilaOperandos.push(direccionVariable);
-		pilaTipos.push(tipoVariable);
+
+		if ( metodo  ) { 
+
+			int tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);				
+			int bloqueMetodo = dirProcedimientos.buscaBloque(dirProcedimientos.nombreTipo(tipoObjeto), metodoNombre);
+			Cuadruplo cuadruploTemp = Cuadruplo("gosub", to_string(bloqueMetodo), to_string(cuadruplos.size()) , "");
+			cuadruplos.push_back( cuadruploTemp );	
+
+		} else {
 
 
+			int direccionVariable = dirProcedimientos.buscaDireccion(nombreProc);
+			int tipoVariable = dirProcedimientos.checaTipo(nombreProc);
+			
+			pilaOperandos.push(direccionVariable);
+			pilaTipos.push(tipoVariable);
 
-		Cuadruplo cuadruploTemp = Cuadruplo("gosub", nombreProc, to_string(cuadruplos.size()) , "");
-		cuadruplos.push_back( cuadruploTemp );	
+
+			int bloqueMetodo = dirProcedimientos.buscaBloque(metodoNombre);
+			Cuadruplo cuadruploTemp = Cuadruplo("gosub", to_string(bloqueMetodo), to_string(cuadruplos.size()) , "");
+			cuadruplos.push_back( cuadruploTemp );	
+		}
 	}
 	
 
@@ -2426,12 +2519,32 @@ int indexGOTOF(int i,Cuadruplo current){
  * @return valor entero que es la direccion del cuadruplo a seguir
  */
 int indexGOTOT(int i,Cuadruplo current){
-  bool b;
-  int dirRes = atoi(current.getRes().c_str());
-  int dirIzq = atoi(current.getIzq().c_str());
-  b = pideBandera(dirIzq);
-  return b ?  (dirRes-1) : i;//-1 porque al final de la iteracion hara i++
+	bool b;
+	int dirRes = atoi(current.getRes().c_str());
+	int dirIzq = atoi(current.getIzq().c_str());
+	b = pideBandera(dirIzq);
+	return b ?  (dirRes-1) : i;//-1 porque al final de la iteracion hara i++
 }
+
+void eraPROC(Cuadruplo current){
+    int bloque = atoi(current.getIzq().c_str());
+    dirProcedimientos.era(bloque);
+}
+ 
+int gosubPROC(int i, Cuadruplo current){
+	int bloque = atoi(current.getIzq().c_str());
+	pilaSUB.push(i);
+	return dirProcedimientos.dameCuadruplo(bloque);
+}
+
+int retornoPROC(){
+
+    dirProcedimientos.retorno();
+    int top = pilaSUB.top();
+    pilaSUB.pop();
+    return top;
+}
+
 
 
 
@@ -2454,7 +2567,8 @@ void solve() {
 
         */
 
-        //cout << "Current: " << current.getOp() << " getOpIndex: " <<  getOperandoIndex(current.getOp() ) << endl;
+        //
+        //cout << "Current: " << current.getOp() << " getOpIndex: " <<  getOperandoIndex(current.getOp() ) <<  " Valor de i: " << i << endl;
         switch ( getOperandoIndex(current.getOp() ))  {
 
             //  +     -     *     /    ==    !=     >     <     =    >=    <=    ||     &&
@@ -2477,10 +2591,15 @@ void solve() {
 			case _GOTO    : i = atoi(current.getRes().c_str()) - 1  ;  break;// -1 para equilibrar el i++
 			case _GOTOF   : i = indexGOTOF(i,current);   break;
 			case _GOTOT   : i = indexGOTOT(i,current);  break;
+			case _ERA 	  : eraPROC(current); break;
+		    case _GSUB 	  : i = gosubPROC(i,current)-1; break;
+		    case _RETURN  : i = retornoPROC(); break;
+		 
 
 
         }
         
+        //cout << "Despues Valor de i: " << i << endl;
     }
 }
 
