@@ -1,125 +1,95 @@
 
-programa  			::= Objetos Funciones Main
+programa  			: Librerias Objetos Funciones Main ;
 
-Objetos				::= Objeto
+Objetos				:  Objeto ;
 
-Objeto 				::= "objeto" Identificador "{" AtributosPrivados AtributosPublicos "}" ";"
+Objeto 				: OBJETOSYM  IDENTIFICADOR LCURLY AtributosPrivados AtributosPublicos RCURLY SEMICOLON  ;
 
-AtributosPrivados	::= "privado" "{" Variables Funciones "}"
-					|	
+AtributosPrivados	: PRIVADOSYM LCURLY  VariablesObjetos Funciones   RCURLY |  epsilon ;
 
-AtributosPublicos	::= "publico" "{" Variables Funciones "}" 
-					|
+AtributosPublicos	: PUBLICOSYM LCURLY  Variables FuncionesObjetos   RCURLY |  epsilon ;
 
+Librerias 			: Libreria Libreria1 ;
+Libreria  			: INCLUIRSYM LSS IDENTIFICADOR GTR  ;
+Libreria1			: Libreria | ;
 
+Funciones 			: Funcion ;
+FuncionesObjetos	: FuncionObjeto ;
 
-					|
+Funcion  			: FUNCIONSYM  Tipo IDENTIFICADOR Params BloqueFuncion SEMICOLON Funcion | epsilon ;
 
+FuncionObjeto		: FUNCIONSYM  Tipo IDENTIFICADOR ParamsObjeto BloqueFuncion SEMICOLON FuncionObjeto	| epsilon ;
 
+Tipo				: ENTEROSYM | DECIMALSYM | TEXTOSYM | BANDERASYM | IDENTIFICADOR ;
 
-Funciones 			::= Funcion
+Params				: LPAREN  Param  RPAREN ;
+ParamsObjeto		: LPAREN  ParamObjeto  RPAREN ;
 
-Funcion  			::= "funcion" Tipo Identificador Params BloqueFuncion ";" Funcion
-					|
+Param 				: Tipo IDENTIFICADOR Param1 | epsilon ;
+Param1				: COMMA Param | epsilon ;
 
+ParamObjeto 		: Tipo IDENTIFICADOR ParamObjeto1 | epsilon ;
+ParamObjeto1		: COMMA ParamObjeto | epsilon ;
 
-Tipo				::= "entero" 
-						| "gran entero"
-						| "decimal"
-						| "caracter"
-						| "texto"
-						| "bandera"
+Args				: Expresion Args1 | epsilon ;
 
+Args1				: COMMA Expresion Args1 | epsilon ;
 
-Params				::=	"(" Param* ")"
+Bloque				: LCURLY   Variables Bloque1   RCURLY ;
+Bloque1				: Estatuto SEMICOLON Bloque1 | epsilon ;
 
-Param 				::= Tipo Identificador Param1
-Param1				::= "," Param | 
+BloqueFuncion		: LCURLY Variables BloqueFuncion1 BloqueFuncion2    RCURLY 
+BloqueFuncion1		: Estatuto SEMICOLON BloqueFuncion1 | epsilon ;
+BloqueFuncion2		: REGRESASYM  Expresion SEMICOLON | epsilon ;
 
-Args				::= Identificador Args1
-					|
-Args1				::= "," Identificador Args1
-					|  
+Estatuto			: Asignacion | Condicion | Ciclo | Escritura | Lectura | Llamada ;
 
+Llamada				: IDENTIFICADOR Llamada1 Llamada2 ;
+Llamada1			: DOT IDENTIFICADOR Llamada1 | epsilon ;
+Llamada2			: LPAREN Args RPAREN | epsilon;
 
+Asignacion 			: IDENTIFICADOR	EQL Expresion;
 
-Bloque				::= "{" Variables Bloque1 "}"
-Bloque1				::=	Estatuto Bloque1 | 
+Expresion			: Exp Expresion1 ;
+Expresion1 			: Expresion2 Exp | epsilon ;
 
-BloqueFuncion				::= "{" Variables BloqueFuncion1 "regresa" Identificador ";" "}"
-BloqueFuncion1				::=	Estatuto BloqueFuncion1 | 
+Expresion2 			: LSS | GTR | EQLEQL | NEQ | LSSOEQL | GTROEQL | AND | OR ;
 
+Exp 				: Termino Exp1 ;
+Exp1				: PLUS Exp 	| MINUS Exp | epsilon	;
 
-Estatuto			::= Asignacion 
-						| Condicion
-						| Ciclo
-						| Escritura
-						| Lectura
-						| Llamada
+Termino				: Factor Termino1	;
+Termino1			: TIMES Termino	| SLASH Termino	| epsilon	;
 
-Llamada				 ::= Identificador Llamada1 '(' Args ')' ';'
-Llamada1			 ::=  ( '.' Identificador ) Llamada1
-						| 
+Factor				: LPAREN Expresion RPAREN | Factor1 VarCteExp Factor2
+Factor1 			: PLUS | MINUS | epsilon	;
+Factor2				: LBRACKET Expresion RBRACKET |	epsilon ;
 
-Asignacion 			::=	Identificador "=" Expresion ";"
+VarCteExp			: Llamada | ENTERO |	BANDERA |	TEXTO |	DECIMAL ;
 
-Expresion			::=	Exp Expresion1
-Expresion1 			::= expresion2 Exp 
-						| 
-Expresion2 			::= ">" | "<" | "!=" | ">=" | "<=" | "||" | "&&" 
+Variables			: Variable SEMICOLON Variables | epsilon ;
+VariablesObjetos	: VariableObjeto SEMICOLON VariablesObjetos	| epsilon ;
 
-Exp 				::= Termino Exp1
-Exp1 				::= ("+" | "-") | 
+Variable			: VARSYM  Tipo IDENTIFICADOR   Variable1 ;
+Variable1			: LBRACKET Expresion RBRACKET | epsilon;
 
-Termino				::= Factor Termino1
-Termino1			::= ("*" | "/") Termino | 
+VariableObjeto		: VARSYM  Tipo IDENTIFICADOR ;
 
-Factor 				::=	"(" Expresion ")"
-						| Factor1 VarCte
-Factor1 			::= "+" | "-" | 
+Condicion			: CONDICIONSYM LPAREN Expresion RPAREN Bloque Condicion1;
+Condicion1			: FALLOSYM Bloque | epsilon ;
 
+Ciclo				: CICLOSYM LPAREN Ciclo1 COMMA Expresion COMMA Ciclo1 RPAREN Bloque; 
+					| HAZSYM Bloque MIENTRASSYM LPAREN Expresion RPAREN ;
+Ciclo1 				: Asignacion | epsilon ;
 
-VarCte				::=	Llamada
-					|	INT
-					|	FLOAT
-					|	BOOL
-					|	TEXT
+Escritura			: MUESTRASYM LPAREN Expresion EstatutosSalida RPAREN | MUESTRALINEASYM LPAREN Expresion EstatutosSalidaLinea RPAREN  ;
 
-Variables			::= Variable ";" Variables
-					| 
+EstatutosSalida		: COMMA Expresion EstatutosSalida | epsilon ;
 
+EstatutosSalidaLinea : COMMA Expresion EstatutosSalidaLinea	| epsilon ;
 
+Lectura				: LEESYM IDENTIFICADOR  ;
 
-Variable			::= "var" Tipo Identificador  Variable2  
-					|	
-Variable2			::=	"," Identificador  
-					|
+Main 				: PROGRAMASYM Bloque;
 
-
-Condicion			::= "condicion" "(" Expresion ")" Bloque Condicion1 ";"
-Condicion1			::= "fallo " Bloque |
-
-
-Ciclo				::=	"ciclo" "(" ( Asignacion | ) "," Expresion "," ( Asignacion | ) ")" Bloque ";" 
-					|	"haz" Bloque "mientras" "(" Expresion ")" ";"
-// muestra         (“Somos ” +  x +  “personas en la tierra”);
-// muestraLinea (“Somos ” + x + “personas en la tierra”);
-
-Escritura			::=	"muestraLinea " "(" Expresion EstatutosSalida ")" ";"
-					| 	"muestra" "(" Expresion EstatutosSalida ")" ";"
-
-EstatutosSalida		::= "," Expresion 
-					|
-
-
-Lectura				::= "lee" VarCte ";"
-
-Main 				::= "programa"  Bloque 
-
-FLOAT 				::= (Digito)+ "." (Digito)+
-INT 				::= (Digito)+
-TEXT                ::= .*
-BOOL 				::= "falso" | "verdadero"
-Letra				::= [a-zA-Z]
-Digito				::=	[0-9]
-Identificador		::= Letra ( Letra | Digito )*
+epsilon				:	;
