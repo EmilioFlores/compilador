@@ -1,0 +1,90 @@
+
+programa  			::= Objetos Funciones Main
+
+Objetos				::= ( "objeto" Identificador "{" AtributosPrivados AtributosPublicos "}" ";" ) *
+
+
+AtributosPrivados	::= ( "privado" "{" (Variable ";")* Funciones "}" ) |	
+
+AtributosPublicos	::= ("publico" "{" (Variable ";")* Funciones "}")  |
+
+
+
+Funciones 			::=  ( "funcion" Tipo Identificador Params BloqueFuncion ";" )* 
+
+
+
+Tipo				::= "entero"  | "decimal" | "texto" | "bandera"
+
+
+Params				::=	"(" (((Tipo Identificador)("," Tipo Identificador)*) | )  ")"
+
+
+
+Bloque				::= "{" (Variable ";")* Estatuto* "}"
+
+BloqueFuncion		::= "{" (Variable ";")* Estatuto* "regresa" Identificador ";" "}"
+
+
+Estatuto			::= Asignacion 
+						| Condicion
+						| Ciclo
+						| Escritura
+						| Lectura
+						| Llamada
+
+Llamada				 ::= Identificador ( ( '.' Identificador )  |  ) '(' ((Identificador ( "," Identificador)* ) | ) ')' ';'
+
+Asignacion 			::=	Identificador "=" Expresion ";"
+
+Expresion			::=	Exp Expresion1
+Expresion1 			::= expresion2 Exp 
+						| 
+Expresion2 			::= ">" | "<" | "!=" | ">=" | "<=" | "||" | "&&" 
+
+Exp 				::= Termino Exp1
+Exp1 				::= ("+" | "-") | 
+
+Termino				::= Factor Termino1
+Termino1			::= ("*" | "/") Termino | 
+
+Factor 				::=	"(" Expresion ")"
+						| Factor1 VarCte
+Factor1 			::= "+" | "-" | 
+
+
+VarCte				::=	Llamada
+					|	INT
+					|	FLOAT
+					|	BOOL
+					|	TEXT
+
+
+
+Variable			::= "var" Tipo Identificador  ( "," Identificador  )*  
+
+
+Condicion			::= "condicion" "(" Expresion ")" Bloque ( ( "fallo " Bloque ) | ) ";"
+
+
+Ciclo				::=	"ciclo" "(" ( Asignacion | ) "," Expresion "," ( Asignacion | ) ")" Bloque ";" 
+					|	"haz" Bloque "mientras" "(" Expresion ")" ";"
+
+Escritura			::=	"muestraLinea " "(" Expresion EstatutosSalida ")" ";"
+					| 	"muestra" "(" Expresion EstatutosSalida ")" ";"
+
+EstatutosSalida		::= "," Expresion 
+					|
+
+
+Lectura				::= "lee" VarCte ";"
+
+Main 				::= "programa"  Bloque 
+
+FLOAT 				::= (Digito)+ "." (Digito)+
+INT 				::= (Digito)+
+TEXT                ::= .*
+BOOL 				::= "falso" | "verdadero"
+Letra				::= [a-zA-Z]
+Digito				::=	[0-9]
+Identificador		::= Letra ( Letra | Digito )*
