@@ -1,0 +1,14 @@
+
+programa {
+	
+	var entero x;
+	var entero y;
+	lee x;
+
+	ciclo (, x <  10, x = x + 1 ) {	
+		ciclo (y = 0, y <  10, y = y + 1 ) {
+			muestra(" ", y); 	
+		};
+		muestraLinea(" ");
+	};	
+}

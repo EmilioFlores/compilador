@@ -1,0 +1,23 @@
+
+programa {
+	
+	var entero n;
+	n = 0;
+	condicion(n != 0){
+		n = n + 50*2;
+
+	} fallo {
+		condicion(n < 3){
+			n = 1 + 50*2;
+		} fallo {
+
+			n = 1 - 50*2;
+		};
+	};
+
+	condicion ( n >= 100 ) {
+		n = n * 2;
+	};
+	muestraLinea("Valor de n: ", n);	
+	
+}

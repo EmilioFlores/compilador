@@ -1,27 +1,12 @@
 
-incluir <test>
-incluir <hola>
-objeto Rectangulo {
-	privado {
-		var entero x;  
-
-	}
-
-	publico {
-		funcion entero getTest2 () {
-
-			var entero test2  ;
-			regresa test2 ; 
-		};
-
-	}
-};
 
 
-funcion entero fibo2(entero n){
 
-		var entero izq;
-		var entero der;
+
+funcion entero fibonacciRecursivo(entero n){
+
+		var entero ramaIzquierda;
+		var entero ramaDerecha;
 		condicion(n == 0){
 			n = 0;
 
@@ -31,9 +16,9 @@ funcion entero fibo2(entero n){
 			} fallo {
 
 				
-				izq = fibo2(n - 1);
-				der = fibo2(n - 2);
-				n = izq + der ;
+				ramaIzquierda = fibonacciRecursivo(n - 1);
+				ramaDerecha = fibonacciRecursivo(n - 2);
+				n = ramaIzquierda + ramaDerecha ;
 			};
 		};
 		regresa n;
@@ -42,13 +27,12 @@ funcion entero fibo2(entero n){
 
 programa {
 	
-
-
 	var entero x;
+	var entero y;
 
-
-	x = fibo2(15);
-	muestraLinea(" ");
-	muestraLinea( x );
+	y = 10;
+	x = fibonacciRecursivo(15);
 	
+	muestraLinea(" ");
+	muestraLinea("El valor de fibonacci (" , y, ") es: ", x );
 }

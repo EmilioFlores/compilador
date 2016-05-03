@@ -1,16 +1,4 @@
 
-incluir <test>
-incluir <hola>
-objeto Rectangulo {
-	privado {
-		var entero x;  
-
-	}
-
-	publico {
-	
-	}
-};
 
 
 
@@ -23,16 +11,16 @@ funcion entero fibIterativo(entero n)
     var entero i ;
     a = 1;
     b = 1;
-	muestraLinea( n );
+
 
     ciclo ( i = 3, i <= n, i = i + 1) {
     	
-		muestraLinea( n );
+
         c = a + b;
         a = b;
         b = c;
     };          
-	muestraLinea( n );
+	
     regresa b;
 };
 
@@ -41,9 +29,11 @@ programa {
 
 
 	var entero x;
-	x = fibIterativo(10);
+	var entero y;
+	y = 10;
+	x = fibIterativo(y);
 	
 	muestraLinea(" ");
-	muestraLinea( x );
+	muestraLinea("El valor de fibonacci (" , y, ") es: ", x );
 	
 }
