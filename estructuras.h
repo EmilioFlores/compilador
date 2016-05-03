@@ -8,6 +8,7 @@ struct constante
 	string valor;
 };
 
+
 struct variable{
     int tipo;//< 5 si es de los tipos estandares, >= 5 si es un tipo definido
     string id;//nombre de la variable
@@ -37,4 +38,7 @@ struct bloque{
     int direccionCuadruplo;
     int inMemoria[4];//Variable para inicializar la memoria con las cantidades
 };
+
+
+
 #endif

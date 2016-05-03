@@ -1,5 +1,4 @@
 
-
 class Memoria{
 private:
     //Arreglos de Vectores de Memoria
@@ -66,9 +65,7 @@ public:
     
     //Metodo que inicializara los vectores de memoria dependiendo de la memoria estatica necesaria
     void inicializa(){
-        
         enteros.resize(cantEnt);
-
         banderas.resize(cantBan);
         decimales.resize(cantDec);
         textos.resize(cantTex);
@@ -77,6 +74,7 @@ public:
         banderasObj.resize(cantBanObj);
         decimalesObj.resize(cantDecObj);
         textosObj.resize(cantTexObj);
+        
         enterosDirObj.resize(cantEntDirObj);
         banderasDirObj.resize(cantBanDirObj);
         decimalesDirObj.resize(cantDecDirObj);
@@ -225,50 +223,6 @@ public:
         textosLoc[dir]=val;
         return true;
     }
-
-
-//Metodos Direcciones Funciones
-    int pideDirEnteroFunc(int dir){
-        return enterosDirFunc[dir];
-    }
-    int pideDirBanderaFunc(int dir){
-        return banderasDirFunc[dir];
-    }
-    int pideDirDecimalFunc(int dir){
-        return decimalesDirFunc[dir];
-    }
-    int pideDirTextoFunc(int dir){
-        return textosDirFunc[dir];
-    }
-    bool guardaEnterosDirFunc(int dir, int val){
-        if (dir >= enterosDirFunc.size()){
-            return false;
-        }
-        enterosDirFunc[dir]=val;
-        return true;
-    }
-    bool guardaBanderasDirFunc(int dir, int val){
-        if (dir >= banderasDirFunc.size()){
-            return false;
-        }
-        banderasDirFunc[dir]=val;
-        return true;
-    }
-    bool guardaDecimalesDirFunc(int dir, int val){
-        if (dir >= decimalesDirFunc.size()){
-            return false;
-        }
-        decimalesDirFunc[dir]=val;
-        return true;
-    }
-    bool guardaTextosDirFunc(int dir, int val){
-        if (dir >= textosDirFunc.size()){
-            return false;
-        }
-        textosDirFunc[dir]=val;
-        return true;
-    }
-
     
     //Metodos objetos
     //Metodos que regresan el espacio de memoria
@@ -366,5 +320,51 @@ public:
         return true;
     }
     
+    //Metodos Direcciones Funciones
+    int pideDirEnteroFunc(int dir){
+
+        //cout << "Dir: " << endl;
+        for ( int i = 0; i < enterosDirFunc.size(); i++ ) {
+            //cout << "Valor EnteroDirFunc i: " <<  i << " valor: " << enterosDirFunc[i] << endl;
+        }
+        return enterosDirFunc[dir];
+    }
+    int pideDirBanderaFunc(int dir){
+        return banderasDirFunc[dir];
+    }
+    int pideDirDecimalFunc(int dir){
+        return decimalesDirFunc[dir];
+    }
+    int pideDirTextoFunc(int dir){
+        return textosDirFunc[dir];
+    }
+    bool guardaEnterosDirFunc(int dir, int val){
+        if (dir >= enterosDirFunc.size()){
+            return false;
+        }
+        enterosDirFunc[dir]=val;
+        return true;
+    }
+    bool guardaBanderasDirFunc(int dir, int val){
+        if (dir >= banderasDirFunc.size()){
+            return false;
+        }
+        banderasDirFunc[dir]=val;
+        return true;
+    }
+    bool guardaDecimalesDirFunc(int dir, int val){
+        if (dir >= decimalesDirFunc.size()){
+            return false;
+        }
+        decimalesDirFunc[dir]=val;
+        return true;
+    }
+    bool guardaTextosDirFunc(int dir, int val){
+        if (dir >= textosDirFunc.size()){
+            return false;
+        }
+        textosDirFunc[dir]=val;
+        return true;
+    }
     
 };

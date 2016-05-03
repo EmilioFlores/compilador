@@ -3,7 +3,10 @@
 
 #include "trie.cpp"
 
+    
 Memoria memoria; 
+
+
 
 class dirProcedimientos{
 private:
@@ -13,7 +16,9 @@ public:
     Trie *arbol =  new Trie(); // arbol de ids
     vector <variable> vVariables;
     vector <bloque> vBloques;
-    vector <int> pilaBloques;
+    vector<int> pilaBloques;
+    vector<pair<int,int>> pilaArgumentos;
+    vector<vector<int>> pilaFunciones; //pila para funciones del era
     int cantVariables[2][5];//
     vector <string> tipos;
     vector <int> bloqueTipo;//bloque del tipo si es un objeto
@@ -26,7 +31,6 @@ public:
     int inMemoria[4];//Variable para inicializar la memoria con las cantidades
     vector<Objeto> vObjetos;
     vector<Objeto> vFunciones;
-    vector<pair<int,int>> pilaArgumentos;
     
     dirProcedimientos(){
         string tiposAux[] = {"bandera","entero","decimal","texto","vacio"};
@@ -45,12 +49,35 @@ public:
         vBloques.push_back(bAux);
     }
     
+    /*
+     
+     NUEVOS METODOS
+     
+     */
+    
+    void eraBloques(int bloque){
+        pilaBloques.push_back(bloque);
+    }
+    
+    void retornoBloques(){
+        pilaBloques.pop_back();
+    }
+    
+    
+    variable dameVariable(int iVar){
+        return vVariables[iVar];
+    }
+    
+    bloque dameBloque(int bloque){
+        return vBloques[bloque];
+    }
     
     /*
      
      METODOS DE VARIABLES
      
      */
+    
     
     int buscaDireccion(string id){
         int iVar;
@@ -61,12 +88,6 @@ public:
         return vVariables[iVar].direccion;
     }
     
-
-    string nombreTipo(int tipo){
-        return tipos[tipo];
-    }
-
-    
     int buscaBloque(string id){
         int iVar;
         iVar = buscaVariable(id);
@@ -75,7 +96,7 @@ public:
         }
         return vVariables[iVar].bloque;
     }
-
+    
     int buscaBloque(string padreTipo, string nombre){//busca bloque para llamadas a metodos de funciones
         for (int i = 0; i < vBloques.size();i++){
             if (vBloques[i].padre==padreTipo&&vBloques[i].nombre==nombre)
@@ -83,13 +104,35 @@ public:
         }
         return -1;
     }
-
+    
+    bool esVariable(int id){
+        if (vVariables[id].estructura==0)
+            return true;
+        return false;
+    }
+    
     int buscaTipo(string tipo){
         for (int i = 0 ; i < tipos.size();i++){
             if (tipos[i]==tipo)
                 return i;
         }
         return -1;
+    }
+    
+    string nombreTipo(int tipo){
+        return tipos[tipo];
+    }
+    
+    int checaEstructura(string id){
+        int iV = buscaVariable(id);
+        if (iV==-1)
+            return -1;
+        return vVariables[iV].estructura;
+    }
+    
+    void espacioArreglo(int tam){
+        int tipo = vVariables.back().tipo;
+        vBloques[bloqueAct].inMemoria[tipo]+=tam-1;
     }
     
     //buscaVariable checa si la variable ha sido instanciada antes en el proyecto y regresa su indice la tabla de variables de variables
@@ -115,12 +158,7 @@ public:
             return -1;
         return vVariables[iV].tipo;
     }
-    bool esVariable(int id){
-        if (vVariables[id].estructura==0)
-            return true;
-        return false;
-    }
-
+    
     //crearVariable es para checar si puede crear una variable. ej: entero x; o 'Objeto' y; donde Objeto es un tipo previamente definido
     //esta funcion tambien sirve para decir si una variable es publica a un objeto, con el bool privacidad
     bool crearVariable(string tipo, string id, bool privacidad,int direccion){
@@ -161,6 +199,8 @@ public:
      METODOS DE OBJETOS
      
      */
+    
+    
     
     void creaMemoriaObjeto(int bloque){//crea la memoria para un objeto con la informacion en el bloque que lo define
         Objeto obj;
@@ -233,44 +273,6 @@ public:
         return -1;
     }
     
-
-    int dameCuadruplo(int bloque){
-        return vBloques[bloque].direccionCuadruplo;
-    }
-
-    void era(int bloque){
-        Objeto funcion;
-        funcion.tipos.resize(vBloques[bloque].vVar.size());
-        funcion.dirCuadruplo.resize(vBloques[bloque].vVar.size());
-        funcion.dirReales.resize(vBloques[bloque].vVar.size());
-        int iVar;
-        for (int i = 0 ; i < funcion.tipos.size() ; i++){
-            iVar=vBloques[bloque].vVar[i];
-            funcion.tipos[i]=vVariables[i].tipo;
-            funcion.dirCuadruplo[i]=vVariables[i].direccion;
-            funcion.dirReales[i]=copiaDireccionesFunc(vVariables[i].tipo,vVariables[i].direccion);
-        }
-        vFunciones.push_back(funcion);
-    }
-    
-    void retorno(){
-    
-        int dir=(int)vFunciones.size()-1;
-        int tam = (int)vFunciones[dir].dirReales.size();
-        for (int i = 0 ; i < tam ; i++){
-            quitaEspacio(vFunciones[dir].tipos[i]);
-        }
-        vFunciones.pop_back();
-        dir--;
-        if (dir > 0){
-            tam = (int)vFunciones[dir].dirReales.size();
-            for (int i = 0 ; i < tam ; i++){
-                copiaDireccionesFuncRet(vFunciones[dir].tipos[i],vFunciones[dir].dirCuadruplo[i],vFunciones[dir].dirReales[i]);
-            }
-        }
-    }
-
-
     /*
      
      METODOS DE FUNCIONES
@@ -286,69 +288,6 @@ public:
         return false;
     }
     
-    //esta es para argumentos normales
-    bool checaArgumentoID(string id){
-        int iAux = ultVariabe;// se guardan para mantener los datos del metodo que llamo los argumentos
-        string sAux = nombreUltVar;
-        if (vVariables[ultVariabe].estructura!=1){
-            cout << "La variable "<<nombreUltVar<<" no es un metodo no debe tener argumentos"<<endl;
-            return false;
-        }
-        if (argActual+1>vBloques[vVariables[ultVariabe].bloque].vParam.size()){
-            cout <<"Se excedio en argumentos"<<endl;
-            return false;
-        }
-        if (vVariables[buscaVariable(id)].tipo!=vVariables[vBloques[vVariables[iAux].bloque].vParam[argActual]].tipo)
-        {
-            cout << "No coinciden los tipos del argumento #"<<argActual<<endl;
-            return false;
-        }
-        argActual++;
-        ultVariabe=iAux;
-        nombreUltVar = sAux;
-        return true;
-    }
-    
-     int checaEstructura(string id){
-        int iV = buscaVariable(id);
-        if (iV==-1)
-            return -1;
-        return vVariables[iV].estructura;
-    }
-    //esta es para constantes
-    bool checaArgumentoTipo(int tipo){
-        int cantidadArg=(int)vBloques[pilaArgumentos.back().first].vParam.size();
-        int argChecados=pilaArgumentos.back().second;
-        if (argChecados==cantidadArg){
-            return false;
-        }
-        int iVar =vBloques[pilaArgumentos.back().first].vParam[argChecados];
-        if (vVariables[iVar].tipo!=tipo)
-            return false;
-        return true;
-    }
-    
-    // se llama al final de checar cada metodo
-    bool checaCompletezPred(bool metodo){
-        if (vVariables[ultVariabe].estructura==1)//checa si la variable es un metodo, si no no
-        {
-            if (!metodo){
-                cout << "Falto la declaracion de argumentos del metodo"<<endl;
-                return false;
-            }
-            
-            if (argActual!=vBloques[vVariables[ultVariabe].bloque].vParam.size()){
-                cout << "Faltan argumentos" << endl;
-                return false;
-            }
-            return true;
-        }
-        else{
-            cout << "La variable no es un metodo"<<endl;
-            return false;
-        }
-    }
-
     bool comienzaArgumentos(int tipo, string metodo){
         string sTipo;
         if (tipo==-1){
@@ -359,13 +298,14 @@ public:
         }
         pair<int,int> par;//el primero es la direccion del bloque, el segundo es el argumento actual
         par.first=buscaBloque(sTipo,metodo);
+        par.second=0;
         if (par.first==-1){
             return false;
         }
         pilaArgumentos.push_back(par);
         return true;
     }
-   
+    
     bool terminaArgumentos(){
         int cantidadArg=(int)vBloques[pilaArgumentos.back().first].vParam.size();
         int argChecados=pilaArgumentos.back().second;
@@ -375,33 +315,22 @@ public:
         }
         return true;
     }
-   
-
     
-    bool checaPredicado(string id){
-        int iAux = ultVariabe; //guardamos la ultima variable usada que corresponde al objeto invocador
-        string sAux = nombreUltVar;
-        
-        if (vVariables[iAux].estructura!=2){
-            cout << "La variable "+sAux+" no es un objeto no puede invocar predicados"<<endl;
+    //esta es para constantes
+    bool checaArgumentoTipo(int tipo){
+        int cantidadArg=(int)vBloques[pilaArgumentos.back().first].vParam.size();
+        int argChecados=pilaArgumentos.back().second;
+        if (argChecados==cantidadArg){
             return false;
         }
-        int bloqueM =vVariables[iAux].bloque;
-        int iVar=-1;
-        for (int  i = 0 ; i < vBloques[bloqueM].vVar.size();i++){
-            if (vVariables[vBloques[bloqueM].vVar[i]].id==id){
-                iVar=vBloques[bloqueM].vVar[i];
-            }
-        }
-        if(iVar==-1){
-            cout << "No se encontro la variable publica "+id+" dentro de "+nombreUltVar<<endl;
+        int iVar =vBloques[pilaArgumentos.back().first].vParam[argChecados];
+        if (vVariables[iVar].tipo!=tipo)
             return false;
-        }
-        ultVariabe=iVar;
-        
+        pilaArgumentos.back().second++;
         return true;
     }
-     
+    
+    
     bool crearMetodo (string tipo, string id, int direccion, int direccionCuadruplo){
         variable v;
         v.tipo = buscaTipo(tipo);
@@ -443,14 +372,13 @@ public:
         return true;
     }
     
-    
     /*
      
      METODOS DE DIRECCIONES *ERA*
      
      */
     
-     //clase auxiliar de subs
+    //clase auxiliar de subs
     void copiaDireccionesObj(int tipo,int espacio, int val){
         switch (tipo) {
             case 0:
@@ -478,22 +406,24 @@ public:
     int copiaDireccionesFunc(int tipo,int espacio){
         switch (tipo) {
             case 0:
-                memoria.guardaDecimalesDirFunc(espacio, memoria.banLocActual);
+                memoria.guardaDecimalesDirFunc(espacio - OFF_BAND_DIR_FUNCION, memoria.banLocActual);
                 memoria.banLocActual++;
                 return (memoria.banLocActual-1);
                 break;
-            case 1:
-                memoria.guardaEnterosDirFunc(espacio, memoria.entLocActual);
+            case 1: 
+                memoria.guardaEnterosDirFunc(espacio  - OFF_ENT_DIR_FUNCION, memoria.entLocActual);
                 memoria.entLocActual++;
+
                 return (memoria.entLocActual-1);
+
                 break;
             case 2:
-                memoria.guardaDecimalesDirFunc(espacio, memoria.decLocActual);
+                memoria.guardaDecimalesDirFunc(espacio - OFF_DEC_DIR_FUNCION, memoria.decLocActual);
                 memoria.decLocActual++;
                 return (memoria.decLocActual-1);
                 break;
             case 3:
-                memoria.guardaTextosDirFunc(espacio, memoria.texLocActual);
+                memoria.guardaTextosDirFunc(espacio - OFF_TEXT_DIR_FUNCION, memoria.texLocActual);
                 memoria.texLocActual++;
                 return (memoria.texLocActual-1);
                 break;
@@ -507,16 +437,16 @@ public:
     int copiaDireccionesFuncRet(int tipo,int espacio,int val){
         switch (tipo) {
             case 0:
-                memoria.guardaBanderasDirObj(espacio, val);
+                memoria.guardaBanderasDirFunc(espacio - OFF_BAND_DIR_FUNCION , val);
                 break;
             case 1:
-                memoria.guardaBanderasDirObj(espacio, val);
+                memoria.guardaEnterosDirFunc(espacio - OFF_ENT_DIR_FUNCION, val);
                 break;
             case 2:
-                memoria.guardaBanderasDirObj(espacio, val);
+                memoria.guardaDecimalesDirFunc(espacio - OFF_DEC_DIR_FUNCION, val);
                 break;
             case 3:
-                memoria.guardaBanderasDirObj(espacio, val);
+                memoria.guardaTextosDirFunc(espacio - OFF_TEXT_DIR_FUNCION, val);
                 break;
             case 4:
                 break;
@@ -548,8 +478,6 @@ public:
     }
     
     
-    
-    
     //clase para copiar el estado actual del vector
     void subsDireccionesObj(int dir){
         int tam = (int)vObjetos[dir].dirReales.size();
@@ -558,6 +486,46 @@ public:
         }
     }
     
+    void era(int bloque){
+
+        pilaBloques.push_back(bloque);
+        Objeto funcion;
+        funcion.tipos.resize(vBloques[bloque].vVar.size());
+        funcion.dirCuadruplo.resize(vBloques[bloque].vVar.size());
+        funcion.dirReales.resize(vBloques[bloque].vVar.size());
+        int iVar;
+        for (int i = 0 ; i < funcion.tipos.size() ; i++){
+
+            iVar=vBloques[bloque].vVar[i];
+            funcion.tipos[i]=vVariables[iVar].tipo;
+            funcion.dirCuadruplo[i]=vVariables[iVar].direccion;
+            funcion.dirReales[i]=copiaDireccionesFunc(vVariables[iVar].tipo,vVariables[iVar].direccion);
+        }
+        vFunciones.push_back(funcion);
+    }
+    
+    void retorno(){
+        int dir=(int)vFunciones.size()-1;
+        int tam = (int)vFunciones[dir].dirReales.size();
+        for (int i = 0 ; i < tam ; i++){
+            quitaEspacio(vFunciones[dir].tipos[i]);
+        }
+        vFunciones.pop_back();
+        pilaBloques.pop_back();
+        dir--;
+        if (dir>=0){
+            tam = (int)vFunciones[dir].dirReales.size();
+            for (int i = 0 ; i < tam ; i++){
+                copiaDireccionesFuncRet(vFunciones[dir].tipos[i],vFunciones[dir].dirCuadruplo[i],vFunciones[dir].dirReales[i]);
+            }
+        }
+    }
+    
+    
+    
+    int direccionArgumento(int bloque, int index){
+        return vVariables[vBloques[bloque].vParam[index]].direccion;
+    }
     /*
      
      METODOS DE OBJETOS Y FUNCIONES
@@ -567,6 +535,10 @@ public:
     void terminaBloque(){
         pilaBloques.pop_back();
         bloqueAct=pilaBloques.back();
+    }
+    
+    int dameCuadruplo(int bloque){
+        return vBloques[bloque].direccionCuadruplo;
     }
     
     /*

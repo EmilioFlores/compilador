@@ -20,12 +20,10 @@ objeto Rectangulo {
 
 
 funcion entero getTest3(entero x) {
-		
-		muestraLinea(" Valor de x:         ", x );
-		condicion ( x > 30 ) { 
-			x = 5;
-		} fallo { 
-			x = 10;
+		var entero y;
+
+		condicion ( x > 0 ) {
+			x = x + getTest3( x - 1 );
 		};
 
 		regresa x;
@@ -37,9 +35,8 @@ programa {
 
 
 	var entero x;
-	x = 1 + getTest3(5);
-	
-	muestraLinea(" ");
+	x = getTest3(1);
 	muestraLinea( x );
+
 	
 }

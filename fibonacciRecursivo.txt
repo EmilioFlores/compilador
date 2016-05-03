@@ -1,0 +1,54 @@
+
+incluir <test>
+incluir <hola>
+objeto Rectangulo {
+	privado {
+		var entero x;  
+
+	}
+
+	publico {
+		funcion entero getTest2 () {
+
+			var entero test2  ;
+			regresa test2 ; 
+		};
+
+	}
+};
+
+
+funcion entero fibo2(entero n){
+
+		var entero izq;
+		var entero der;
+		condicion(n == 0){
+			n = 0;
+
+		} fallo {
+			condicion(n < 3){
+				n = 1;
+			} fallo {
+
+				
+				izq = fibo2(n - 1);
+				der = fibo2(n - 2);
+				n = izq + der ;
+			};
+		};
+		regresa n;
+	};
+
+
+programa {
+	
+
+
+	var entero x;
+
+
+	x = fibo2(15);
+	muestraLinea(" ");
+	muestraLinea( x );
+	
+}
