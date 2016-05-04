@@ -367,7 +367,6 @@ Asignacion 			: IDENTIFICADOR  {
 Asignacion1 		: LBRACKET {
 
 					} Expresion {
-						accion_2_acceso_arreglo(objetoPadre);
 					} RBRACKET {
 						accion_3_acceso_arreglo();
 						//accion_5_acceso_arreglo();
@@ -417,7 +416,6 @@ Factor1 			: PLUS
 Factor2				:	LBRACKET {
 						
 					} Expresion {
-						accion_2_acceso_arreglo(objetoPadre);
 						//accion_3_acceso_arreglo();
 					}  RBRACKET {
 						accion_3_acceso_arreglo();
@@ -1133,13 +1131,6 @@ void accion_2_llamada_proc() {
 		cuadruplos.push_back( cuadruploTemp );
 	} else {
 		objetoPadre = objetoNombre;
-		/*
-		// Este es un era normal de funcion
-		objetoPadre = objetoNombre;
-		int bloqueMetodo = dirProcedimientos.buscaBloque(objetoNombre);
-		Cuadruplo cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodo), "" , "");
-		cuadruplos.push_back( cuadruploTemp );	
-		*/
 	}	
 }
 
@@ -1244,16 +1235,6 @@ void accion_2_arreglo_def(int indexVariableCreada) {
 }	
 
 
-
-/**
- * Accion 2 acceso arreglo. 
- */
-void accion_2_acceso_arreglo(string name) {
-	
-
-	
-}	
-
 /**
  * Accion 3 acceso arreglo. 
  */
@@ -1307,8 +1288,12 @@ void accion_3_acceso_arreglo() {
 
 }	
 
-
-
+/**
+ * getDirBase consigue la direccion base dado un scope y un tipo de dato
+ * @param  scope       donde se encuentra la variable
+ * @param  tipoArreglo de la variable que se busca
+ * @return             direccion base
+ */
 int getDirBase(int scope, int tipoArreglo) {
 	int dirBase = -1;
 	switch (scope) {
@@ -2448,18 +2433,35 @@ int indexGOTOT(int i,Cuadruplo current){
 	return b ?  (dirRes-1) : i;//-1 porque al final de la iteracion hara i++
 }
 
+/**
+ * eraProc
+ * Función utilizada para realizar la accion de era de modulos
+ * @param current cuadruplo, representando el cuadruplo actual. 
+ */
 void eraPROC(Cuadruplo current){
     int bloque = atoi(current.getIzq().c_str());
     dirProcedimientos.era(bloque);
     bloqueglobal = bloque;
 }
  
+ /**
+  * goSubPROC
+  * Esta funcion se encarga de realizar la accion de ir al a subrutina
+  * @param  i       indice del cuadruplo actual
+  * @param  current cuadruplo que se esta analizando
+  * @return         indice nuevo en caso de ir a subrutina
+  */
 int gosubPROC(int i, Cuadruplo current){
 	int bloque = atoi(current.getIzq().c_str());
 	pilaSUB.push(i);
 	return dirProcedimientos.dameCuadruplo(bloque);
 }
 
+/**
+ * retornoPROC
+ * Metodo utilizado para realizar la accion de retorno de una subrutina.
+ * @return indice a donde debe de regresar la operacion.
+ */
 int retornoPROC(){
     dirProcedimientos.retorno();
     int top = pilaSUB.top();
@@ -2467,6 +2469,11 @@ int retornoPROC(){
     return top;
 }
 
+/**
+ * paramPROC
+ * Metodo que se encarga de ligar un parametro a una variable de argumento de una subrutina.
+ * @param current cuadruplo actual donde se encuentre la ejecucion.
+ */
 void paramPROC(Cuadruplo current){
     int dirDer = atoi(current.getDer().c_str());//index
     int dirIzq = atoi(current.getIzq().c_str());//direccion
@@ -2490,6 +2497,11 @@ void paramPROC(Cuadruplo current){
     }
 }
 
+/**
+ * eraObj
+ * Metodo que se encarga de realizar la accion de era para objetos.
+ * @param current cuadruplo actual de la ejecucion
+ */
 void eraObj(Cuadruplo current){//izquerda direccion de objeto, derecha bloque del objeto
     int dirDer = atoi(current.getDer().c_str());
     int dirIzq = atoi(current.getIzq().c_str());
@@ -2497,10 +2509,19 @@ void eraObj(Cuadruplo current){//izquerda direccion de objeto, derecha bloque de
     dirProcedimientos.subsDireccionesObj(dirDer);
 }
 
+/**
+ * returnObj
+ * metodo que se encarga de regresar la ejecucion al momento donde se debe de encontrar
+ */
 void returnObj(){
     dirProcedimientos.retornoBloques();
 }
 
+/**
+ * verificaPROC
+ * metodo que se encarga de verificar los limites de un arreglo
+ * @param current cuadruplo de ejecucion actual
+ */
 void verificaPROC(Cuadruplo current){
     int dirIzq = atoi(current.getIzq().c_str());
     int dirDer = atoi(current.getDer().c_str());
@@ -2540,7 +2561,6 @@ void solve() {
     for(int i  = 0; i < cuadruplos.size(); i++){
         Cuadruplo current = cuadruplos[i];
 
-        //
         //cout << "Current: " << current.getOp() << " getOpIndex: " <<  getOperandoIndex(current.getOp() ) <<  " Valor de i: " << i << endl;
         switch ( getOperandoIndex(current.getOp() ))  {
 
