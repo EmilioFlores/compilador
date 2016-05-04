@@ -61,6 +61,9 @@ programa {
 }
 ```
 
+
+
+
 *resultado: 1  2  3*
 
 
@@ -93,3 +96,83 @@ programa {
 
 ```
 *resultado: 0 1 2 3 4 5* 
+
+
+####Funciones
+```javascript
+
+funcion entero fibIterativo(entero n)
+{
+     var entero a ; 
+     var entero b ;
+     var entero c ;
+     var entero i ;
+     a = 1;
+     b = 1;
+
+     ciclo (i = 3 ; i < n ; i = i +1){
+         c = a + b;
+         a = b;
+         b = c;
+     };
+
+     regresa b;
+};
+
+funcion entero fibRecursivo(entero n)
+{
+     var entero ramaIzquierda;
+     var entero ramaDerecha;
+     condicion(n == 0){
+           n = 0;
+     } fallo {
+               condicion(n < 3){
+                      n = 1 ;
+               } fallo {
+                    ramaIzquierda = fibRecursivo(n - 1);
+                    ramaDerecha = fibRecursivo(n - 2);
+                    n = ramaIzquierda + ramaDerecha;             
+     };
+     regresa n;
+};
+
+programa {
+
+     var entero x;
+     var entero y;
+     var entero z;
+     z = 10;
+     x = fibIterativo(z);
+     y = fibRecursivo(z);
+
+     muestraLinea(“Fibonacci iterativo: ”x);
+     muestraLinea(“También recursivo!: ”y);
+}
+
+```
+
+*Resultado: Fibonacci iterativo: 55*
+*Tambien Recursivo!: 55*
+
+```javascript
+cbjeto Cosa {
+        privado {
+        }
+        publico {
+               var entero x;
+               var entero y;
+               funcion entero suma (){
+                         regresa (x + y);
+    
+        }
+};
+
+Programa{
+      Cosa coso;
+      coso.x = 1;
+      coso.y = 1;
+      muestraLinea(coso.suma());
+}
+```
+
+*resultado: 2*
