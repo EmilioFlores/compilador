@@ -1,17 +1,5 @@
-incluir <test>
-incluir <hola>
-
 objeto Rectangulo {
 	privado {
-		var entero x;  
-		var entero ancho;
-		var entero largo;
-
-		funcion entero getTest ( entero largo ) {
-			var entero test1 ; 
-
-			regresa test1 ; 
-		};
 
 	}
 
@@ -23,6 +11,7 @@ objeto Rectangulo {
 		funcion entero getTest2 () {
 
 			var entero test2  ;
+			test2 = 1;
 			regresa test2 ; 
 		};
 	}
@@ -31,21 +20,15 @@ objeto Rectangulo {
 
 
 
-funcion bandera getTest3 ( bandera x, entero y  ) {
-	var entero test3  ;
-
-	regresa x ; 
-};
-
-
 programa {
 	
 	var bandera band ;
 
 	var entero test5;
+	var Rectangulo y;
 
+	y.getTest2();
 	
-	muestra (test5 , test5, 6);
 }
 
 

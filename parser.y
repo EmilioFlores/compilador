@@ -257,6 +257,7 @@ Args				: {
 					  if ( metodo ) { 
 					   	tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);
 					  }
+
 					  if ( !dirProcedimientos.comienzaArgumentos(tipoObjeto, objetoNombre)) {
 					   		cout << "Error:" << endl;
 					   		exit(-1);
@@ -299,7 +300,7 @@ Llamada				: IDENTIFICADOR {
 					   metodo = false;
 					   objetoNombre = $1;
 					   metodoNombre = $1;
-				   	   objetoPadre = $1;
+				   	   //objetoPadre = $1;
 					   
 					   int variableIndex = dirProcedimientos.buscaVariable(objetoNombre);
 					   
@@ -339,8 +340,7 @@ Llamada2			: LPAREN {
 					};
 Asignacion 			: IDENTIFICADOR  {
 
-						cout << "Editando el objeto padre a " << $1 << endl;
-						objetoPadre = $1;
+						//objetoPadre = $1;
 						int direccionVariable = dirProcedimientos.buscaDireccion($1);
 						int tipoVariable = dirProcedimientos.checaTipo($1);
 						accion_1_assignacion(direccionVariable, tipoVariable);
@@ -845,6 +845,7 @@ void accion_2_assignacion(string operador){
  * Accion 3 asignacion. sacar der de pilaO. Sacar izq de pilaO. asigna = pOperadores.pop(). Genera codigo de asignacion
  */
 void accion_3_assignacion( ){
+
 	int der = pilaOperandos.top();
 	pilaOperandos.pop();
 	int tipoDer = pilaTipos.top();
@@ -1169,6 +1170,7 @@ void accion_6_llamada_proc(string nombreProc) {
 	int estructura = dirProcedimientos.checaEstructura(nombreProc);
 
 	if ( estructura != 0 ) {
+
 		if ( metodo  ) { 
 			int tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);				
 			int bloqueMetodo = dirProcedimientos.buscaBloque(dirProcedimientos.nombreTipo(tipoObjeto), metodoNombre);

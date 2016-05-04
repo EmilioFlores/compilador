@@ -5,6 +5,7 @@
 
 funcion entero fibonacciRecursivo(entero n){
 
+
 		var entero ramaIzquierda;
 		var entero ramaDerecha;
 		condicion(n == 0){
