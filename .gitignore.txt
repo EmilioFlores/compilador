@@ -1,5 +1,0 @@
-primeravance.zip
-Proyecto.exe
-lex.yy.c
-parser.tab.c
-parser.tab.h

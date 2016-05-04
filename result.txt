@@ -1,2 +1,0 @@
-In file included from parser.y:8:0:
-declaraciones.cpp:7:1: error: 'dirProcedimientos' does not name a type
