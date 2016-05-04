@@ -1,3 +1,6 @@
+// Condiciones  en lenguaje Lesp.
+// Emilio Flores Rivera A01035087 
+// Francisco Canseco A01034948
 
 programa {
 	

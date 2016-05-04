@@ -56,7 +56,7 @@ void accion_1_arreglo_def(int indexVariableCreada, int tam);
 void accion_2_arreglo_def(int  indexVariableCreada);
 
 void accion_1_acceso_arreglo();
-void accion_2_acceso_arreglo();
+void accion_2_acceso_arreglo(string name);
 void accion_3_acceso_arreglo();
 void accion_4_acceso_arreglo();
 void accion_5_acceso_arreglo();

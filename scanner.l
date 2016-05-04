@@ -14,6 +14,7 @@ letter [a-zA-Z]
 ID [a-z][a-z0-9]*
 
 %%
+("//").*                  			{ line_num++;    }
 [ \t]          ;
 "+"                  			{ return PLUS;       }
 "-"                  			{ return MINUS;      }

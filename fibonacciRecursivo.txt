@@ -1,6 +1,6 @@
-
-
-
+// FibonacciRecursivo en lenguaje Lesp.
+// Emilio Flores Rivera A01035087 
+// Francisco Canseco A01034948
 
 
 funcion entero fibonacciRecursivo(entero n){

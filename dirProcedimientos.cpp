@@ -553,6 +553,14 @@ public:
     }
     
     
+    string nombreVariable(int direccion){
+        for (int i = 0 ; i < vVariables.size();i++){
+            if (vVariables[i].direccion==direccion)
+                return vVariables[i].id;
+        }
+        return "-1";
+    }
+
     
     int direccionArgumento(int bloque, int index){
         return vVariables[vBloques[bloque].vParam[index]].direccion;
@@ -585,7 +593,6 @@ public:
                 memoria.cantEnt+=vBloques[i].inMemoria[1];
                 memoria.cantDec+=vBloques[i].inMemoria[2];
                 memoria.cantTex+=vBloques[i].inMemoria[3];
-                cout << "Cant ent dirProcedimientos: " << memoria.cantEnt << endl;
             }
             if (vBloques[i].estructura=="objeto"){
                 memoria.cantBanDirObj+=vBloques[i].inMemoria[0];

@@ -1,0 +1,47 @@
+// Bubble sort en lenguaje Lesp.
+// Emilio Flores Rivera A01035087 
+// Francisco Canseco A01034948
+
+programa {
+	
+	var entero x[10];
+	var entero i;
+	var entero j;
+	var entero k;
+
+	x[0] = 6; 
+	x[1] = 3; 
+	x[2] = 5; 
+	x[3] = 1; 
+	x[4] = 7; 
+	x[5] = 2; 
+	x[6] = 10; 
+	x[7] = 8; 
+	x[8] = 9; 
+	x[9] = 4; 
+
+
+	ciclo(i=0, i < 10, i = i + 1){
+		muestra(x[i], " ");
+	};
+	muestraLinea(" ");
+
+	ciclo(i=0, i < 10, i = i + 1){
+		ciclo (j=i,j<10, j = j+1 ){
+			condicion (x[j] > x[i] ) {
+				k = x[i];
+				x[i] = x[j];
+				x[j] = k;
+			};
+
+		};
+		muestraLinea(" ");
+	};
+	muestraLinea(" ");
+
+	ciclo(i=0, i < 10, i = i + 1){
+		muestra(x[i], " ");
+	};
+	muestraLinea(" ");
+
+}

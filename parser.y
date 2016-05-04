@@ -49,6 +49,8 @@ int bloqueglobal = 0;
 int indexParametro = 0;
 int indexVariableCreada = 0;
 int indexVariableAcesada = 0;
+
+bool isArray = false;
 bool metodo = false;
 bool global = true;
 bool objeto = false;
@@ -60,6 +62,7 @@ queue<int> filaArgumentos;
 stack<int> pilaTipos;
 stack<int> pilaSaltos;
 stack<int> pilaSUB;
+stack<string> pilaArreglos;
 vector<Cuadruplo> cuadruplos; 
 vector<constante> constantesEnteras;
 vector<constante> constantesDecimales;
@@ -296,7 +299,8 @@ Llamada				: IDENTIFICADOR {
 					   metodo = false;
 					   objetoNombre = $1;
 					   metodoNombre = $1;
-					   objetoPadre = $1;
+				   	   objetoPadre = $1;
+					   
 					   int variableIndex = dirProcedimientos.buscaVariable(objetoNombre);
 					   
 					   if (variableIndex == -1 ) { 
@@ -334,8 +338,9 @@ Llamada2			: LPAREN {
 						}
 					};
 Asignacion 			: IDENTIFICADOR  {
+
+						cout << "Editando el objeto padre a " << $1 << endl;
 						objetoPadre = $1;
-						cout << "la variable es:" << $1 << endl;
 						int direccionVariable = dirProcedimientos.buscaDireccion($1);
 						int tipoVariable = dirProcedimientos.checaTipo($1);
 						accion_1_assignacion(direccionVariable, tipoVariable);
@@ -362,7 +367,7 @@ Asignacion 			: IDENTIFICADOR  {
 Asignacion1 		: LBRACKET {
 
 					} Expresion {
-						accion_2_acceso_arreglo();
+						accion_2_acceso_arreglo(objetoPadre);
 					} RBRACKET {
 						accion_3_acceso_arreglo();
 						//accion_5_acceso_arreglo();
@@ -412,7 +417,7 @@ Factor1 			: PLUS
 Factor2				:	LBRACKET {
 						
 					} Expresion {
-						accion_2_acceso_arreglo();
+						accion_2_acceso_arreglo(objetoPadre);
 						//accion_3_acceso_arreglo();
 					}  RBRACKET {
 						accion_3_acceso_arreglo();
@@ -825,7 +830,7 @@ void accion_9_expresiones(){
  * @param tipoVariable tipo del operando leido
  */
 void accion_1_assignacion(int dirOperando, int tipoVariable){
-	cout << "dirOperando: " << dirOperando << endl;
+	
 	pilaTipos.push(tipoVariable);
 	pilaOperandos.push(dirOperando);
 }
@@ -1243,14 +1248,10 @@ void accion_2_arreglo_def(int indexVariableCreada) {
 /**
  * Accion 2 acceso arreglo. 
  */
-void accion_2_acceso_arreglo() {
+void accion_2_acceso_arreglo(string name) {
 	
 
-
-	int iVar = dirProcedimientos.buscaVariable(objetoPadre);
-	dimensionActual = dirProcedimientos.dameDimension(iVar, 0 );
 	
-
 }	
 
 /**
@@ -1258,13 +1259,22 @@ void accion_2_acceso_arreglo() {
  */
 void accion_3_acceso_arreglo() {
 
+
 	int valorExp = pilaOperandos.top();
 	pilaOperandos.pop();
 
+	
+
 	if ( pilaOperandos.size() > 0  ) {
-		cout << "Sacar de la pila el: " << pilaOperandos.top() << endl;
+		objetoPadre = dirProcedimientos.nombreVariable(pilaOperandos.top());
+		//cout << "Sacar de la pila el: " << pilaOperandos.top() << endl;
 		pilaOperandos.pop();
 	}
+
+	//cout << "Valor Padre: "<< objetoPadre << endl;
+	int iVar = dirProcedimientos.buscaVariable(objetoPadre);
+	//cout << "Valor: "<< iVar << endl;
+	dimensionActual = dirProcedimientos.dameDimension(iVar, 0 );
 
 	int limSuperior = dimensionActual.first;
 
@@ -1923,6 +1933,7 @@ void plus_op(Cuadruplo current){
     r=getTipoDireccion(dirRes,getScope(dirRes));
     if (i+d==2){
         iRes = pideEntero(dirIzq) + pideEntero(dirDer);
+        //cout << "pideEntero: " << pideEntero(dirIzq ) << " dirIzq: " << dirIzq << " pideEntDer: " << pideEntero(dirDer) << " dirDer: " <<  dirDer << endl;
         guardaEntero(dirRes,iRes);
         return;
     } else if (i+d==4) {
@@ -2288,7 +2299,6 @@ void assign_op(Cuadruplo current){
 void print_op(Cuadruplo current){
   int dirRes = atoi(current.getRes().c_str());
   int r;
-  cout << "muestra res: " << dirRes << endl;
   r=getTipoDireccion(dirRes,getScope(dirRes));
   switch(r){
     case 0:
