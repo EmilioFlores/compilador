@@ -151,7 +151,6 @@ public:
             vAux->dimensiones[i].second =vAux->tam / vAux->dimensiones[i].second;
         }
         vBloques[bloqueAct].inMemoria[vAux->tipo] += vAux->tam -1 ;
-        cout << "Valor: "<<vAux->tam -1 << endl;
         return vAux->tam -1 ;
     }
    

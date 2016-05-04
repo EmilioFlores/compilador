@@ -507,7 +507,7 @@ Main 				: PROGRAMASYM {
 						int inicio = pilaSaltos.top();
 						pilaSaltos.pop();
 						rellenar(inicio, cuadruplos.size()  );
-					} Bloque {  printCuadruplos(); }
+					} Bloque {  printCuadruplos(); if (pilaOperandos.size() > 0 ) { cout << "IFOJDSOFIJASDIOFJADSIOFJ SAOITamaño pila: " << pilaOperandos.size() << " top: " << pilaOperandos.top() << endl;}  }
 epsilon				:	;
 
 
@@ -1261,6 +1261,11 @@ void accion_3_acceso_arreglo() {
 	int valorExp = pilaOperandos.top();
 	pilaOperandos.pop();
 
+	if ( pilaOperandos.size() > 0  ) {
+		cout << "Sacar de la pila el: " << pilaOperandos.top() << endl;
+		pilaOperandos.pop();
+	}
+
 	int limSuperior = dimensionActual.first;
 
 
@@ -1675,9 +1680,9 @@ int pideEntero (int dir) {
     }
 
     if ( negativo ) {
-    	cout << "Valor antes: "<< valor << endl;
+    	//cout << "Valor antes: "<< valor << endl;
     	valor = pideEntero(valor);
-    	cout << "Valor despues: "<< valor << endl;
+    	//cout << "Valor despues: "<< valor << endl;
     }
     return valor;
 }
@@ -1789,7 +1794,7 @@ double pideDecimal (int dir) {
 void guardaEntero (int dir, int valor) { 
 
 	if (dir<0) {
-		cout << "PideEntero(dir) " << dir << " pideEntero: " << pideEntero(dir)  << " valor: " << valor << endl;
+		//cout << "PideEntero(dir) " << dir << " pideEntero: " << pideEntero(abs(dir))  << " valor: " << valor << endl;
 		guardaEntero(pideEntero(abs(dir)),valor);
 		return;
 	}
@@ -2512,7 +2517,7 @@ void sumadir_op(Cuadruplo current){
     int iRes;
 
     iRes = pideEntero(dirIzq) + pideEntero(dirDer);
-    cout << "iRes: " << iRes << " dirRes: " << dirRes << endl;
+    //cout << "iRes: " << iRes << " dirRes: " << dirRes << endl;
     guardaEntero(dirRes,iRes);
      
 }
