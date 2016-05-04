@@ -20,6 +20,7 @@ struct variable{
     int tam;
 };
 struct Objeto{
+    vector<int> tams;
     vector<int> tipos;//tipos de direcciones a sustituir
     vector<int> dirCuadruplo;//Direciones a sustituir
     vector<int> dirReales;//direciones reales de objeto  *en caso de ser un objeto->
