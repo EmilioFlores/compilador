@@ -64,12 +64,12 @@ public:
     int texLocActual = 0;
     
     //Metodo que inicializara los vectores de memoria dependiendo de la memoria estatica necesaria
-    void inicializa(){
+    void inicializa() {
         enteros.resize(cantEnt);
         banderas.resize(cantBan);
         decimales.resize(cantDec);
         textos.resize(cantTex);
-        
+
         enterosObj.resize(cantEntObj);
         banderasObj.resize(cantBanObj);
         decimalesObj.resize(cantDecObj);

@@ -1,0 +1,9 @@
+
+
+programa {
+	
+	var entero x[2];
+	x[0] = 15;
+	muestraLinea("Valor de x0 : ", x[0]);	
+
+}

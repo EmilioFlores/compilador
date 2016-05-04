@@ -72,4 +72,5 @@
 #define _SALTOLINEA 24
 #define _ERAOBJ 25
 #define _RETURNOBJ 26
+#define _SUMADIR 27
 #endif

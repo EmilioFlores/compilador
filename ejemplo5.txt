@@ -1,24 +1,4 @@
 
-incluir <test>
-incluir <hola>
-objeto Rectangulo {
-	privado {
-		var entero x;  
-
-	}
-
-	publico {
-		funcion entero getTest2 () {
-
-			var entero test2  ;
-			regresa test2 ; 
-		};
-
-	}
-};
-
-
-
 funcion entero getTest3(entero x) {
 		var entero y;
 
@@ -35,7 +15,7 @@ programa {
 
 
 	var entero x;
-	x = getTest3(1);
+	x = getTest3(5);
 	muestraLinea( x );
 
 	

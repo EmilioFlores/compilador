@@ -16,9 +16,9 @@ struct variable{
     int bloque;//por si es funcion u objeto
     int direccion; //direccion a la base de datos
     bool privacidad;//true si es publico, false si es privado
-    
+    vector<pair<int,int>> dimensiones;// primero es el tam de la dimension, segundo es el M
+    int tam;
 };
-
 struct Objeto{
     vector<int> tipos;//tipos de direcciones a sustituir
     vector<int> dirCuadruplo;//Direciones a sustituir

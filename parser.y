@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include <math.h> 
+#include <cmath> 
 #include "prototipos.h"
 #include "definiciones.h"
 #include "memoria.cpp"
@@ -46,6 +47,8 @@ int indexDirObjetos[4] = {0};
 int indexDirFunciones[4] = {0};
 int bloqueglobal = 0;
 int indexParametro = 0;
+int indexVariableCreada = 0;
+int indexVariableAcesada = 0;
 bool metodo = false;
 bool global = true;
 bool objeto = false;
@@ -62,6 +65,7 @@ vector<constante> constantesEnteras;
 vector<constante> constantesDecimales;
 vector<constante> constantesTexto;
 vector<constante> constantesBandera;
+pair<int, int> dimensionActual;
 int cuboSemantico[4][4][13] = 	
 {
   	{  // bandera 0
@@ -292,6 +296,7 @@ Llamada				: IDENTIFICADOR {
 					   metodo = false;
 					   objetoNombre = $1;
 					   metodoNombre = $1;
+					   objetoPadre = $1;
 					   int variableIndex = dirProcedimientos.buscaVariable(objetoNombre);
 					   
 					   if (variableIndex == -1 ) { 
@@ -328,31 +333,42 @@ Llamada2			: LPAREN {
 							accion_1_expresiones(objetoNombre, 4);
 						}
 					};
-
-Asignacion 			: IDENTIFICADOR {
-										int direccionVariable = dirProcedimientos.buscaDireccion($1);
-										int tipoVariable = dirProcedimientos.checaTipo($1);
-										accion_1_assignacion(direccionVariable, tipoVariable);
-										int variableIndex = dirProcedimientos.buscaVariable($1);
-										if (variableIndex == -1 ) { 
-											cerr << "ERROR: at symbol \"" << yytext;
-											cerr << "\" on line " << line_num << endl;
-											exit(-1);
-										}
-										int esVariable = dirProcedimientos.esVariable(variableIndex);
-										if ( !esVariable ) { 
-											cerr << "ERROR: en el simbolo  \"" << yytext;
-											cerr << "\"  no se puede asignar contenido a un metodo, en linea " << line_num << endl;
-											exit(-1);
-										}
-										
-									} 
-						EQL  {
-								accion_2_assignacion("=");
+Asignacion 			: IDENTIFICADOR  {
+						objetoPadre = $1;
+						cout << "la variable es:" << $1 << endl;
+						int direccionVariable = dirProcedimientos.buscaDireccion($1);
+						int tipoVariable = dirProcedimientos.checaTipo($1);
+						accion_1_assignacion(direccionVariable, tipoVariable);
+						int variableIndex = dirProcedimientos.buscaVariable($1);
+						if (variableIndex == -1 ) { 
+							cerr << "ERROR: at symbol \"" << yytext;
+							cerr << "\" on line " << line_num << endl;
+							exit(-1);
 						}
-						Expresion {
-								accion_3_assignacion();								
-						} ;
+						int esVariable = dirProcedimientos.esVariable(variableIndex);
+						if ( !esVariable ) { 
+							cerr << "ERROR: en el simbolo  \"" << yytext;
+							cerr << "\"  no se puede asignar contenido a un metodo, en linea " << line_num << endl;
+							exit(-1);
+						}
+						
+					} Asignacion1
+					EQL  {
+						accion_2_assignacion("=");
+					}
+					Expresion {
+						accion_3_assignacion();								
+					} ;
+Asignacion1 		: LBRACKET {
+
+					} Expresion {
+						accion_2_acceso_arreglo();
+					} RBRACKET {
+						accion_3_acceso_arreglo();
+						//accion_5_acceso_arreglo();
+						
+					} 
+					| epsilon ; 
 
 Expresion			: Exp Expresion1 ;
 Expresion1 			: Expresion2 Exp { accion_9_expresiones(); }
@@ -386,11 +402,22 @@ Termino1			: TIMES {
 					| epsilon	;
 
 Factor				: LPAREN { accion_6_expresiones("("); } Expresion { accion_7_expresiones(); }  RPAREN
-					| Factor1 VarCteExp Factor2
+					| Factor1 VarCteExp {
+
+						
+					} Factor2
 Factor1 			: PLUS
 					| MINUS
 					| epsilon	;
-Factor2				:	LBRACKET Expresion RBRACKET 
+Factor2				:	LBRACKET {
+						
+					} Expresion {
+						accion_2_acceso_arreglo();
+						//accion_3_acceso_arreglo();
+					}  RBRACKET {
+						accion_3_acceso_arreglo();
+						
+					}
 					|	epsilon ;
 
 VarCteExp			:	Llamada 
@@ -419,9 +446,17 @@ Variable			: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR  {
 						if ( !dirProcedimientos.crearVariable(yyTipo, $4, 1, direccion )) {
 							exit (-1);
 						};
+						indexVariableCreada = dirProcedimientos.buscaVariable($4);
+
 					 }  Variable1 ;
-Variable1			: LBRACKET Expresion RBRACKET 
-					| epsilon;
+Variable1			: LBRACKET ENTERO { 
+						string temp = yytext;
+						accion_1_arreglo_def(indexVariableCreada, atoi(temp.c_str()) ); 
+					}  RBRACKET  { 
+						accion_2_arreglo_def( indexVariableCreada ); 
+					}
+					| epsilon ;
+
 
 VariableObjeto		: VARSYM  Tipo { yyTipo = yytext } IDENTIFICADOR   {  
 						dirProcedimientos.crearVariable(yyTipo, $4, 0, getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0, global, temporal, objeto, funcion));
@@ -790,6 +825,7 @@ void accion_9_expresiones(){
  * @param tipoVariable tipo del operando leido
  */
 void accion_1_assignacion(int dirOperando, int tipoVariable){
+	cout << "dirOperando: " << dirOperando << endl;
 	pilaTipos.push(tipoVariable);
 	pilaOperandos.push(dirOperando);
 }
@@ -1178,6 +1214,203 @@ void accion_6_llamada_proc(string nombreProc) {
 	}
 }
 
+
+/**
+ * Accion 1 arreglo def. Se encarga de agregar una dimension a la variable dimensionada en el directorio de procedimientos
+ * @param indexVariableCreada index de la variable creada 
+ */
+void accion_1_arreglo_def(int indexVariableCreada, int tam) {
+
+		dirProcedimientos.agregaDimension(indexVariableCreada, tam);	
+}
+
+/**
+ * Accion 2 arreglo def. Se encarga de avisar que ya no hay más dimensiones para que se pueda entonces calcular la m
+ */
+void accion_2_arreglo_def(int indexVariableCreada) {
+
+	int tamArray = dirProcedimientos.terminaDimensiones(indexVariableCreada);
+	int direccionTemp;
+	// Quema las tamArray direcciones de las direcciones disponibles para el tipo de dato
+	for (int i = 0; i < tamArray ; i++) {
+		
+		direccionTemp = getSiguienteDireccion(getIndexTipoVariable(yyTipo), 0,  global, temporal, objeto, funcion);
+	}
+}	
+
+
+
+/**
+ * Accion 2 acceso arreglo. 
+ */
+void accion_2_acceso_arreglo() {
+	
+
+
+	int iVar = dirProcedimientos.buscaVariable(objetoPadre);
+	dimensionActual = dirProcedimientos.dameDimension(iVar, 0 );
+	
+
+}	
+
+/**
+ * Accion 3 acceso arreglo. 
+ */
+void accion_3_acceso_arreglo() {
+
+	int valorExp = pilaOperandos.top();
+	pilaOperandos.pop();
+
+	int limSuperior = dimensionActual.first;
+
+
+	//cout << "Valor de izq: " << pideEntero(valorExp) <<  " y " << valorExp <<  " objeto padre: " << objetoPadre << endl; 
+	Cuadruplo cuadruploTemp = Cuadruplo("ver", to_string(valorExp), "0" , to_string(limSuperior));
+	cuadruplos.push_back( cuadruploTemp );	
+
+	string nombreArreglo = objetoPadre;
+	int temporalSalida = getSiguienteDireccion(1, 0, 0, 1, 0, 0);
+	int direccion = dirProcedimientos.buscaDireccion(nombreArreglo);
+	
+	int scope = getScope(direccion);
+	int tipoArreglo = dirProcedimientos.checaTipo(nombreArreglo);
+	int dirBase = getDirBase(scope, tipoArreglo);
+	
+	constante constante;		
+	constante.direccion = getSiguienteDireccion(1, 1, 0, 0, 0, 0);
+	constante.tipo = 1;
+	constante.valor = to_string(dirBase);
+	constantesEnteras.push_back(constante);	
+
+
+	cuadruploTemp = Cuadruplo("sumaDir", to_string(valorExp), to_string(constante.direccion) , to_string(temporalSalida));
+	cuadruplos.push_back( cuadruploTemp );
+	pilaOperandos.push(temporalSalida *-1);	
+
+	//cout << " pilaOperandos: " << pilaOperandos.top() << endl;
+
+
+}	
+
+
+
+int getDirBase(int scope, int tipoArreglo) {
+	int dirBase = -1;
+	switch (scope) {
+        case _GLOBAL: {
+        	switch (tipoArreglo) {
+        		case 0: {
+        			dirBase = OFF_BAND_GLOBAL;
+        		}
+	    		break;
+        		case 1: {
+        			dirBase = OFF_ENT_GLOBAL;
+        		}
+        		break;
+        		case 2: {
+        			dirBase = OFF_DEC_GLOBAL;
+
+        		}
+        		break;
+        		case 3: {
+        			dirBase = OFF_TEXT_GLOBAL;
+        		}
+        		break;
+        	}
+        }       
+        break;
+        case _TEMPORAL: 
+                switch (tipoArreglo) {
+        		case 0: {
+        			dirBase = OFF_BAND_TEMP;
+        		}
+	    		break;
+        		case 1: {
+        			dirBase = OFF_ENT_TEMP;
+        		}
+        		break;
+        		case 2: {
+        			dirBase = OFF_DEC_TEMP;
+
+        		}
+        		break;
+        		case 3: {
+        			dirBase = OFF_TEXT_TEMP;
+        		}
+        		break;
+        	}
+        break;
+        case _CONSTANTE: 
+                switch (tipoArreglo) {
+        		case 0: {
+        			dirBase = OFF_BAND_CONST;
+        		}
+	    		break;
+        		case 1: {
+        			dirBase = OFF_ENT_CONST;
+        		}
+        		break;
+        		case 2: {
+        			dirBase = OFF_DEC_CONST;
+        		}
+        		break;
+        		case 3: {
+        			dirBase = OFF_TEXT_CONST;
+        		}
+        		break;
+        	}
+        break;
+        case _OBJETO:
+        switch (tipoArreglo) {
+        		case 0: {
+        			dirBase = OFF_BAND_DIR_OBJ;
+        		}
+	    		break;
+        		case 1: {
+        			dirBase = OFF_ENT_DIR_OBJ;
+        		}
+        		break;
+        		case 2: {
+        			dirBase = OFF_DEC_DIR_OBJ;
+
+        		}
+        		break;
+        		case 3: {
+        			dirBase = OFF_TEXT_DIR_OBJ;
+        		}
+        		break;
+        	}
+                
+        break;
+        case _FUNCION:
+        switch (tipoArreglo) {
+        		case 0: {
+        			dirBase = OFF_BAND_DIR_FUNCION;
+        		}
+	    		break;
+        		case 1: {
+        			dirBase = OFF_ENT_DIR_FUNCION;
+        		}
+        		break;
+        		case 2: {
+        			dirBase = OFF_DEC_DIR_FUNCION;
+
+        		}
+        		break;
+        		case 3: {
+        			dirBase = OFF_TEXT_DIR_FUNCION;
+        		}
+        		break;
+        	}
+                
+        break;
+        default: dirBase = -1;
+        break;
+    }
+    return dirBase;
+}
+
+
 /**
  * getIndexOperador utilizado para conseguir un index dependiendo del operador que recibe la funcion.
  * @param  operador a buscar el index
@@ -1319,7 +1552,7 @@ template <typename T> string to_string(T value) {
 	@return el scope en el que se encuentra la direccion.
 **/
 int getScope(int dir){
-
+	dir = abs(dir);
 	if(dir >= OFF_LOWER_LIMIT && dir < OFF_BAND_TEMP){
 		return _GLOBAL;
 	}else if(dir >= OFF_BAND_TEMP && dir < OFF_BAND_CONST){
@@ -1345,7 +1578,7 @@ int getScope(int dir){
 **/
 int getTipoDireccion ( int dir, int scope ) {
 	int tipoDireccion = -1 ;
-
+	dir = abs(dir);
     switch (scope) {
         case _GLOBAL:
                 tipoDireccion = floor( ( dir - OFF_BAND_GLOBAL  )/ 1000 ) ; 
@@ -1401,6 +1634,7 @@ int getOperandoIndex(string operador){
     if ( operador == "saltolinea") { return _SALTOLINEA; }
     if ( operador == "eraObj") { return _ERAOBJ; }
     if ( operador == "retornoObj") { return _RETURNOBJ; }
+    if ( operador == "sumaDir") { return _SUMADIR; }
     return - 1;
 }
 
@@ -1411,7 +1645,14 @@ int getOperandoIndex(string operador){
     @param scope, scope de la variable a conseguir
     @return el valor del entero conseguido en memoria
 **/
-int pideEntero (int dir) { 
+int pideEntero (int dir) {
+	bool negativo = false;
+	if (dir<0) { 
+		negativo = true;
+		//cout << "dir: " << dir << " pideEntero(dir): " << pideEntero(abs(dir)) << " pideEnteroTotal: " << pideEntero(pideEntero(abs(dir))) << endl;
+		//return pideEntero(abs(dir));
+		dir = abs(dir);
+	} 
     int scope = getScope(dir);
     int valor = -1;
     switch (scope) {
@@ -1431,6 +1672,12 @@ int pideEntero (int dir) {
                 valor =  memoria.pideEnteroObj(  memoria.pideDirEnteroObj( dir - OFF_ENT_DIR_OBJ ));       
         }				
         break;
+    }
+
+    if ( negativo ) {
+    	cout << "Valor antes: "<< valor << endl;
+    	valor = pideEntero(valor);
+    	cout << "Valor despues: "<< valor << endl;
     }
     return valor;
 }
@@ -1541,6 +1788,11 @@ double pideDecimal (int dir) {
 **/
 void guardaEntero (int dir, int valor) { 
 
+	if (dir<0) {
+		cout << "PideEntero(dir) " << dir << " pideEntero: " << pideEntero(dir)  << " valor: " << valor << endl;
+		guardaEntero(pideEntero(abs(dir)),valor);
+		return;
+	}
     int scope = getScope(dir);
     switch (scope) {
         case _GLOBAL:
@@ -2031,6 +2283,7 @@ void assign_op(Cuadruplo current){
 void print_op(Cuadruplo current){
   int dirRes = atoi(current.getRes().c_str());
   int r;
+  cout << "muestra res: " << dirRes << endl;
   r=getTipoDireccion(dirRes,getScope(dirRes));
   switch(r){
     case 0:
@@ -2233,6 +2486,36 @@ void returnObj(){
     dirProcedimientos.retornoBloques();
 }
 
+void verificaPROC(Cuadruplo current){
+    int dirIzq = atoi(current.getIzq().c_str());
+    int dirDer = atoi(current.getDer().c_str());
+    int dirRes = atoi(current.getRes().c_str());
+    int index = pideEntero(dirIzq);
+    if (index < dirDer || index >= dirRes){
+      cerr << "Acceso fuera de limites en la linea: " << line_num <<  endl;
+      exit(-1);
+    }
+  }
+
+
+/**
+ * sumadir_op
+ * Funcion utilizada para llevar a cabo la suma de dos operandos
+ * @param cuadruplo, representando el cuadruplo actual
+ */
+void sumadir_op(Cuadruplo current){
+
+    int dirIzq = atoi(current.getIzq().c_str());
+    int dirDer = atoi(current.getDer().c_str());
+    int dirRes = atoi(current.getRes().c_str());
+
+    int iRes;
+
+    iRes = pideEntero(dirIzq) + pideEntero(dirDer);
+    cout << "iRes: " << iRes << " dirRes: " << dirRes << endl;
+    guardaEntero(dirRes,iRes);
+     
+}
 /**
  *  solve
  *  Metodo utilizado como si fuera la virtual machine. 
@@ -2272,6 +2555,8 @@ void solve() {
 		    case _PARAM   : paramPROC(current); break;
 		 	case _ERAOBJ : eraObj(current); break;
 			case _RETURNOBJ : returnObj(); break;
+			case _VER : verificaPROC(current); break;
+			case _SUMADIR : sumadir_op(current); break;
         }        
         //cout << "Despues Valor de i: " << i << endl;
     }

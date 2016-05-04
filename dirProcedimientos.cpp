@@ -135,6 +135,37 @@ public:
         vBloques[bloqueAct].inMemoria[tipo]+=tam-1;
     }
     
+
+    void agregaDimension(int iVar, int tam){
+        pair<int,int> par;
+        vVariables[iVar].tam*=tam;
+        par.first=tam;
+        par.second=vVariables[iVar].tam;
+        vVariables[iVar].dimensiones.push_back(par);
+    }
+   int terminaDimensiones(int iVar){
+        variable *vAux;
+        vAux=&vVariables[iVar];
+        //este procedimientodeja las m's preparadas
+        for (int i = 0; i < vAux->dimensiones.size(); i++) {
+            vAux->dimensiones[i].second =vAux->tam / vAux->dimensiones[i].second;
+        }
+        vBloques[bloqueAct].inMemoria[vAux->tipo] += vAux->tam -1 ;
+        cout << "Valor: "<<vAux->tam -1 << endl;
+        return vAux->tam -1 ;
+    }
+   
+    pair<int,int> dameDimension(int iVar, int indexDimension){
+        pair<int,int> par;
+        par.first = vVariables[iVar].dimensiones[indexDimension].first;
+        par.second = vVariables[iVar].dimensiones[indexDimension].second;
+        return par;
+    }
+   
+    int cantidadDimensiones(int iVar){
+        return (int) vVariables[iVar].dimensiones.size();
+    }
+
     //buscaVariable checa si la variable ha sido instanciada antes en el proyecto y regresa su indice la tabla de variables de variables
     // regresa -1 si no la encontro
     int buscaVariable (string id){
@@ -176,6 +207,7 @@ public:
         v.estructura = 0;
         v.direccion=direccion;
         v.bloque = -1;
+        v.tam = 1;
         if (v.tipo>4){
             v.estructura=2;
             v.bloque=bloqueTipo[v.tipo-4];
@@ -554,6 +586,7 @@ public:
                 memoria.cantEnt+=vBloques[i].inMemoria[1];
                 memoria.cantDec+=vBloques[i].inMemoria[2];
                 memoria.cantTex+=vBloques[i].inMemoria[3];
+                cout << "Cant ent dirProcedimientos: " << memoria.cantEnt << endl;
             }
             if (vBloques[i].estructura=="objeto"){
                 memoria.cantBanDirObj+=vBloques[i].inMemoria[0];

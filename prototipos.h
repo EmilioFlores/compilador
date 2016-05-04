@@ -52,6 +52,15 @@ void accion_4_llamada_proc();
 void accion_5_llamada_proc();
 void accion_6_llamada_proc(string nombreProc);
 
+void accion_1_arreglo_def(int indexVariableCreada, int tam);
+void accion_2_arreglo_def(int  indexVariableCreada);
+
+void accion_1_acceso_arreglo();
+void accion_2_acceso_arreglo();
+void accion_3_acceso_arreglo();
+void accion_4_acceso_arreglo();
+void accion_5_acceso_arreglo();
+
 void solve();
 void plus_op(Cuadruplo current);
 void minus_op(Cuadruplo current);
@@ -89,6 +98,8 @@ void guardaBandera(int dir, int valor);
 void guardaTexto(int dir, int valor);
 void guardaDecimal(int dir, int valor);
 
+int getScope(int dir);
+int getDirBase(int scope, int arregloTipo);
 int getOperandoIndex(string operador);
 int getIndexOperador(string operador);
 string getTipoVariable(int tipo );
