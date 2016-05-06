@@ -7,11 +7,11 @@ objeto Rectangulo {
 	}
 
 	publico {
+
 		var entero area;
 		var entero perimetro ;
 		
 		funcion bandera setLargo(entero z){
-
 			largo = z;
 						
 			regresa verdadero;
@@ -37,7 +37,7 @@ objeto Rectangulo {
 
 		funcion entero calculaArea(){
 
-			area = largo*ancho;
+			area = getLargo()*getAncho();
 			regresa area;
 
 		};
@@ -51,6 +51,8 @@ objeto Rectangulo {
 	}
 
 };
+
+
 
 
 
