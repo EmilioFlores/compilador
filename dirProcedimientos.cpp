@@ -144,6 +144,13 @@ public:
         return (int) vVariables[iVar].dimensiones.size();
     }
     
+    string buscaPadreTipo(string id){
+        int iVar = buscaVariable(id);
+        if (iVar==-1)
+            return "-1";
+        return tipos[vVariables[iVar].tipo];
+    }
+
     
     /*
      
@@ -340,13 +347,14 @@ public:
         v.bloque = -1;
         if (v.tipo>4){
             v.estructura=2;
-            v.bloque=bloqueTipo[v.tipo-4];
+            v.bloque=bloqueTipo[v.tipo-5];
             v.direccion=vObjetos.size();
             creaMemoriaObjeto(v.bloque);
         }
         else{
-            if (v.tipo < 4)
+            if (v.tipo < 4) {
                 vBloques[bloqueAct].inMemoria[v.tipo]++;
+            }
         }
         v.privacidad=privacidad;
         v.id=id;
@@ -383,10 +391,10 @@ public:
         vObjetos[o].tams.resize(tam);
         for (int i = 0 ; i < tam;i++){
             v=vBloques[bloque].vVar[i];
-            vObjetos[o].tams[i]=vVariables[i].tam;
-            vObjetos[o].tipos[i]=vVariables[i].tipo;
+            vObjetos[o].tams[i]=vVariables[v].tam;
+            vObjetos[o].tipos[i]=vVariables[v].tipo;
             vObjetos[o].dirCuadruplo[i]=vVariables[v].direccion;
-            vObjetos[o].dirReales[i]=espacioMemoriaObjeto(vVariables[i].tipo,vVariables[i].tam);
+            vObjetos[o].dirReales[i]=espacioMemoriaObjeto(vVariables[v].tipo,vVariables[v].tam);
         }
     }
     
@@ -428,22 +436,23 @@ public:
      *
      */
     int espacioMemoriaObjeto(int tipo,int tam){
+
         switch (tipo) {
             case 0:
                 memoria.cantBanObj+=tam;
-                return memoria.cantBanObj-=tam;
+                return memoria.cantBanObj=tam;
                 break;
             case 1:
                 memoria.cantEntObj+=tam;
-                return memoria.cantEntObj-=tam;
+                return memoria.cantEntObj=tam;
                 break;
             case 2:
                 memoria.cantDecObj+=tam;
-                return memoria.cantDecObj-=tam;
+                return memoria.cantDecObj=tam;
                 break;
             case 3:
                 memoria.cantTexObj+=tam;
-                return memoria.cantTexObj-=tam;
+                return memoria.cantTexObj=tam;
                 break;
             case 4:
                 return -1;
@@ -482,7 +491,32 @@ public:
         return false;
     }
     
-    
+
+    int buscaVariableObj(int bloque, string id){
+        for (int i = 0 ; i < vBloques[bloque].vVar.size();i++){
+            int iVar = vBloques[bloque].vVar[i];
+            if (vVariables[iVar].id==id){
+                return iVar;
+            }
+        }
+        return -1;
+    }
+   
+    int buscaBloque(int iVar){
+        return vVariables[iVar].bloque;
+    }
+   
+    int buscaDireccion(int iVar){
+        return vVariables[iVar].direccion;
+    }
+    int buscaEstructura(int iVar){
+        return vVariables[iVar].estructura;
+    }
+
+    int checaTipoVarObj(int iVar){
+        return vVariables[iVar].tipo;
+    }
+
     /*
      *
      * comienzaArgumentos
@@ -517,10 +551,12 @@ public:
      *
      */
     bool terminaArgumentos(){
+        if (pilaArgumentos.empty()){
+            return true;
+        }
         int cantidadArg=(int)vBloques[pilaArgumentos.back().first].vParam.size();
         int argChecados=pilaArgumentos.back().second;
         pilaArgumentos.pop_back();
-        
         if (argChecados<cantidadArg){
             return false;
         }
@@ -575,7 +611,7 @@ public:
         }
         v.estructura = 1;
         v.direccion=direccion;
-        
+        v.tam = 1;
         v.bloque = sigBloque;//los metodos señalan a un bloque para enseñar sus parametros
         bloque bAux;
         bAux.tipo = v.tipo;
@@ -590,7 +626,7 @@ public:
         vBloques[bloqueAct].vVar.push_back(varNo);
         vBloques[bloqueAct].inMemoria[v.tipo]++;
         vBloques.push_back(bAux);
-        bloqueTipo.push_back(sigBloque);
+        //bloqueTipo.push_back(sigBloque);
         tipos.push_back("Funcion");//placeholder para mantener el orden de la relacion tipos, tipoBloque, vBloques
         pilaBloques.push_back(sigBloque);
         bloqueAct = sigBloque;

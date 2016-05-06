@@ -1,0 +1,32 @@
+// Fibonacci recursivo
+
+funcion entero fibonacci(entero n) {
+	var entero izquierdo;
+	var entero derecho;
+
+	condicion( n == 0 ){ 
+		n = 0;
+	} fallo {
+
+			condicion( n < 3) {
+				n = 1;
+
+			} fallo {
+				izquierdo = fibonacci(n-1);
+				derecho = fibonacci(n-2);
+				n = izquierdo + derecho;
+			};
+	};
+	regresa n;
+};
+
+
+programa {
+	
+	var entero x;
+    lee x;
+	x = fibonacci(x);
+   
+	muestraLinea("Valor de fibonacci: " , x);
+
+}

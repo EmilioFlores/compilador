@@ -25,9 +25,7 @@ programa {
 	var bandera band ;
 
 	var entero test5;
-	var Rectangulo y;
 
-	y.getTest2();
 	
 }
 

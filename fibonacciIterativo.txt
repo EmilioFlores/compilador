@@ -30,7 +30,7 @@ programa {
 
 	var entero x;
 	var entero y;
-	y = 10;
+	y = 20;
 	x = fibIterativo(y);
 	
 	muestraLinea(" ");

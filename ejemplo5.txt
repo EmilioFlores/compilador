@@ -16,7 +16,7 @@ programa {
 
 	var entero x;
 	x = getTest3(5);
-	muestraLinea( "holaa " + " holaaaaaaaaaaa" );
+	muestraLinea( x );
 
 	
 }

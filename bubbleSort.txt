@@ -28,7 +28,7 @@ programa {
 
 	ciclo(i=0, i < 10, i = i + 1){
 		ciclo (j=i,j<10, j = j+1 ){
-			condicion (x[j] > x[i] ) {
+			condicion (x[j] < x[i] ) {
 				k = x[i];
 				x[i] = x[j];
 				x[j] = k;

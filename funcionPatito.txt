@@ -4,18 +4,14 @@
 
 funcion entero funcionPatito(entero x, entero z) {
 		
-		var entero y ;
-		y = x * z ;
-		condicion ( x > 1 ) {
-			x = 5 + y;
-		};
-		regresa x;
+		
+		regresa 2;
 };
 
 programa {
 	
 
 	var entero x;
-	x = 15 + funcionPatito(5, 7);
-	muestraLinea("Resultado de valor x: ", x );
+	x = funcionPatito(5, 7);
+	
 }	

@@ -49,11 +49,12 @@ int bloqueglobal = 0;
 int indexParametro = 0;
 int indexVariableCreada = 0;
 int indexVariableAcesada = 0;
-
+int bloqueObjeto = 0;
 bool isArray = false;
-bool metodo = false;
 bool global = true;
 bool objeto = false;
+bool esObjeto = false;
+bool esVarObjeto = false;
 bool temporal = false;
 bool funcion = false; 
 stack<int> pilaOperandos;
@@ -254,14 +255,22 @@ ParamObjeto1		: COMMA ParamObjeto
 
 Args				: {
 					  int tipoObjeto = -1;
-					  if ( metodo ) { 
-					   	tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);
-					  }
+					  if ( esObjeto ) {
+					   	tipoObjeto = dirProcedimientos.checaTipo(metodoNombre);
+						
+						  if ( !dirProcedimientos.comienzaArgumentos(tipoObjeto, metodoNombre)) {
+						  		cout << "Comienza argumentos : " << tipoObjeto << "  metodoNombre: " << metodoNombre << endl;
+						   		cout << "Error:" << endl;
+						   		exit(-1);
+						   }					  	 
+					  } else {
 
-					  if ( !dirProcedimientos.comienzaArgumentos(tipoObjeto, objetoNombre)) {
-					   		cout << "Error:" << endl;
-					   		exit(-1);
-					   }
+						  if ( !dirProcedimientos.comienzaArgumentos(tipoObjeto, objetoNombre)) {
+						  		cout << "Comienza argumentos : " << tipoObjeto << "  metodoNombre: " << metodoNombre << endl;
+						   		cout << "Error:" << endl;
+						   		exit(-1);
+						   }
+					  }
 					} Expresion { 
 					  accion_3_llamada_proc();
 					} Args1
@@ -297,11 +306,15 @@ Estatuto			: Asignacion
 
 Llamada				: IDENTIFICADOR {
 
-					   metodo = false;
+					   esObjeto = false;
+					   esVarObjeto = false;
 					   objetoNombre = $1;
 					   metodoNombre = $1;
 				   	   //objetoPadre = $1;
-					   
+					  int iVar = dirProcedimientos.buscaVariable(objetoNombre);
+
+					  bloqueObjeto = dirProcedimientos.buscaBloque(iVar);
+
 					   int variableIndex = dirProcedimientos.buscaVariable(objetoNombre);
 					   
 					   if (variableIndex == -1 ) { 
@@ -312,26 +325,43 @@ Llamada				: IDENTIFICADOR {
 
 					}  Llamada1 Llamada2 ;
 Llamada1			: DOT IDENTIFICADOR {
+					  // acion 1 def de objetos
 					  metodoNombre = $2;
-					  metodo = true;
+					  esObjeto = true;
+					  esVarObjeto = true;
+
+					   
 						//accion_1_llamada_proc_predicado(objetoNombre, metodoNombre);
 					} Llamada1
 					| epsilon ;
 Llamada2			: LPAREN {
+					   
 						accion_6_expresiones("(");
-						if ( metodo == false) {
+						if ( esObjeto ) {
+							esVarObjeto = false;
 							//accion_1_llamada_proc_no_predicado(objetoNombre, metodoNombre);
 						}
 						accion_2_llamada_proc();
 					} Args RPAREN  {
 
+						if ( esObjeto ) {
+
+						
+
+						}
 						dirProcedimientos.terminaArgumentos();
 						accion_6_llamada_proc(objetoPadre);
 						accion_7_expresiones();
 						//accion_5_llamada_proc();
 					}
 					| epsilon {
-						if ( metodo ) {
+						if ( esObjeto ) {
+							
+							int dirObjetoPadre = dirProcedimientos.buscaDireccion(objetoNombre);
+
+							Cuadruplo cuadruploTemp = Cuadruplo("eraObj", to_string(dirObjetoPadre), to_string(bloqueObjeto), "");
+							cuadruplos.push_back( cuadruploTemp );
+
 							accion_1_expresiones(metodoNombre, 4);
 						}
 						else {
@@ -598,30 +628,46 @@ void accion_1_expresiones(string yytext, int tipo){
 	}
 	else {
 		// la variable ya estaba registrada
-		int direccionVariable = dirProcedimientos.buscaDireccion(yytext);
-		if (direccionVariable != -1 ) {
-			
-			int tipoVariable = dirProcedimientos.checaTipo(yytext);
-			int estructuraVariable = dirProcedimientos.checaEstructura(yytext);
-			//0 bandera, 1 entero, 2 decimal, 3 texto
-			// estructura 0 variable, 1 funcion
-			if (tipoVariable < 4 && ( estructuraVariable == 0 )  ) {
-				
-				// Si es una funcion, no meter nada a la pila, pues ya se metio arriba
-				if ( estructuraVariable != 1) {
+		if ( esVarObjeto ) {
 
-					pilaOperandos.push(direccionVariable);
-					pilaTipos.push(tipoVariable);
-				}
+			int iVar = dirProcedimientos.buscaVariableObj(bloqueObjeto, yytext);
+			int tipoVarObj = dirProcedimientos.checaTipoVarObj(iVar);
+			int direccionVarObjeto = dirProcedimientos.buscaDireccion(iVar);
+
+			if (tipoVarObj < 4  ) {
+					
+				pilaOperandos.push(direccionVarObjeto);
+				pilaTipos.push(tipoVarObj);
+			
 			}
 			else  {
 				cout << "No se permiten operaciones entre objetos";
 				exit(0);
 			}
-		}
-		else {
-			cout << "Linea: " << line_num << endl;
-			exit(0);
+			
+		} else {
+			
+			int direccionVariable = dirProcedimientos.buscaDireccion(yytext);
+			if (direccionVariable != -1 ) {
+				
+				int tipoVariable = dirProcedimientos.checaTipo(yytext);
+				int estructuraVariable = dirProcedimientos.checaEstructura(yytext);
+				//0 bandera, 1 entero, 2 decimal, 3 texto
+				// estructura 0 variable, 1 funcion
+				if (tipoVariable < 4 && ( estructuraVariable == 0 )  ) {
+					
+					// Si es una funcion, no meter nada a la pila, pues ya se metio arriba
+					if ( estructuraVariable != 1) {
+
+						pilaOperandos.push(direccionVariable);
+						pilaTipos.push(tipoVariable);
+					}
+				}
+				else  {
+					cout << "No se permiten operaciones entre objetos";
+					exit(0);
+				}
+			}
 		}
 	}
 }
@@ -1119,7 +1165,8 @@ void accion_7_definicion_proc() {
 void accion_2_llamada_proc() {
 	indexParametro = 0;
 	// Si es una variable o funcion de un objeto, como hago un era de un obj de la direccion del objeto
-	if ( metodo ) {
+	if ( esObjeto ) {
+		/*
 		int direccion = dirProcedimientos.buscaDireccion(objetoNombre);
 		//cout << "Metodo nombre: " << metodoNombre  << " objetoNombre: " << objetoNombre << " metodo: " << metodo << endl;
 		Cuadruplo cuadruploTemp = Cuadruplo("eraObj", to_string(direccion), "" , "");
@@ -1130,6 +1177,7 @@ void accion_2_llamada_proc() {
 		//cout << "tipo objeto: "<< tipoObjeto<< " nombre: " <<  dirProcedimientos.nombreTipo(tipoObjeto) <<  " objetoNombre: " << objetoNombre << endl; 
 		cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodo), "" , "");
 		cuadruplos.push_back( cuadruploTemp );
+		*/
 	} else {
 		objetoPadre = objetoNombre;
 	}	
@@ -1171,11 +1219,64 @@ void accion_6_llamada_proc(string nombreProc) {
 
 	if ( estructura != 0 ) {
 
-		if ( metodo  ) { 
-			int tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);				
-			int bloqueMetodo = dirProcedimientos.buscaBloque(dirProcedimientos.nombreTipo(tipoObjeto), metodoNombre);
-			Cuadruplo cuadruploTemp = Cuadruplo("gosub", to_string(bloqueMetodo), to_string(cuadruplos.size()) , "");
+		if ( esObjeto  ) { 
+
+			// consigue direccion de var de metodo de objeto    r.x  consigue dir de x
+			int iVar = dirProcedimientos.buscaVariableObj(bloqueObjeto, metodoNombre);
+
+			// Consigue la direccion del objeto Padre..   r.x    consigeu dir de R
+			int dirObjetoPadre = dirProcedimientos.buscaDireccion(objetoNombre); 
+
+			string sTipoPadre = dirProcedimientos.buscaPadreTipo(objetoNombre);
+
+			Cuadruplo cuadruploTemp = Cuadruplo("eraObj", to_string(dirObjetoPadre), to_string(bloqueObjeto), "");
+			cuadruplos.push_back( cuadruploTemp );
+//			cout << "objetoPadre" << objetoNombre << endl;
+//			cout << " tipoPadre: " << sTipoPadre << " metodoNombre: " << metodoNombre << endl;
+			int bloqueMetodoObj = dirProcedimientos.buscaBloque(sTipoPadre, metodoNombre);
+
+
+
+			cuadruploTemp = Cuadruplo("era", to_string(bloqueMetodoObj), "" , "");
 			cuadruplos.push_back( cuadruploTemp );	
+
+			int indexParametro = 0; 
+			while ( !filaArgumentos.empty() ) {
+
+				int argument = filaArgumentos.front();
+				filaArgumentos.pop();
+				cuadruploTemp = Cuadruplo("param", to_string(argument), to_string(indexParametro), "");
+				cuadruplos.push_back( cuadruploTemp );
+				indexParametro++;
+			}
+//			cout << " Bloque objeto: " << bloqueObjeto << endl;
+
+			int iVarMetodo = dirProcedimientos.buscaVariableObj(bloqueObjeto, metodoNombre);
+//			cout << "iVarMetodo: " << iVarMetodo << endl;
+			int direccionVariable = dirProcedimientos.buscaDireccion(iVarMetodo);
+			int tipoObjeto = dirProcedimientos.checaTipoVarObj(iVarMetodo);
+
+//			cout << "Tipo objeto: " << tipoObjeto << " direccionVarObjeto: " << direccionVariable << endl;
+			cuadruploTemp = Cuadruplo("gosub", to_string(bloqueMetodoObj), to_string(cuadruplos.size()) , "");
+			cuadruplos.push_back( cuadruploTemp );
+
+
+			
+			// Si tiene valor de retorno la funcion genera un temporal asignandole la direccion de la funcion
+			if ( tipoObjeto < 4) {			
+				int direccion_virtual = getSiguienteDireccion(tipoObjeto, 0, 0, 1, 0, 0);
+				cuadruploTemp = Cuadruplo("=", to_string(direccionVariable), "" , to_string(direccion_virtual));
+				cuadruplos.push_back( cuadruploTemp );	
+				pilaOperandos.push(direccion_virtual);
+				pilaTipos.push(tipoObjeto);
+			}
+
+
+			cuadruploTemp = Cuadruplo("returnObj", "", "", "");
+			cuadruplos.push_back( cuadruploTemp );
+
+
+
 		} else {
 			// Este es un era normal de funcion
 			int bloqueMetodo = dirProcedimientos.buscaBloque(nombreProc);
@@ -1635,7 +1736,7 @@ int getOperandoIndex(string operador){
     if ( operador == "end") { return _END; }
     if ( operador == "saltolinea") { return _SALTOLINEA; }
     if ( operador == "eraObj") { return _ERAOBJ; }
-    if ( operador == "retornoObj") { return _RETURNOBJ; }
+    if ( operador == "retornObj") { return _RETURNOBJ; }
     if ( operador == "sumaDir") { return _SUMADIR; }
     return - 1;
 }
@@ -1671,6 +1772,7 @@ int pideEntero (int dir) {
                 valor =  memoria.pideEnteroLoc(  memoria.pideDirEnteroFunc( dir - OFF_ENT_DIR_FUNCION ));
         break;
         case _OBJETO: {
+
                 valor =  memoria.pideEnteroObj(  memoria.pideDirEnteroObj( dir - OFF_ENT_DIR_OBJ ));       
         }				
         break;
@@ -1728,6 +1830,7 @@ string pideTexto (int dir) {
 
     int scope = getScope(dir);
     string valor = "";
+
     switch (scope) {
         case _GLOBAL:
                 valor =  memoria.pideTexto( dir - OFF_TEXT_GLOBAL );
@@ -2252,12 +2355,14 @@ void assign_op(Cuadruplo current){
   int i,r;
   i=getTipoDireccion(dirIzq,getScope(dirIzq));
   r=getTipoDireccion(dirRes,getScope(dirRes));
+
   switch(r){
     case 0:
       guardaBandera(dirRes,pideBandera(dirIzq));
       break;
     case 1:
       if(i==1) {
+      	//cout << "valorIzq: " << pideEntero(dirIzq) << endl;
         guardaEntero(dirRes,pideEntero(dirIzq));
       }
       else {
@@ -2507,8 +2612,8 @@ void paramPROC(Cuadruplo current){
 void eraObj(Cuadruplo current){//izquerda direccion de objeto, derecha bloque del objeto
     int dirDer = atoi(current.getDer().c_str());
     int dirIzq = atoi(current.getIzq().c_str());
-    dirProcedimientos.eraBloques(dirIzq);
-    dirProcedimientos.subsDireccionesObj(dirDer);
+    dirProcedimientos.eraBloques(dirDer);
+    dirProcedimientos.subsDireccionesObj(dirIzq);
 }
 
 /**
@@ -2570,7 +2675,7 @@ void solve() {
             case _PLUS    : plus_op(current);   break; // Funcion que hace la suma
             case _MINUS   : minus_op(current);   break; // Funcion que hace la resta
             case _TIMES   : times_op(current);   break; // Funcion que hace la multiplicacion
-            case _SLASH   : divide_op(current);   break; // Funcion que hace la division
+            case _SLASH   : divide_op(current);   break; // Funcfasion que hace la division
             case _EQLEQL  : equal_op(current);   break; // Funcion que hace ==
             case _NEQ     : notequal_op(current);   break; // Funcion que hace !=
             case _GTR     : more_op(current);   break; // Funcion que hace >
