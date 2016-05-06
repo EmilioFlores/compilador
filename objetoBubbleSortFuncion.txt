@@ -1,0 +1,45 @@
+objeto Rectangulo {
+	privado {
+		var entero x;  
+
+	}
+
+	publico {
+		var entero y ;
+	
+
+
+		
+		
+		funcion entero bubblesort(){
+
+
+			var entero x[10];
+			var entero i;
+			var entero j;
+			var entero k;
+
+			x[0] = 6 ; 
+
+
+			
+
+			regresa x[0];
+		};
+
+	}
+
+};
+
+
+
+programa {
+	
+	var Rectangulo rect;
+	
+	var entero x ;
+	x = 5 * 5 * 5;
+	x = rect.bubblesort();
+	muestraLinea(x);
+
+}

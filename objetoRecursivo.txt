@@ -1,0 +1,80 @@
+objeto Rectangulo {
+	privado {
+		var entero x;  
+
+	}
+
+	publico {
+		var entero y ;
+	
+
+
+		
+		funcion entero fibonacciRecursivo(entero n){
+
+
+			var entero ramaIzquierda;
+			var entero ramaDerecha;
+			
+
+			
+			condicion(n == 0){
+				n = 0;
+
+			} fallo {
+				condicion(n < 3){
+					n = 1;
+				} fallo {
+
+					
+					ramaIzquierda = fibonacciRecursivo(n - 1);
+					ramaDerecha = fibonacciRecursivo(n - 2);
+					n = ramaIzquierda  + ramaDerecha;
+				};
+			};
+			regresa n;
+		};
+
+	}
+
+};
+
+
+funcion entero fibonacciRecursivo(entero n){
+
+
+		var entero ramaIzquierda;
+		var entero ramaDerecha;
+
+		
+		condicion(n == 0){
+			n = 0;
+
+		} fallo {
+			condicion(n < 3){
+				n = 1;
+			} fallo {
+
+				
+				ramaIzquierda = fibonacciRecursivo(n - 1);
+				ramaDerecha = fibonacciRecursivo(n - 2);
+				n = ramaIzquierda  + ramaDerecha;
+			};
+		};
+		regresa n;
+	};
+
+
+programa {
+	
+	var Rectangulo rect;
+	
+	var entero x ;
+	var entero y ;
+	muestraLinea("hola");
+	x = rect.fibonacciRecursivo(10);
+	y = fibonacciRecursivo(20);
+
+	muestraLinea("Valor x: " , x, " Valor y: " , y);
+
+}

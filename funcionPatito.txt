@@ -13,5 +13,5 @@ programa {
 
 	var entero x;
 	x = funcionPatito(5, 7);
-	
+	muestraLinea(x);	
 }	
