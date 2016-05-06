@@ -1,0 +1,68 @@
+objeto Rectangulo {
+	privado {
+		var entero x;  
+
+	}
+
+	publico {
+		var entero y ;
+	
+		
+		funcion bandera setY(entero z){
+
+
+			//var entero x[10];
+			//var entero i;
+			y = z;
+			regresa verdadero;
+		};
+
+		
+		funcion entero getTest(){
+			var entero z;
+			z = 5*5*5;
+			regresa y;
+		};
+
+		funcion entero getY(){
+			regresa y;
+		};
+
+		funcion entero getX() {
+			regresa x;
+		};
+
+		funcion bandera setX(entero input) { 
+
+			x = input;
+			regresa verdadero;
+		};
+
+	}
+
+};
+
+
+
+programa {
+	
+	var Rectangulo rect;
+	var entero y;
+	var bandera x ;
+	x = rect.setY(15);
+	muestraLinea("Valor de y", rect.getY());
+	x = rect.setY(45);
+	muestraLinea("Valor de y", rect.getY());
+	x = rect.setY(75);
+	muestraLinea("Valor de y", rect.getY());
+	
+	x = rect.setX(1);
+	muestraLinea("Valor de y", rect.getX());
+	x = rect.setX(4);
+	muestraLinea("Valor de y", rect.getX());
+	x = rect.setX(99);
+	muestraLinea("Valor de y", rect.getX());
+	
+
+	muestraLinea(rect.y + rect.y);
+}	

@@ -269,11 +269,11 @@ Args				: {
 
 					  if ( esObjeto || objeto ) {
 					   	tipoObjeto = dirProcedimientos.checaTipo(objetoNombre);
-					   	cout << "Nombre metodo: " << metodoNombre << " tipoObjeto: " << tipoObjeto << endl;
+					   	//cout << "Nombre metodo: " << metodoNombre << " tipoObjeto: " << tipoObjeto << endl;
 					   	  if ( objeto ) { 
 					   	  		
 					   	  		tipoObjeto = dirProcedimientos.buscaTipo(nombreObjetoGlobal);
-					   			cout << "objeto global: " << metodoNombre << " tipoObjeto: " << tipoObjeto << endl;
+					   	//		cout << "objeto global: " << metodoNombre << " tipoObjeto: " << tipoObjeto << endl;
 					   	  }
 						  if ( !dirProcedimientos.comienzaArgumentos(tipoObjeto, metodoNombre)) {
 						  		
@@ -656,15 +656,22 @@ void accion_1_expresiones(string yytext, int tipo){
 			int iVar = dirProcedimientos.buscaVariableObj(bloqueObjeto, yytext);
 			int tipoVarObj = dirProcedimientos.checaTipoVarObj(iVar);
 			int direccionVarObjeto = dirProcedimientos.buscaDireccion(iVar);
+			bool privacidad = dirProcedimientos.checaPrivacidad(iVar);
 
-			if (tipoVarObj < 4  ) {
-					
-				pilaOperandos.push(direccionVarObjeto);
-				pilaTipos.push(tipoVarObj);
-			
-			}
-			else  {
-				cout << "No se permiten operaciones entre objetos";
+			if ( privacidad ) {
+
+				if (tipoVarObj < 4  ) {
+						
+					pilaOperandos.push(direccionVarObjeto);
+					pilaTipos.push(tipoVarObj);
+				
+				}
+				else  {
+					cout << "No se permiten operaciones entre objetos. Linea: " << line_num;
+					exit(0);
+				}
+			} else  {
+				cout << "La variable " << yytext << " es de tipo privada. Linea:" <<  line_num;
 				exit(0);
 			}
 			

@@ -1,0 +1,73 @@
+objeto Rectangulo {
+	privado {
+		
+		var entero largo;
+		var entero ancho;
+
+	}
+
+	publico {
+		var entero area;
+		var entero perimetro ;
+		
+		funcion bandera setLargo(entero z){
+
+			largo = z;
+						
+			regresa verdadero;
+		};
+
+		funcion entero getLargo(){
+
+			regresa largo;
+		};
+		
+	
+		funcion bandera setAncho(entero z){
+
+			ancho = z;
+						
+			regresa verdadero;
+		};
+
+		funcion entero getAncho(){
+
+			regresa ancho;
+		};
+
+		funcion entero calculaArea(){
+
+			area = largo*ancho;
+			regresa area;
+
+		};
+
+		funcion entero calculaPerimetro(){
+
+			perimetro = 2 * largo  + 2 * ancho;
+			regresa perimetro;
+		};	
+	
+	}
+
+};
+
+
+
+programa {
+	
+	var Rectangulo rect;
+	var entero y;
+	var bandera x ;
+	x = rect.setLargo(15);
+	x = rect.setAncho(10);
+	y = rect.calculaArea();
+	muestraLinea(y);
+	muestraLinea(rect.area);
+
+	y = rect.calculaPerimetro();
+	muestraLinea(y);
+	muestraLinea(rect.perimetro);
+
+	
+}	

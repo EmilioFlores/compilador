@@ -300,7 +300,7 @@ public:
                 return val;
             }
         }
-        cout << "No se encontro la variable "<< id << endl;
+        //cout << "No se encontro la variable "<< id << endl;
         return -1;
     }
     
@@ -381,6 +381,7 @@ public:
      */
     void creaMemoriaObjeto(int bloque){//crea la memoria para un objeto con la informacion en el bloque que lo define
         Objeto obj;
+        cout << "bloque: " << bloque << endl;
         vObjetos.push_back(obj);
         int v;
         int tam=(int)vBloques[bloque].vVar.size();
@@ -389,7 +390,9 @@ public:
         vObjetos[o].dirReales.resize(tam);
         vObjetos[o].tipos.resize(tam);
         vObjetos[o].tams.resize(tam);
+
         for (int i = 0 ; i < tam;i++){
+
             v=vBloques[bloque].vVar[i];
             vObjetos[o].tams[i]=vVariables[v].tam;
             vObjetos[o].tipos[i]=vVariables[v].tipo;
@@ -436,23 +439,23 @@ public:
      *
      */
     int espacioMemoriaObjeto(int tipo,int tam){
-
+        
         switch (tipo) {
             case 0:
                 memoria.cantBanObj+=tam;
-                return memoria.cantBanObj=tam;
+                return memoria.cantBanObj-tam;
                 break;
             case 1:
                 memoria.cantEntObj+=tam;
-                return memoria.cantEntObj=tam;
+                return memoria.cantEntObj-tam;
                 break;
             case 2:
                 memoria.cantDecObj+=tam;
-                return memoria.cantDecObj=tam;
+                return memoria.cantDecObj-tam;
                 break;
             case 3:
                 memoria.cantTexObj+=tam;
-                return memoria.cantTexObj=tam;
+                return memoria.cantTexObj-tam;
                 break;
             case 4:
                 return -1;
@@ -515,6 +518,10 @@ public:
 
     int checaTipoVarObj(int iVar){
         return vVariables[iVar].tipo;
+    }
+
+    bool checaPrivacidad(int iVar){
+        return vVariables[iVar].privacidad;
     }
 
     /*
@@ -650,21 +657,22 @@ public:
     void copiaDireccionesObj(int tipo,int espacio, int val){
         switch (tipo) {
             case 0:
-                memoria.guardaBanderasDirObj(espacio, val);
+                memoria.guardaBanderasDirObj(espacio - OFF_BAND_DIR_OBJ, val);
                 break;
             case 1:
-                memoria.guardaEnterosDirObj(espacio, val);
+                memoria.guardaEnterosDirObj(espacio - OFF_ENT_DIR_OBJ, val);
                 break;
             case 2:
-                memoria.guardaDecimalesDirObj(espacio, val);
+                memoria.guardaDecimalesDirObj(espacio - OFF_DEC_DIR_OBJ, val);
                 break;
             case 3:
-                memoria.guardaTextosDirObj(espacio, val);
+                memoria.guardaTextosDirObj(espacio - OFF_TEXT_DIR_OBJ, val);
                 break;
             case 4:
                 break;
             default:
                 if(tipo>4){
+                    //cout << "copiaDireccionesObj: " << tipo << " val: " << val << endl;
                     memoria.guardaObjetosDirObj(espacio, val);
                     subsDireccionesObj(val);
                 }
@@ -781,7 +789,8 @@ public:
     void subsDireccionesObj(int dir){
         int tam = (int)vObjetos[dir].dirReales.size();
         for (int i = 0 ; i < tam ; i++){
-            for (int j = 0 ; j < vObjetos[dir].tams[i];i++){
+            for (int j = 0 ; j < vObjetos[dir].tams[i];j++){
+                //cout << "Tipo : " << vObjetos[dir].tipos[i] << " Dir: " << vObjetos[dir].dirCuadruplo[i]+j << " dirReal: " << vObjetos[dir].dirReales[i]+j << endl; 
                 copiaDireccionesObj(vObjetos[dir].tipos[i],vObjetos[dir].dirCuadruplo[i]+j,vObjetos[dir].dirReales[i]+j);
             }
         }

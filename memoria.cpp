@@ -66,6 +66,7 @@ public:
     //Metodo que inicializara los vectores de memoria dependiendo de la memoria estatica necesaria
     void inicializa() {
 
+
         enteros.resize(cantEnt);
         banderas.resize(cantBan);
         decimales.resize(cantDec);
