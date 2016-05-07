@@ -52,16 +52,11 @@ objeto Rectangulo {
 
 };
 
-
-
-
-
-programa {
-	
+funcion entero test() {
 	var Rectangulo rect;
 	var entero y;
 	var bandera x ;
-	x = rect.setLargo(15);
+	x = rect.setLargo(20);
 	x = rect.setAncho(10);
 	y = rect.calculaArea();
 	muestraLinea(y);
@@ -70,6 +65,15 @@ programa {
 	y = rect.calculaPerimetro();
 	muestraLinea(y);
 	muestraLinea(rect.perimetro);
+	regresa 1;
+};
+
+
+
+
+programa {
+	
+	muestra(test());
 
 	
 }	
